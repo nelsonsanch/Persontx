@@ -1,0 +1,224 @@
+{
+  "timestamp": "2025-10-04T04:01:29.577Z",
+  "projectPath": "./",
+  "summary": {
+    "totalLargeFiles": 7,
+    "urgentFiles": 5,
+    "highPriorityFiles": 0
+  },
+  "largeFiles": [
+    {
+      "path": "src\\components\\cliente\\EMOSList.js",
+      "fullPath": "src\\components\\cliente\\EMOSList.js",
+      "lineCount": 1844,
+      "size": "75.0 KB",
+      "components": 9,
+      "functions": 36,
+      "imports": 3,
+      "complexity": "MUY ALTA"
+    },
+    {
+      "path": "src\\components\\cliente\\PerfilesCargo.js",
+      "fullPath": "src\\components\\cliente\\PerfilesCargo.js",
+      "lineCount": 1437,
+      "size": "69.2 KB",
+      "components": 8,
+      "functions": 17,
+      "imports": 6,
+      "complexity": "MUY ALTA"
+    },
+    {
+      "path": "src\\components\\cliente\\IndicadoresDashboard.js",
+      "fullPath": "src\\components\\cliente\\IndicadoresDashboard.js",
+      "lineCount": 1423,
+      "size": "50.1 KB",
+      "components": 12,
+      "functions": 20,
+      "imports": 4,
+      "complexity": "MUY ALTA"
+    },
+    {
+      "path": "src\\components\\cliente\\TrabajadoresList.js",
+      "fullPath": "src\\components\\cliente\\TrabajadoresList.js",
+      "lineCount": 1071,
+      "size": "40.1 KB",
+      "components": 6,
+      "functions": 17,
+      "imports": 5,
+      "complexity": "MUY ALTA"
+    },
+    {
+      "path": "src\\components\\cliente\\NovedadesList.js",
+      "fullPath": "src\\components\\cliente\\NovedadesList.js",
+      "lineCount": 1067,
+      "size": "38.8 KB",
+      "components": 7,
+      "functions": 18,
+      "imports": 5,
+      "complexity": "MUY ALTA"
+    },
+    {
+      "path": "src\\components\\admin\\ClientesList.js",
+      "fullPath": "src\\components\\admin\\ClientesList.js",
+      "lineCount": 424,
+      "size": "15.1 KB",
+      "components": 2,
+      "functions": 8,
+      "imports": 2,
+      "complexity": "BAJA"
+    },
+    {
+      "path": "src\\pages\\Login.js",
+      "fullPath": "src\\pages\\Login.js",
+      "lineCount": 411,
+      "size": "14.4 KB",
+      "components": 2,
+      "functions": 3,
+      "imports": 5,
+      "complexity": "BAJA"
+    }
+  ],
+  "suggestions": [
+    {
+      "originalFile": "src\\components\\admin\\ClientesList.js",
+      "lineCount": 424,
+      "complexity": "BAJA",
+      "priority": "BAJA",
+      "suggestedFiles": [
+        "ClientesList.js",
+        "ClientesListForm.js",
+        "ClientesListTable.js",
+        "ClientesListFilters.js",
+        "ClientesListUtils.js",
+        "ClientesListHooks.js"
+      ],
+      "steps": [
+        "1. Extraer formulario a componente separado",
+        "2. Separar tabla en su propio archivo",
+        "3. Mover filtros a componente independiente",
+        "4. Crear archivo de utilidades para funciones helper",
+        "5. Extraer custom hooks para lógica de estado"
+      ]
+    },
+    {
+      "originalFile": "src\\components\\cliente\\EMOSList.js",
+      "lineCount": 1844,
+      "complexity": "MUY ALTA",
+      "priority": "URGENTE",
+      "suggestedFiles": [
+        "EMOSList.js",
+        "EMOSListForm.js",
+        "EMOSListTable.js",
+        "EMOSListFilters.js",
+        "EMOSListUtils.js",
+        "EMOSListHooks.js"
+      ],
+      "steps": [
+        "1. Extraer formulario a componente separado",
+        "2. Separar tabla en su propio archivo",
+        "3. Mover filtros a componente independiente",
+        "4. Crear archivo de utilidades para funciones helper",
+        "5. Extraer custom hooks para lógica de estado"
+      ]
+    },
+    {
+      "originalFile": "src\\components\\cliente\\IndicadoresDashboard.js",
+      "lineCount": 1423,
+      "complexity": "MUY ALTA",
+      "priority": "URGENTE",
+      "suggestedFiles": [
+        "IndicadoresDashboard.js",
+        "IndicadoresDashboardCards.js",
+        "IndicadoresDashboardCharts.js",
+        "IndicadoresDashboardFilters.js",
+        "IndicadoresDashboardUtils.js",
+        "IndicadoresDashboardHooks.js"
+      ],
+      "steps": [
+        "1. Extraer tarjetas/cards a componente separado",
+        "2. Separar gráficos en su propio archivo",
+        "3. Mover filtros a componente independiente",
+        "4. Crear archivo de utilidades para cálculos",
+        "5. Extraer hooks para manejo de datos"
+      ]
+    },
+    {
+      "originalFile": "src\\components\\cliente\\NovedadesList.js",
+      "lineCount": 1067,
+      "complexity": "MUY ALTA",
+      "priority": "URGENTE",
+      "suggestedFiles": [
+        "NovedadesList.js",
+        "NovedadesListForm.js",
+        "NovedadesListTable.js",
+        "NovedadesListFilters.js",
+        "NovedadesListUtils.js",
+        "NovedadesListHooks.js"
+      ],
+      "steps": [
+        "1. Extraer formulario a componente separado",
+        "2. Separar tabla en su propio archivo",
+        "3. Mover filtros a componente independiente",
+        "4. Crear archivo de utilidades para funciones helper",
+        "5. Extraer custom hooks para lógica de estado"
+      ]
+    },
+    {
+      "originalFile": "src\\components\\cliente\\PerfilesCargo.js",
+      "lineCount": 1437,
+      "complexity": "MUY ALTA",
+      "priority": "URGENTE",
+      "suggestedFiles": [
+        "PerfilesCargo.js",
+        "PerfilesCargoComponents.js",
+        "PerfilesCargoUtils.js",
+        "PerfilesCargoHooks.js"
+      ],
+      "steps": [
+        "1. Identificar sub-componentes y extraerlos",
+        "2. Mover funciones de utilidad a archivo separado",
+        "3. Extraer custom hooks para lógica de estado",
+        "4. Mantener solo el componente principal en el archivo original"
+      ]
+    },
+    {
+      "originalFile": "src\\components\\cliente\\TrabajadoresList.js",
+      "lineCount": 1071,
+      "complexity": "MUY ALTA",
+      "priority": "URGENTE",
+      "suggestedFiles": [
+        "TrabajadoresList.js",
+        "TrabajadoresListForm.js",
+        "TrabajadoresListTable.js",
+        "TrabajadoresListFilters.js",
+        "TrabajadoresListUtils.js",
+        "TrabajadoresListHooks.js"
+      ],
+      "steps": [
+        "1. Extraer formulario a componente separado",
+        "2. Separar tabla en su propio archivo",
+        "3. Mover filtros a componente independiente",
+        "4. Crear archivo de utilidades para funciones helper",
+        "5. Extraer custom hooks para lógica de estado"
+      ]
+    },
+    {
+      "originalFile": "src\\pages\\Login.js",
+      "lineCount": 411,
+      "complexity": "BAJA",
+      "priority": "BAJA",
+      "suggestedFiles": [
+        "Login.js",
+        "LoginComponents.js",
+        "LoginUtils.js",
+        "LoginHooks.js"
+      ],
+      "steps": [
+        "1. Identificar sub-componentes y extraerlos",
+        "2. Mover funciones de utilidad a archivo separado",
+        "3. Extraer custom hooks para lógica de estado",
+        "4. Mantener solo el componente principal en el archivo original"
+      ]
+    }
+  ]
+}
