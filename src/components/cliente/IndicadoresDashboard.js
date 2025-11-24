@@ -1176,9 +1176,9 @@ const IndicadoresDashboard = () => {
         </div>
       </div>
 
-      {/* Primera fila de gráficos - 3 por fila */}
+      {/* Primera fila de gráficos - 4 por fila */}
       <div className="row mb-4">
-        <div className="col-lg-4 col-md-6 mb-3">
+        <div className="col-lg-3 col-md-6 mb-3">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">📈 Evolución Mensual</h6>
@@ -1199,7 +1199,7 @@ const IndicadoresDashboard = () => {
             </div>
           </div>
         </div>
-        <div className="col-lg-4 col-md-6 mb-3">
+        <div className="col-lg-3 col-md-6 mb-3">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">📊 Novedades por Tipo</h6>
@@ -1220,7 +1220,7 @@ const IndicadoresDashboard = () => {
             </div>
           </div>
         </div>
-        <div className="col-lg-4 col-md-6 mb-3">
+        <div className="col-lg-3 col-md-6 mb-3">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">📅 Días Ausentismo por Tipo</h6>
@@ -1241,10 +1241,6 @@ const IndicadoresDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Primera fila de gráficos pequeños - 4 por fila */}
-      <div className="row mb-4">
         <div className="col-lg-3 col-md-6 mb-3">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
@@ -1257,7 +1253,7 @@ const IndicadoresDashboard = () => {
                 📋
               </button>
             </div>
-            <div className="card-body" style={{ height: '250px' }}>
+            <div className="card-body" style={{ height: '300px' }}>
               <Pie 
                 id="estados-novedades-chart"
                 data={generarEstadosNovedades()} 
@@ -1266,6 +1262,10 @@ const IndicadoresDashboard = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Segunda fila de gráficos - 4 por fila */}
+      <div className="row mb-4">
         <div className="col-lg-3 col-md-6 mb-3">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
@@ -1329,10 +1329,6 @@ const IndicadoresDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Segunda fila de gráficos - 4 por fila */}
-      <div className="row mb-4">
         <div className="col-lg-3 col-md-6 mb-3">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
@@ -1354,6 +1350,10 @@ const IndicadoresDashboard = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Tercera fila de gráficos - 4 por fila */}
+      <div className="row mb-4">
         <div className="col-lg-3 col-md-6 mb-3">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">

@@ -1,4 +1,4 @@
-// Contenido COMPLETO Y FINAL para: src/pages/InformesIA.js (Versión ChatGPT)
+// Contenido COMPLETO Y FINAL para: src/pages/InformesIA.js (Versión con Manus API)
 
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
@@ -8,17 +8,16 @@ import OpenAI from 'openai';
 import ReactMarkdown from 'react-markdown';
 
 const InformesIA = () => {
-  const OPENAI_API_KEY = ''; // API Key removida por seguridad
-  
   const { user } = useAuth();
   const [consulta, setConsulta] = useState('');
   const [informe, setInforme] = useState('');
   const [estaCargando, setEstaCargando] = useState(false);
 
-  // Configuración del cliente de OpenAI
+  // Configuración del cliente de OpenAI usando Manus API
+  // La API de Manus es compatible con OpenAI, por lo que usamos el mismo cliente
   const openai = new OpenAI({
-    apiKey: OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true, // Necesario para usar la librería en el navegador.
+    apiKey: process.env.OPENAI_API_KEY || 'dummy-key', // La clave ya está configurada en las variables de entorno
+    dangerouslyAllowBrowser: true, // Necesario para usar la librería en el navegador
   });
 
   const generarInforme = async () => {
@@ -26,16 +25,12 @@ const InformesIA = () => {
       alert("Error: No se pudo verificar tu usuario.");
       return;
     }
-    if (!OPENAI_API_KEY || OPENAI_API_KEY.includes('AQUÍ_PEGA_TU_API_KEY')) {
-        alert('Error: La API Key de OpenAI no está configurada.');
-        return;
-    }
 
     setEstaCargando(true);
     setInforme('');
 
     try {
-      // 1. Recopilar datos de Firestore (esto no cambia)
+      // 1. Recopilar datos de Firestore
       const colecciones = ['trabajadores', 'novedades', 'emos'];
       const promesas = colecciones.map(col => getDocs(query(collection(db, col), where('clienteId', '==', user.uid))));
       const [trabajadoresSnap, novedadesSnap, emosSnap] = await Promise.all(promesas);
@@ -50,7 +45,7 @@ const InformesIA = () => {
         return;
       }
       
-      // 2. Preparar el prompt mejorado para un modelo superior
+      // 2. Preparar el prompt mejorado para el modelo
       const systemPrompt = `Eres un asistente experto en análisis de datos de Recursos Humanos. Tu tarea es analizar los datos que te proporciono y responder a la pregunta del usuario con la máxima precisión. Las 'novedades' y 'emos' se relacionan con los 'trabajadores' a través del campo 'numeroDocumento'.`;
       
       const userPrompt = `
@@ -74,9 +69,10 @@ const InformesIA = () => {
         4. Sé claro, conciso y profesional en tu respuesta.
       `;
 
-      // 3. Llamar a la API de ChatGPT con el modelo GPT-4o
+      // 3. Llamar a la API de Manus usando modelos compatibles con OpenAI
+      // Usamos gpt-4.1-mini que está disponible en Manus
       const chatCompletion = await openai.chat.completions.create({
-        model: "gpt-4o", // <-- ¡MODELO MEJORADO!
+        model: "gpt-4.1-mini", // Modelo de Manus compatible con OpenAI
         messages: [
           { "role": "system", "content": systemPrompt },
           { "role": "user", "content": userPrompt },
@@ -87,16 +83,19 @@ const InformesIA = () => {
       setInforme(respuesta);
 
     } catch (error) {
-      console.error("Error al generar el informe con OpenAI:", error);
+      console.error("Error al generar el informe con IA:", error);
       if (error.response && error.response.status === 401) {
-        setInforme("Error de autenticación. Parece que tu API Key de OpenAI no es válida o ha expirado. Por favor, verifícala.");
+        setInforme("Error de autenticación. Parece que la API Key no es válida o ha expirado. Por favor, verifícala en las variables de entorno.");
+      } else if (error.message) {
+        setInforme(`Hubo un error al procesar tu solicitud: ${error.message}. Por favor, revisa la consola (F12) para más detalles.`);
       } else {
-        setInforme("Hubo un error al procesar tu solicitud con la API de ChatGPT. Por favor, revisa la consola (F12) para más detalles.");
+        setInforme("Hubo un error al procesar tu solicitud con la API de IA. Por favor, revisa la consola (F12) para más detalles.");
       }
     } finally {
       setEstaCargando(false);
     }
   };
+
   return (
     <div className="container-fluid">
       <h2 className="text-primary mb-4">❓ Consultas con IA</h2>

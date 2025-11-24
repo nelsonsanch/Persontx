@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { toast } from 'react-toastify';
@@ -609,11 +609,7 @@ const NovedadesList = () => {
   };
 
   // Calcular valores automáticamente cuando cambien los campos relevantes
-  useEffect(() => {
-    calcularValores();
-  }, [formData.fechaInicio, formData.fechaFin, formData.horaInicio, formData.horaFin, formData.salarioCotizacion, formData.tipoNovedad, formData.valorPagado]);
-
-  const calcularValores = () => {
+  const calcularValores = useCallback(() => {
     let dias = 0;
     let horas = 0;
     let valorDiario = 0;
@@ -694,7 +690,11 @@ const NovedadesList = () => {
       valorPendiente,
       responsable
     });
-  };
+  }, [formData.fechaInicio, formData.fechaFin, formData.horaInicio, formData.horaFin, formData.salarioCotizacion, formData.tipoNovedad, formData.valorPagado, esTipoNovedadPorHoras]);
+
+  useEffect(() => {
+    calcularValores();
+  }, [calcularValores]);
 
   const consultarPorCedula = () => {
     if (!cedulaConsulta.trim()) {
