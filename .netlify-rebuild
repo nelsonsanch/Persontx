@@ -1,0 +1,3 @@
+# Archivo para forzar rebuild en Netlify
+# Fecha: 2025-11-24
+# Razón: Asegurar que la pestaña de Encuestas de Salud aparezca en producción
