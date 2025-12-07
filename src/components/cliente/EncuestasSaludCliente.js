@@ -146,6 +146,8 @@ const EncuestasSaludCliente = () => {
           ...doc.data()
         }));
 
+        console.log('📊 Respuestas cargadas:', respuestasData.length);
+        console.log('📊 Datos de respuestas:', respuestasData);
         setRespuestas(respuestasData);
       } catch (error) {
         console.error('❌ Error cargando respuestas:', error);
@@ -1246,7 +1248,7 @@ const EncuestasSaludCliente = () => {
 
       {/* Vista de Dashboard */}
       {activeView === 'dashboard' && (
-        <DashboardSalud />
+        <DashboardSalud respuestas={respuestas} trabajadores={trabajadores} />
       )}
     </div>
   );

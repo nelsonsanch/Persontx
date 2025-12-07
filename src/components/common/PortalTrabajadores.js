@@ -334,11 +334,16 @@ const PortalTrabajadores = () => {
 
           {/* Formulario de encuesta */}
           <FormularioEncuesta_COMPLETO
-            trabajador={trabajador}
-            encuesta={encuestaActiva}
-            respuestaExistente={respuestaExistente}
-            onGuardar={handleGuardarRespuesta}
-            onCerrarSesion={handleLogout}
+            trabajadorData={trabajador}
+            onSubmit={async (respuestas) => {
+              const resultado = await handleGuardarRespuesta(respuestas, 'completada');
+              if (resultado.success) {
+                // La encuesta se guardó correctamente, el estado cambiará a 'completada'
+                return resultado;
+              }
+              throw new Error(resultado.error || 'Error al guardar la encuesta');
+            }}
+            onCancel={handleLogout}
           />
         </div>
       </div>

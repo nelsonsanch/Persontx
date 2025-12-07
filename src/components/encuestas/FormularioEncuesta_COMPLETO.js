@@ -214,7 +214,8 @@ const FormularioEncuesta = ({ trabajadorData, onSubmit = () => {}, onCancel = ()
       try {
         if (typeof onSubmit === 'function') {
           await onSubmit(formData);
-          alert('✅ Encuesta enviada exitosamente');
+          // No mostrar alert, dejar que el componente padre maneje la transición
+          console.log('✅ Encuesta enviada exitosamente');
         } else {
           console.log('📋 Datos de la encuesta:', formData);
           alert('✅ Encuesta completada (modo demo)');

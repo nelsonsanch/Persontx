@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Pie, Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -40,16 +40,19 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
     };
 
     respuestas.forEach(respuesta => {
+      // Acceder a los datos dentro del objeto respuestas
+      const datos = respuesta.respuestas || {};
+      
       // Distribución por género
-      const genero = respuesta.genero || 'No especificado';
+      const genero = datos.genero || 'No especificado';
       distribuciones.genero[genero] = (distribuciones.genero[genero] || 0) + 1;
 
       // Distribución por raza
-      const raza = respuesta.raza || 'No especificado';
+      const raza = datos.raza || 'No especificado';
       distribuciones.raza[raza] = (distribuciones.raza[raza] || 0) + 1;
 
       // Distribución por rango de edad
-      const edad = respuesta.edad || 0;
+      const edad = datos.edad || 0;
       let rangoEdad = 'No especificado';
       if (edad >= 18 && edad <= 25) rangoEdad = '18-25 años';
       else if (edad >= 26 && edad <= 35) rangoEdad = '26-35 años';
@@ -59,27 +62,27 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
       distribuciones.rangoEdad[rangoEdad] = (distribuciones.rangoEdad[rangoEdad] || 0) + 1;
 
       // Distribución por escolaridad
-      const escolaridad = respuesta.escolaridad || 'No especificado';
+      const escolaridad = datos.escolaridad || 'No especificado';
       distribuciones.escolaridad[escolaridad] = (distribuciones.escolaridad[escolaridad] || 0) + 1;
 
       // Distribución por estado civil
-      const estadoCivil = respuesta.estadoCivil || 'No especificado';
+      const estadoCivil = datos.estadoCivil || 'No especificado';
       distribuciones.estadoCivil[estadoCivil] = (distribuciones.estadoCivil[estadoCivil] || 0) + 1;
 
       // Distribución por estrato social
-      const estratoSocial = respuesta.estratoSocial || 'No especificado';
+      const estratoSocial = datos.estratoSocial || 'No especificado';
       distribuciones.estratoSocial[estratoSocial] = (distribuciones.estratoSocial[estratoSocial] || 0) + 1;
 
       // Distribución por grupo sanguíneo
-      const grupoSanguineo = respuesta.grupoSanguineo || 'No especificado';
+      const grupoSanguineo = datos.grupoSanguineo || 'No especificado';
       distribuciones.grupoSanguineo[grupoSanguineo] = (distribuciones.grupoSanguineo[grupoSanguineo] || 0) + 1;
 
       // Distribución salarial
-      const salario = respuesta.salario || 'No especificado';
+      const salario = datos.salario || 'No especificado';
       distribuciones.distribucionSalarial[salario] = (distribuciones.distribucionSalarial[salario] || 0) + 1;
 
       // Distribución por peso
-      const peso = respuesta.peso || 0;
+      const peso = datos.peso || 0;
       let rangoPeso = 'No especificado';
       if (peso > 0 && peso < 50) rangoPeso = 'Menos de 50kg';
       else if (peso >= 50 && peso < 60) rangoPeso = '50-59kg';
@@ -90,7 +93,7 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
       distribuciones.rangoPeso[rangoPeso] = (distribuciones.rangoPeso[rangoPeso] || 0) + 1;
 
       // Distribución por estatura
-      const estatura = respuesta.estatura || 0;
+      const estatura = datos.estatura || 0;
       let rangoEstatura = 'No especificado';
       if (estatura > 0 && estatura < 150) rangoEstatura = 'Menos de 150cm';
       else if (estatura >= 150 && estatura < 160) rangoEstatura = '150-159cm';
@@ -153,7 +156,8 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
       distribucionesSalud[pregunta] = { 'Sí': 0, 'No': 0, 'Sin respuesta': 0 };
 
       respuestas.forEach(respuesta => {
-        const valor = respuesta[preguntaId] || 'Sin respuesta';
+        const datos = respuesta.respuestas || {};
+        const valor = datos[preguntaId] || 'Sin respuesta';
         distribucionesSalud[pregunta][valor] = (distribucionesSalud[pregunta][valor] || 0) + 1;
       });
     });
