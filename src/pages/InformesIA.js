@@ -2,12 +2,9 @@ import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-// import OpenAI from 'openai'; // ELIMINADO: Ya no usamos la librería en el cliente
 import ReactMarkdown from 'react-markdown';
 
 const InformesIA = () => {
-  // const OPENAI_API_KEY = ''; // ELIMINADO: La clave ahora vive segura en el servidor
-
   const { user } = useAuth();
   const [consulta, setConsulta] = useState('');
   const [informe, setInforme] = useState('');

@@ -62,6 +62,7 @@ module.exports = {
                     try {
                         return path.resolve(__dirname, 'node_modules', pkg);
                     } catch (e) {
+                        console.warn(`Package ${pkg} not found in node_modules`);
                         return null;
                     }
                 }).filter(Boolean);
@@ -76,13 +77,22 @@ module.exports = {
                 }
             }
 
-            // 6. Polyfill usually ignored node modules (fix for some webpack 5 issues)
+            // 6. Polyfill usually ignored node modules
             webpackConfig.resolve.fallback = {
                 ...webpackConfig.resolve.fallback,
                 "crypto": require.resolve("crypto-browserify"),
                 "stream": require.resolve("stream-browserify"),
-                "buffer": require.resolve("buffer/")
+                "buffer": require.resolve("buffer")
             };
+
+            // 7. EXPLICITLY IGNORE SOURCE MAPS FOR NODE_MODULES
+            // This is often the cause of "failed to parse" warnings/errors in CRA 5
+            webpackConfig.module.rules.push({
+                test: /\.js$/,
+                enforce: "pre",
+                use: ["source-map-loader"],
+                exclude: /node_modules/,
+            });
 
             return webpackConfig;
         },
