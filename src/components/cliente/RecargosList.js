@@ -374,7 +374,13 @@ const RecargosList = () => {
                                             <td>{r.cantidadHoras}</td>
                                             <td className="fw-bold text-success">${parseFloat(r.valorTotal).toLocaleString()}</td>
                                             <td>
-                                                <button className="btn btn-sm btn-outline-danger" title="Eliminar">🗑️</button>
+                                                <button
+                                                    className="btn btn-sm btn-outline-danger"
+                                                    title="Eliminar"
+                                                    onClick={() => eliminarRecargo(r.id)}
+                                                >
+                                                    🗑️
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
