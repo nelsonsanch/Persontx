@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     
     <!-- Favicons de Ausentix -->
-    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png">
-    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#007bff" />
@@ -17,16 +17,16 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Ausentix - Gestión de Ausencias" />
     <meta property="og:description" content="Sistema profesional de gestión de ausencias empresariales con análisis de indicadores y reportes avanzados." />
-    <meta property="og:image" content="%PUBLIC_URL%/ausentix-social.png" />
+    <meta property="og:image" content="/ausentix-social.png" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:title" content="Ausentix - Gestión de Ausencias" />
     <meta property="twitter:description" content="Sistema profesional de gestión de ausencias empresariales con análisis de indicadores y reportes avanzados." />
-    <meta property="twitter:image" content="%PUBLIC_URL%/ausentix-social.png" />
+    <meta property="twitter:image" content="/ausentix-social.png" />
     
     <!-- Manifest -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="manifest" href="/manifest.json" />
     
     <!-- Título de la aplicación -->
     <title>Ausentix - Sistema de Gestión de Ausencias</title>
@@ -123,6 +123,7 @@
       
       ::-webkit-scrollbar-thumb:hover {
         background: var(--ausentix-primary-dark);
+        border-radius: 4px;
       }
     </style>
   </head>
@@ -147,6 +148,7 @@
     
     <!-- Contenedor principal de la aplicación React -->
     <div id="root"></div>
+    <script type="module" src="/src/index.js"></script>
     
     <!-- Script de carga -->
     <script>
