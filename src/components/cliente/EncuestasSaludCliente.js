@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  deleteDoc, 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
   updateDoc,
-  doc, 
-  query, 
+  doc,
+  query,
   where,
   orderBy,
-  onSnapshot 
+  onSnapshot
 } from 'firebase/firestore';
 import DashboardSalud from './DashboardSalud';
 
@@ -23,7 +23,7 @@ const EncuestasSaludCliente = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedEncuesta, setSelectedEncuesta] = useState(null);
-  
+
   // Estados para crear encuesta
   const [newEncuesta, setNewEncuesta] = useState({
     titulo: '',
@@ -165,8 +165,8 @@ const EncuestasSaludCliente = () => {
     const area = (trabajador.area || '').toLowerCase();
     const busqueda = filtros.busqueda.toLowerCase();
 
-    const coincideBusqueda = !busqueda || 
-      nombreCompleto.includes(busqueda) || 
+    const coincideBusqueda = !busqueda ||
+      nombreCompleto.includes(busqueda) ||
       numeroId.includes(busqueda) ||
       cargo.includes(busqueda) ||
       area.includes(busqueda);
@@ -217,7 +217,7 @@ const EncuestasSaludCliente = () => {
         fechaCreacion: new Date(),
         estado: 'activa',
         configuracion: {
-          preguntasIncluidas: Array.from({length: 90}, (_, i) => i + 1),
+          preguntasIncluidas: Array.from({ length: 90 }, (_, i) => i + 1),
           requiereAprobacion: false
         },
         estadisticas: {
@@ -228,7 +228,7 @@ const EncuestasSaludCliente = () => {
       };
 
       await addDoc(collection(db, 'encuestas_salud'), encuestaData);
-      
+
       // Resetear formulario
       setNewEncuesta({
         titulo: '',
@@ -237,7 +237,7 @@ const EncuestasSaludCliente = () => {
         fechaFin: '',
         trabajadoresSeleccionados: []
       });
-      
+
       setError(null);
       setActiveView('gestion');
 
@@ -253,7 +253,7 @@ const EncuestasSaludCliente = () => {
   const handleToggleEstadoEncuesta = async (encuestaId, estadoActual) => {
     const nuevoEstado = estadoActual === 'activa' ? 'inactiva' : 'activa';
     const accion = nuevoEstado === 'activa' ? 'activar' : 'desactivar';
-    
+
     if (!window.confirm(`¿Estás seguro de que deseas ${accion} esta encuesta?`)) {
       return;
     }
@@ -307,7 +307,7 @@ const EncuestasSaludCliente = () => {
       }
 
       await deleteDoc(doc(db, 'encuestas_salud', encuestaId));
-      
+
       // También eliminar respuestas asociadas
       const respuestasQuery = query(
         collection(db, 'respuestas_encuestas'),
@@ -315,8 +315,8 @@ const EncuestasSaludCliente = () => {
         where('clienteId', '==', clienteId)
       );
       const respuestasSnapshot = await getDocs(respuestasQuery);
-      
-      const deletePromises = respuestasSnapshot.docs.map(doc => 
+
+      const deletePromises = respuestasSnapshot.docs.map(doc =>
         deleteDoc(doc.ref)
       );
       await Promise.all(deletePromises);
@@ -358,31 +358,31 @@ const EncuestasSaludCliente = () => {
         '11. Alteraciones visuales?',
         '12. Hipertensión arterial o tensión alta?',
         '13. Colesterol o Triglicéridos elevados?',
-        
+
         // ¿HA SENTIDO O TENIDO EN ALGÚN MOMENTO EN LOS ÚLTIMOS 6 MESES?
         '14. Dolor en el pecho o palpitaciones',
         '15. Ahogo o asfixia al caminar',
         '16. Tos persistente por más de 1 mes',
         '17. Pérdida de la conciencia, desmayos o alteración del equilibrio',
-        
+
         // ¿TIENE ALGUNO DE LOS SIGUIENTES HÁBITOS O COSTUMBRES?
         '18. Fuma? (No importa la cantidad ni la frecuencia)',
         '19. Toma bebidas alcohólicas semanal o quincenalmente (no importa la cantidad)',
         '20. ¿Practica deportes de choque o de mano tipo baloncesto, voleibol, fútbol, tenis, squash, ping-pong, otros, mínimo 2 veces al mes?',
         '21. Realiza actividad física o deporte al menos 3 veces por semana?',
-        
+
         // ¿EL MÉDICO LE HA DIAGNOSTICADO EN LOS ÚLTIMOS 6 MESES ALGUNA DE LAS SIGUIENTES ENFERMEDADES EN MIEMBROS SUPERIORES (BRAZOS) O INFERIORES (PIERNAS)?
         '22. Alteraciones de los músculos, tendones y ligamentos como desgarros, tendinitis, bursitis, esguinces, espasmos musculares?',
         '23. Enfermedades de los nervios (atrapamiento o inflamación de nervios periféricos)',
         '24. Fracturas',
         '25. ¿Hernias (inguinal, abdominal)?',
         '26. Várices en las piernas',
-        
+
         // ¿HA SENTIDO EN LOS ÚLTIMOS 6 MESES EN MANOS, BRAZOS, PIES O PIERNAS?
         '27. Adormecimiento u hormigueo?',
         '28. Disminución de la fuerza?',
         '29. Dolor o inflamación?',
-        
+
         // REFIERE ALGUNA DE LAS SIGUIENTES MOLESTIAS
         '30. Dolor o molestia en el cuello',
         '31. Dolor o molestia en los hombros',
@@ -399,7 +399,7 @@ const EncuestasSaludCliente = () => {
       const trabajadoresData = encuesta.trabajadoresSeleccionados.map(trabajadorId => {
         const trabajador = trabajadores.find(t => t.id === trabajadorId);
         const respuesta = respuestasEncuesta.find(r => r.trabajadorId === trabajadorId);
-        
+
         // Datos básicos del trabajador
         const datosBasicos = {
           'Identificación': trabajador ? obtenerNumeroIdentificacion(trabajador) : 'N/A',
@@ -409,15 +409,15 @@ const EncuestasSaludCliente = () => {
           'Área': trabajador?.area || 'N/A',
           'Estado Encuesta': respuesta?.estado || 'sin_respuesta',
           'Fecha Respuesta': respuesta?.fechaRespuesta?.toDate?.()?.toLocaleDateString() || 'N/A',
-          'Progreso': respuesta?.estado === 'completada' ? '100%' : 
-                     respuesta?.estado === 'en_progreso' ? '50%' : '0%'
+          'Progreso': respuesta?.estado === 'completada' ? '100%' :
+            respuesta?.estado === 'en_progreso' ? '50%' : '0%'
         };
 
         // Agregar respuestas a cada pregunta usando el texto completo como clave
         const respuestasPreguntas = {};
         preguntasEncuesta.forEach((pregunta, index) => {
           const numeroPregunta = index + 1;
-          const respuestaPregunta = respuesta?.respuestas?.[numeroPregunta] || 'Sin respuesta';
+          const respuestaPregunta = respuesta?.respuestas?.[numeroPregunta] || 'No sé';
           respuestasPreguntas[pregunta] = respuestaPregunta;
         });
 
@@ -426,7 +426,7 @@ const EncuestasSaludCliente = () => {
 
       // Crear archivo Excel usando SheetJS
       const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs');
-      
+
       // Crear libro de trabajo
       const workbook = XLSX.utils.book_new();
 
@@ -456,10 +456,10 @@ const EncuestasSaludCliente = () => {
 
       // Generar archivo Excel
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      
+
       // Crear y descargar archivo
-      const blob = new Blob([excelBuffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -474,17 +474,17 @@ const EncuestasSaludCliente = () => {
 
     } catch (error) {
       console.error('❌ Error descargando reporte:', error);
-      
+
       // Fallback: generar CSV mejorado si falla Excel
       try {
         const respuestasEncuesta = respuestas.filter(r => r.encuestaId === encuesta.id);
-        
+
         // Crear CSV con estructura mejorada
         const headers = [
-          'Identificación', 'Nombres', 'Apellidos', 'Cargo', 'Área', 
+          'Identificación', 'Nombres', 'Apellidos', 'Cargo', 'Área',
           'Estado Encuesta', 'Fecha Respuesta', 'Progreso'
         ];
-        
+
         // Agregar columnas para cada pregunta con texto completo (38 preguntas específicas)
         const preguntasCompletas = [
           // I. ¿EL MÉDICO LE HA DIAGNOSTICADO ALGUNA DE LAS SIGUIENTES ENFERMEDADES O CONDICIONES?
@@ -501,31 +501,31 @@ const EncuestasSaludCliente = () => {
           '11. Alteraciones visuales?',
           '12. Hipertensión arterial o tensión alta?',
           '13. Colesterol o Triglicéridos elevados?',
-          
+
           // ¿HA SENTIDO O TENIDO EN ALGÚN MOMENTO EN LOS ÚLTIMOS 6 MESES?
           '14. Dolor en el pecho o palpitaciones',
           '15. Ahogo o asfixia al caminar',
           '16. Tos persistente por más de 1 mes',
           '17. Pérdida de la conciencia, desmayos o alteración del equilibrio',
-          
+
           // ¿TIENE ALGUNO DE LOS SIGUIENTES HÁBITOS O COSTUMBRES?
           '18. Fuma? (No importa la cantidad ni la frecuencia)',
           '19. Toma bebidas alcohólicas semanal o quincenalmente (no importa la cantidad)',
           '20. ¿Practica deportes de choque o de mano tipo baloncesto, voleibol, fútbol, tenis, squash, ping-pong, otros, mínimo 2 veces al mes?',
           '21. Realiza actividad física o deporte al menos 3 veces por semana?',
-          
+
           // ¿EL MÉDICO LE HA DIAGNOSTICADO EN LOS ÚLTIMOS 6 MESES ALGUNA DE LAS SIGUIENTES ENFERMEDADES EN MIEMBROS SUPERIORES (BRAZOS) O INFERIORES (PIERNAS)?
           '22. Alteraciones de los músculos, tendones y ligamentos como desgarros, tendinitis, bursitis, esguinces, espasmos musculares?',
           '23. Enfermedades de los nervios (atrapamiento o inflamación de nervios periféricos)',
           '24. Fracturas',
           '25. ¿Hernias (inguinal, abdominal)?',
           '26. Várices en las piernas',
-          
+
           // ¿HA SENTIDO EN LOS ÚLTIMOS 6 MESES EN MANOS, BRAZOS, PIES O PIERNAS?
           '27. Adormecimiento u hormigueo?',
           '28. Disminución de la fuerza?',
           '29. Dolor o inflamación?',
-          
+
           // REFIERE ALGUNA DE LAS SIGUIENTES MOLESTIAS
           '30. Dolor o molestia en el cuello',
           '31. Dolor o molestia en los hombros',
@@ -537,7 +537,7 @@ const EncuestasSaludCliente = () => {
           '37. El dolor aumenta con el reposo',
           '38. El dolor es permanente'
         ];
-        
+
         preguntasCompletas.forEach(pregunta => {
           headers.push(pregunta);
         });
@@ -545,7 +545,7 @@ const EncuestasSaludCliente = () => {
         const csvData = encuesta.trabajadoresSeleccionados.map(trabajadorId => {
           const trabajador = trabajadores.find(t => t.id === trabajadorId);
           const respuesta = respuestasEncuesta.find(r => r.trabajadorId === trabajadorId);
-          
+
           const row = [
             trabajador ? obtenerNumeroIdentificacion(trabajador) : 'N/A',
             trabajador?.nombres || 'N/A',
@@ -554,8 +554,8 @@ const EncuestasSaludCliente = () => {
             trabajador?.area || 'N/A',
             respuesta?.estado || 'sin_respuesta',
             respuesta?.fechaRespuesta?.toDate?.()?.toLocaleDateString() || 'N/A',
-            respuesta?.estado === 'completada' ? '100%' : 
-            respuesta?.estado === 'en_progreso' ? '50%' : '0%'
+            respuesta?.estado === 'completada' ? '100%' :
+              respuesta?.estado === 'en_progreso' ? '50%' : '0%'
           ];
 
           // Agregar respuestas a cada pregunta
@@ -571,8 +571,8 @@ const EncuestasSaludCliente = () => {
           .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
           .join('\n');
 
-        const blob = new Blob(['\ufeff' + csvContent], { 
-          type: 'text/csv;charset=utf-8' 
+        const blob = new Blob(['\ufeff' + csvContent], {
+          type: 'text/csv;charset=utf-8'
         });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -584,7 +584,7 @@ const EncuestasSaludCliente = () => {
         window.URL.revokeObjectURL(url);
 
         console.log('✅ Reporte CSV descargado como fallback');
-        
+
       } catch (fallbackError) {
         console.error('❌ Error en fallback CSV:', fallbackError);
         setError('Error al generar el reporte: ' + error.message);
@@ -597,7 +597,7 @@ const EncuestasSaludCliente = () => {
     const clienteId = getCurrentClientId();
     const baseUrl = window.location.origin;
     const enlace = `${baseUrl}/portal-trabajadores?encuesta=${encuesta.id}&cliente=${clienteId}`;
-    
+
     // Crear contenido del modal de forma más simple
     const modalContent = `
       📋 Encuesta: ${encuesta.titulo}
@@ -613,13 +613,13 @@ const EncuestasSaludCliente = () => {
       • El enlace es válido mientras la encuesta esté activa
       • Cada trabajador verá solo su formulario personalizado
     `;
-    
+
     // Mostrar prompt con el enlace
     const userAction = prompt(
       `🔗 ENLACE DE LA ENCUESTA\n\n${modalContent}\n\n¿Deseas copiar el enlace al portapapeles?`,
       enlace
     );
-    
+
     if (userAction !== null) {
       // Intentar copiar al portapapeles
       if (navigator.clipboard) {
@@ -633,7 +633,7 @@ const EncuestasSaludCliente = () => {
         alert('📋 Copia este enlace manualmente:\n\n' + enlace);
       }
     }
-    
+
     console.log('🔗 Enlace generado:', enlace);
   };
 
@@ -689,7 +689,7 @@ const EncuestasSaludCliente = () => {
           <h2 className="mb-3">
             📋 Encuestas de Condiciones de Salud
           </h2>
-          
+
           {/* Botones de navegación */}
           <div className="btn-group mb-3" role="group">
             <button
@@ -741,7 +741,7 @@ const EncuestasSaludCliente = () => {
             <div className="card">
               <div className="card-header d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">📋 Encuestas Creadas ({encuestas.length})</h5>
-                <button 
+                <button
                   className="btn btn-success btn-sm"
                   onClick={() => setActiveView('nueva')}
                 >
@@ -756,7 +756,7 @@ const EncuestasSaludCliente = () => {
                     </div>
                     <h5 className="text-muted">No hay encuestas creadas</h5>
                     <p className="text-muted">Crea tu primera encuesta de condiciones de salud</p>
-                    <button 
+                    <button
                       className="btn btn-primary"
                       onClick={() => setActiveView('nueva')}
                     >
@@ -802,7 +802,7 @@ const EncuestasSaludCliente = () => {
                               </td>
                               <td>
                                 <div className="progress" style={{ height: '20px', minWidth: '100px' }}>
-                                  <div 
+                                  <div
                                     className={`progress-bar ${progreso === 100 ? 'bg-success' : progreso > 50 ? 'bg-warning' : 'bg-info'}`}
                                     style={{ width: `${progreso}%` }}
                                   >
@@ -811,26 +811,25 @@ const EncuestasSaludCliente = () => {
                                 </div>
                               </td>
                               <td>
-                                <span className={`badge ${
-                                  encuesta.estado === 'activa' ? 'bg-success' : 
-                                  encuesta.estado === 'inactiva' ? 'bg-warning' :
-                                  encuesta.estado === 'cerrada' ? 'bg-secondary' : 'bg-info'
-                                }`}>
+                                <span className={`badge ${encuesta.estado === 'activa' ? 'bg-success' :
+                                    encuesta.estado === 'inactiva' ? 'bg-warning' :
+                                      encuesta.estado === 'cerrada' ? 'bg-secondary' : 'bg-info'
+                                  }`}>
                                   {encuesta.estado === 'activa' ? 'Activa' :
-                                   encuesta.estado === 'inactiva' ? 'Inactiva' :
-                                   encuesta.estado === 'cerrada' ? 'Cerrada' : encuesta.estado}
+                                    encuesta.estado === 'inactiva' ? 'Inactiva' :
+                                      encuesta.estado === 'cerrada' ? 'Cerrada' : encuesta.estado}
                                 </span>
                               </td>
                               <td>
                                 <div className="btn-group btn-group-sm">
-                                  <button 
+                                  <button
                                     className="btn btn-outline-primary"
                                     onClick={() => handleVerResultados(encuesta)}
                                     title="Ver resultados"
                                   >
                                     👁️
                                   </button>
-                                  <button 
+                                  <button
                                     className="btn btn-outline-success"
                                     onClick={() => handleDescargarPDF(encuesta)}
                                     title="Descargar reporte"
@@ -838,7 +837,7 @@ const EncuestasSaludCliente = () => {
                                     📄
                                   </button>
                                   {/* BOTÓN: Generar enlace para compartir */}
-                                  <button 
+                                  <button
                                     className="btn btn-outline-info"
                                     onClick={() => handleGenerarEnlace(encuesta)}
                                     title="Generar enlace para compartir"
@@ -846,14 +845,14 @@ const EncuestasSaludCliente = () => {
                                     🔗
                                   </button>
                                   {/* BOTÓN: Activar/Desactivar */}
-                                  <button 
+                                  <button
                                     className={`btn ${encuesta.estado === 'activa' ? 'btn-outline-warning' : 'btn-outline-success'}`}
                                     onClick={() => handleToggleEstadoEncuesta(encuesta.id, encuesta.estado)}
                                     title={encuesta.estado === 'activa' ? 'Desactivar encuesta' : 'Activar encuesta'}
                                   >
                                     {encuesta.estado === 'activa' ? '⏸️' : '▶️'}
                                   </button>
-                                  <button 
+                                  <button
                                     className="btn btn-outline-danger"
                                     onClick={() => handleDeleteEncuesta(encuesta.id)}
                                     title="Eliminar encuesta"
@@ -893,7 +892,7 @@ const EncuestasSaludCliente = () => {
                           type="text"
                           className="form-control"
                           value={newEncuesta.titulo}
-                          onChange={(e) => setNewEncuesta(prev => ({...prev, titulo: e.target.value}))}
+                          onChange={(e) => setNewEncuesta(prev => ({ ...prev, titulo: e.target.value }))}
                           placeholder="Ej: Encuesta Condiciones de Salud 2024"
                           required
                         />
@@ -906,7 +905,7 @@ const EncuestasSaludCliente = () => {
                           type="text"
                           className="form-control"
                           value={newEncuesta.descripcion}
-                          onChange={(e) => setNewEncuesta(prev => ({...prev, descripcion: e.target.value}))}
+                          onChange={(e) => setNewEncuesta(prev => ({ ...prev, descripcion: e.target.value }))}
                           placeholder="Descripción opcional de la encuesta"
                         />
                       </div>
@@ -921,7 +920,7 @@ const EncuestasSaludCliente = () => {
                           type="date"
                           className="form-control"
                           value={newEncuesta.fechaInicio}
-                          onChange={(e) => setNewEncuesta(prev => ({...prev, fechaInicio: e.target.value}))}
+                          onChange={(e) => setNewEncuesta(prev => ({ ...prev, fechaInicio: e.target.value }))}
                           required
                         />
                       </div>
@@ -933,7 +932,7 @@ const EncuestasSaludCliente = () => {
                           type="date"
                           className="form-control"
                           value={newEncuesta.fechaFin}
-                          onChange={(e) => setNewEncuesta(prev => ({...prev, fechaFin: e.target.value}))}
+                          onChange={(e) => setNewEncuesta(prev => ({ ...prev, fechaFin: e.target.value }))}
                           required
                         />
                       </div>
@@ -950,14 +949,14 @@ const EncuestasSaludCliente = () => {
                           className="form-control form-control-sm"
                           placeholder="Buscar por nombre, cédula, cargo..."
                           value={filtros.busqueda}
-                          onChange={(e) => setFiltros(prev => ({...prev, busqueda: e.target.value}))}
+                          onChange={(e) => setFiltros(prev => ({ ...prev, busqueda: e.target.value }))}
                         />
                       </div>
                       <div className="col-md-3">
                         <select
                           className="form-select form-select-sm"
                           value={filtros.cargo}
-                          onChange={(e) => setFiltros(prev => ({...prev, cargo: e.target.value}))}
+                          onChange={(e) => setFiltros(prev => ({ ...prev, cargo: e.target.value }))}
                         >
                           <option value="">Todos los cargos</option>
                           {cargosUnicos.map(cargo => (
@@ -969,7 +968,7 @@ const EncuestasSaludCliente = () => {
                         <select
                           className="form-select form-select-sm"
                           value={filtros.area}
-                          onChange={(e) => setFiltros(prev => ({...prev, area: e.target.value}))}
+                          onChange={(e) => setFiltros(prev => ({ ...prev, area: e.target.value }))}
                         >
                           <option value="">Todas las áreas</option>
                           {areasUnicas.map(area => (
@@ -1026,8 +1025,8 @@ const EncuestasSaludCliente = () => {
                       <div className="alert alert-info">
                         <i className="fas fa-info-circle me-2"></i>
                         No hay trabajadores que coincidan con los filtros aplicados.
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="btn btn-link btn-sm p-0 ms-2"
                           onClick={limpiarFiltros}
                         >
@@ -1161,12 +1160,11 @@ const EncuestasSaludCliente = () => {
                   <h6>📝 Información de la Encuesta</h6>
                   <p><strong>Descripción:</strong> {selectedEncuesta.descripcion || 'Sin descripción'}</p>
                   <p><strong>Período:</strong> {selectedEncuesta.fechaInicio} - {selectedEncuesta.fechaFin}</p>
-                  <p><strong>Estado:</strong> <span className={`badge ${
-                    selectedEncuesta.estado === 'activa' ? 'bg-success' : 
-                    selectedEncuesta.estado === 'inactiva' ? 'bg-warning' : 'bg-secondary'
-                  }`}>
+                  <p><strong>Estado:</strong> <span className={`badge ${selectedEncuesta.estado === 'activa' ? 'bg-success' :
+                      selectedEncuesta.estado === 'inactiva' ? 'bg-warning' : 'bg-secondary'
+                    }`}>
                     {selectedEncuesta.estado === 'activa' ? 'Activa' :
-                     selectedEncuesta.estado === 'inactiva' ? 'Inactiva' : selectedEncuesta.estado}
+                      selectedEncuesta.estado === 'inactiva' ? 'Inactiva' : selectedEncuesta.estado}
                   </span></p>
                 </div>
 
@@ -1187,7 +1185,7 @@ const EncuestasSaludCliente = () => {
                       {selectedEncuesta.trabajadoresSeleccionados?.map(trabajadorId => {
                         const trabajador = trabajadores.find(t => t.id === trabajadorId);
                         const respuesta = respuestas.find(r => r.encuestaId === selectedEncuesta.id && r.trabajadorId === trabajadorId);
-                        
+
                         return (
                           <tr key={trabajadorId}>
                             <td>
@@ -1200,10 +1198,9 @@ const EncuestasSaludCliente = () => {
                               <small className="text-muted">{trabajador?.cargo || 'N/A'}</small>
                             </td>
                             <td>
-                              <span className={`badge ${
-                                respuesta?.estado === 'completada' ? 'bg-success' : 
-                                respuesta?.estado === 'en_progreso' ? 'bg-warning' : 'bg-secondary'
-                              }`}>
+                              <span className={`badge ${respuesta?.estado === 'completada' ? 'bg-success' :
+                                  respuesta?.estado === 'en_progreso' ? 'bg-warning' : 'bg-secondary'
+                                }`}>
                                 {respuesta?.estado || 'sin_respuesta'}
                               </span>
                             </td>
@@ -1212,18 +1209,17 @@ const EncuestasSaludCliente = () => {
                             </td>
                             <td>
                               <div className="progress" style={{ height: '20px', minWidth: '80px' }}>
-                                <div 
-                                  className={`progress-bar ${
-                                    respuesta?.estado === 'completada' ? 'bg-success' : 
-                                    respuesta?.estado === 'en_progreso' ? 'bg-warning' : 'bg-secondary'
-                                  }`}
-                                  style={{ 
-                                    width: respuesta?.estado === 'completada' ? '100%' : 
-                                           respuesta?.estado === 'en_progreso' ? '50%' : '0%' 
+                                <div
+                                  className={`progress-bar ${respuesta?.estado === 'completada' ? 'bg-success' :
+                                      respuesta?.estado === 'en_progreso' ? 'bg-warning' : 'bg-secondary'
+                                    }`}
+                                  style={{
+                                    width: respuesta?.estado === 'completada' ? '100%' :
+                                      respuesta?.estado === 'en_progreso' ? '50%' : '0%'
                                   }}
                                 >
-                                  {respuesta?.estado === 'completada' ? '100%' : 
-                                   respuesta?.estado === 'en_progreso' ? '50%' : '0%'}
+                                  {respuesta?.estado === 'completada' ? '100%' :
+                                    respuesta?.estado === 'en_progreso' ? '50%' : '0%'}
                                 </div>
                               </div>
                             </td>

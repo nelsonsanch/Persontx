@@ -42,7 +42,7 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
     respuestas.forEach(respuesta => {
       // Acceder a los datos dentro del objeto respuestas
       const datos = respuesta.respuestas || {};
-      
+
       // Distribución por género
       const genero = datos.genero || 'No especificado';
       distribuciones.genero[genero] = (distribuciones.genero[genero] || 0) + 1;
@@ -153,12 +153,25 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
 
     preguntasSalud.forEach((pregunta, index) => {
       const preguntaId = `salud_${index + 1}`;
-      distribucionesSalud[pregunta] = { 'Sí': 0, 'No': 0, 'Sin respuesta': 0 };
+      // Inicializar contadores incluyendo "No sé" que es la opción real del formulario
+      distribucionesSalud[pregunta] = { 'Sí': 0, 'No': 0, 'No sé': 0 };
 
       respuestas.forEach(respuesta => {
         const datos = respuesta.respuestas || {};
-        const valor = datos[preguntaId] || 'Sin respuesta';
-        distribucionesSalud[pregunta][valor] = (distribucionesSalud[pregunta][valor] || 0) + 1;
+        let valor = datos[preguntaId];
+
+        // Normalizar valor si viene vacío o difiere
+        if (!valor) valor = 'No sé';
+
+        // Asegurarse de que el valor exista en nuestra distribución, si no, lo ignoramos o lo sumamos a No sé
+        if (distribucionesSalud[pregunta][valor] !== undefined) {
+          distribucionesSalud[pregunta][valor]++;
+        } else {
+          // Si llega algo raro, lo contamos como No sé para no perder la cuenta total? 
+          // O mejor no hacemos nada para data corrupta.
+          // Asumamos que "No se" (sin tilde) podría llegar
+          if (valor === 'No se') distribucionesSalud[pregunta]['No sé']++;
+        }
       });
     });
 
@@ -172,7 +185,7 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
   const crearDatosGrafico = (datos, colores = null) => {
     const labels = Object.keys(datos);
     const values = Object.values(datos);
-    
+
     const coloresPredeterminados = [
       '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
       '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
@@ -191,10 +204,10 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
   // Función para crear datos de gráfico de barras para condiciones de salud
   const crearDatosBarras = (pregunta, datos) => {
     return {
-      labels: ['Sí', 'No', 'Sin respuesta'],
+      labels: ['Sí', 'No', 'No sé'],
       datasets: [{
         label: 'Respuestas',
-        data: [datos['Sí'], datos['No'], datos['Sin respuesta']],
+        data: [datos['Sí'], datos['No'], datos['No sé']],
         backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
         borderWidth: 1
       }]
@@ -209,7 +222,7 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
       },
       tooltip: {
         callbacks: {
-          label: function(context) {
+          label: function (context) {
             const total = context.dataset.data.reduce((a, b) => a + b, 0);
             const percentage = ((context.parsed * 100) / total).toFixed(1);
             return `${context.label}: ${context.parsed} (${percentage}%)`;
@@ -248,7 +261,7 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
           {/* Tabs de navegación */}
           <ul className="nav nav-tabs mb-4">
             <li className="nav-item">
-              <button 
+              <button
                 className={`nav-link ${activeTab === 'demograficos' ? 'active' : ''}`}
                 onClick={() => setActiveTab('demograficos')}
               >
@@ -256,7 +269,7 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
               </button>
             </li>
             <li className="nav-item">
-              <button 
+              <button
                 className={`nav-link ${activeTab === 'salud' ? 'active' : ''}`}
                 onClick={() => setActiveTab('salud')}
               >
@@ -403,8 +416,8 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
                         </h6>
                       </div>
                       <div className="card-body">
-                        <Bar 
-                          data={crearDatosBarras(pregunta, datos)} 
+                        <Bar
+                          data={crearDatosBarras(pregunta, datos)}
                           options={{
                             ...opcionesBarras,
                             plugins: {
@@ -412,7 +425,7 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
                               tooltip: {
                                 callbacks: {
                                   title: () => pregunta,
-                                  label: function(context) {
+                                  label: function (context) {
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                     const percentage = total > 0 ? ((context.parsed.y * 100) / total).toFixed(1) : 0;
                                     return `${context.label}: ${context.parsed.y} (${percentage}%)`;
@@ -420,11 +433,11 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
                                 }
                               }
                             }
-                          }} 
+                          }}
                         />
                         <div className="mt-2">
                           <small className="text-muted">
-                            Total respuestas: {datos['Sí'] + datos['No'] + datos['Sin respuesta']}
+                            Total respuestas: {datos['Sí'] + datos['No'] + datos['No sé']}
                           </small>
                         </div>
                       </div>
