@@ -201,6 +201,20 @@ const RecargosList = () => {
         setParametros(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
     };
 
+    const eliminarRecargo = async (id) => {
+        if (window.confirm('¿Estás seguro de eliminar este registro?')) {
+            try {
+                const user = auth.currentUser;
+                await deleteDoc(doc(db, 'recargos_laborales', id));
+                toast.success('Registro eliminado correctamente');
+                cargarRecargos(user.uid);
+            } catch (error) {
+                console.error('Error eliminando recargo:', error);
+                toast.error('Error al eliminar el registro');
+            }
+        }
+    };
+
     return (
         <div className="container-fluid p-4">
 
