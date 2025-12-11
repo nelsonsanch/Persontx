@@ -1,9 +1,0 @@
-{
-    "name": "netlify-functions",
-    "version": "1.0.0",
-    "description": "Dependencies for Netlify Functions",
-    "main": "chat-ia.js",
-    "dependencies": {
-        "openai": "^6.1.0"
-    }
-}
