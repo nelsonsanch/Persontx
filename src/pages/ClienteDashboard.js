@@ -10,6 +10,7 @@ import PerfilesCargo from '../components/cliente/PerfilesCargo';
 // --- INICIO DE CÓDIGO NUEVO ---
 // 1. Importamos el nuevo componente de Informes
 import InformesIA from './InformesIA';
+import RecargosList from '../components/cliente/RecargosList';
 // --- FIN DE CÓDIGO NUEVO ---
 
 
@@ -33,15 +34,17 @@ const ClienteDashboard = () => {
         return <EMOSList />;
       case 'perfiles':
         return <PerfilesCargo />;
-        case 'encuestas-salud':
-  return <EncuestasSaludCliente />;
-      
+      case 'encuestas-salud':
+        return <EncuestasSaludCliente />;
+
       // --- INICIO DE CÓDIGO NUEVO ---
       // 2. Añadimos el caso para la nueva pestaña
       case 'informes':
         return <InformesIA />;
+      case 'recargos':
+        return <RecargosList />;
       // --- FIN DE CÓDIGO NUEVO ---
-        
+
       default:
         return null;
     }
@@ -60,10 +63,10 @@ const ClienteDashboard = () => {
               <span className="me-3" style={{ color: '#6c757d' }}>
                 Bienvenido, {user?.email || 'juan.perez@empresa.com'}
               </span>
-              <button 
+              <button
                 className="btn btn-danger"
                 onClick={handleLogout}
-                style={{ 
+                style={{
                   backgroundColor: '#dc3545',
                   borderColor: '#dc3545',
                   fontWeight: '500'
@@ -94,7 +97,7 @@ const ClienteDashboard = () => {
           >
             👥 Registro de Trabajadores
           </button>
-          
+
           <button
             className="btn me-2 mb-2"
             onClick={() => setActiveTab('novedades')}
@@ -110,7 +113,7 @@ const ClienteDashboard = () => {
           >
             📝 Registro de Novedades
           </button>
-          
+
           <button
             className="btn me-2 mb-2"
             onClick={() => setActiveTab('indicadores')}
@@ -126,7 +129,7 @@ const ClienteDashboard = () => {
           >
             📊 Indicadores
           </button>
-          
+
           <button
             className="btn me-2 mb-2"
             onClick={() => setActiveTab('emos')}
@@ -176,21 +179,37 @@ const ClienteDashboard = () => {
           >
             ❓Consultas
           </button>
-                      <button
-  className="btn me-2 mb-2"
-  onClick={() => setActiveTab('encuestas-salud')}
-  style={{
-    backgroundColor: activeTab === 'encuestas-salud' ? '#007bff' : '#f8f9fa',
-    border: '1px solid #dee2e6',
-    borderBottom: activeTab === 'encuestas-salud' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-    borderRadius: '8px 8px 0 0',
-    color: activeTab === 'encuestas-salud' ? 'white' : '#495057',
-    padding: '10px 20px',
-    marginBottom: '-1px'
-  }}
->
-  📋 Encuestas de Salud
-</button>
+
+          <button
+            className="btn me-2 mb-2"
+            onClick={() => setActiveTab('recargos')}
+            style={{
+              backgroundColor: activeTab === 'recargos' ? '#007bff' : '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderBottom: activeTab === 'recargos' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+              borderRadius: '8px 8px 0 0',
+              color: activeTab === 'recargos' ? 'white' : '#495057',
+              padding: '10px 20px',
+              marginBottom: '-1px'
+            }}
+          >
+            ⏱️ Recargos
+          </button>
+          <button
+            className="btn me-2 mb-2"
+            onClick={() => setActiveTab('encuestas-salud')}
+            style={{
+              backgroundColor: activeTab === 'encuestas-salud' ? '#007bff' : '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderBottom: activeTab === 'encuestas-salud' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+              borderRadius: '8px 8px 0 0',
+              color: activeTab === 'encuestas-salud' ? 'white' : '#495057',
+              padding: '10px 20px',
+              marginBottom: '-1px'
+            }}
+          >
+            📋 Encuestas de Salud
+          </button>
           {/* --- FIN DE CÓDIGO NUEVO --- */}
 
         </div>
