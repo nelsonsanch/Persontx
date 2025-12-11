@@ -11,6 +11,7 @@ import PerfilesCargo from '../components/cliente/PerfilesCargo';
 // 1. Importamos el nuevo componente de Informes
 import InformesIA from './InformesIA';
 import RecargosList from '../components/cliente/RecargosList';
+import BaseDatosUnificada from '../components/cliente/base-datos/BaseDatosUnificada';
 // --- FIN DE CÓDIGO NUEVO ---
 
 
@@ -43,6 +44,8 @@ const ClienteDashboard = () => {
         return <InformesIA />;
       case 'recargos':
         return <RecargosList />;
+      case 'base-datos':
+        return <BaseDatosUnificada />;
       // --- FIN DE CÓDIGO NUEVO ---
 
       default:
@@ -95,7 +98,23 @@ const ClienteDashboard = () => {
               marginBottom: '-1px'
             }}
           >
-            👥 Base de Datos
+            👥 Registro de Trabajadores
+          </button>
+
+          <button
+            className="btn me-2 mb-2"
+            onClick={() => setActiveTab('base-datos')}
+            style={{
+              backgroundColor: activeTab === 'base-datos' ? '#007bff' : '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderBottom: activeTab === 'base-datos' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+              borderRadius: '8px 8px 0 0',
+              color: activeTab === 'base-datos' ? 'white' : '#495057',
+              padding: '10px 20px',
+              marginBottom: '-1px'
+            }}
+          >
+            📂 Base de Datos
           </button>
 
           <button
