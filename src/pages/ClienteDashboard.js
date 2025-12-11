@@ -95,7 +95,7 @@ const ClienteDashboard = () => {
               marginBottom: '-1px'
             }}
           >
-            👥 Registro de Trabajadores
+            👥 Base de Datos
           </button>
 
           <button
