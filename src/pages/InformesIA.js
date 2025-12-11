@@ -59,8 +59,7 @@ const InformesIA = () => {
       };
 
       // 3. Lógica Híbrida: Backend Seguro (Prod) vs Directo (Local)
-      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const localKey = process.env.REACT_APP_OPENAI_API_KEY; // Clave espejo en .env
+      // Nota: Eliminamos fallback local inseguro para evitar exponer keys en build
 
       let resultadoFinal = "";
 
@@ -87,48 +86,8 @@ const InformesIA = () => {
         resultadoFinal = data.resultado;
 
       } catch (backendError) {
-        console.warn("Fallo el backend, intentando fallback local...", backendError);
-
-        // Si falló el backend y estamos en local con clave, usamos fetch directo
-        if (isLocalhost && localKey && (backendError.message === "HTML_RESPONSE" || backendError.message.includes("Failed to fetch"))) {
-          console.log("🔧 Modo Fallback Local: Llamando directo a OpenAI");
-
-          const systemPromptLocal = `
-                Eres el "Analista Senior de Datos de Recursos Humanos (HR)" de la empresa.
-                Tu misión es ayudar al gerente a tomar decisiones estratégicas basadas en la salud y el comportamiento de los empleados.
-                Responde SIEMPRE usando Markdown enriquecido (Tablas, Negritas, Listas).
-                IMPORTANTE: Si te piden "Costos", suma el valor de los EMOs o estima costos de incapacidad.
-            `;
-          const userPromptLocal = `
-                PREGUNTA: "${consulta}"
-                DATOS (JSON):
-                - Trabajadores: ${JSON.stringify(payload.trabajadores)}
-                - Novedades: ${JSON.stringify(payload.novedades)}
-                - EMOs: ${JSON.stringify(payload.emos)}
-            `;
-
-          const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localKey}`
-            },
-            body: JSON.stringify({
-              model: "gpt-4o",
-              messages: [
-                { role: "system", content: systemPromptLocal },
-                { role: "user", content: userPromptLocal }
-              ],
-              temperature: 0.5
-            })
-          });
-
-          const data = await resp.json();
-          if (data.error) throw new Error(data.error.message);
-          resultadoFinal = data.choices[0].message.content;
-        } else {
-          throw backendError; // Re-lanzar error si no podemos hacer fallback
-        }
+        console.error("Fallo el backend IA:", backendError);
+        throw backendError;
       }
 
       setInforme(resultadoFinal);

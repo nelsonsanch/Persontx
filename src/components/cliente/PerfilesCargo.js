@@ -4,14 +4,14 @@ import { db } from '../../firebase';
 import { useAuth } from '../../hooks/useAuth';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  getDocs, 
-  query, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
   orderBy,
   where
 } from 'firebase/firestore';
@@ -58,7 +58,7 @@ const PerfilesCargo = () => {
 
   const modalidadesWork = ['Presencial', 'Remoto', 'Híbrido', 'Rotativo', 'Por turnos'];
   const jornadasLaborales = ['Lunes a viernes', 'Lunes a sábado', 'Turnos rotativos', 'Nocturno', 'Fin de semana', 'Por horas', 'Horario flexible'];
-  const riesgosDisponibles = [{ categoria: 'Biológico', opciones: ['Virus', 'Bacterias', 'Hongos', 'Parásitos', 'Picaduras', 'Mordeduras', 'Fluidos corporales'] }, { categoria: 'Físico', opciones: ['Ruido', 'Iluminación', 'Vibración', 'Temperaturas extremas', 'Radiación ionizante', 'Radiación no ionizante ','Presión atmosférica'] }, { categoria: 'Químico', opciones: ['Polvos', 'Vapores', 'Líquidos', 'Gases', 'Humos', 'Material particulado'] }, { categoria: 'Psicosocial', opciones: ['Estrés', 'Carga mental', 'Contenido de la tarea', 'Demandas emocionales', 'Sistemas de control', 'Relaciones humanas', 'Liderazgo'] }, { categoria: 'Biomecánico', opciones: ['Postura', 'Esfuerzo', 'Movimiento repetitivo', 'Manipulación manual de cargas'] }, { categoria: 'Condiciones de Seguridad', opciones: ['Mecánico', 'Eléctrico', 'Locativo', 'Tecnológico', 'Accidentes de tránsito', 'Público', 'Trabajo en alturas', 'Espacios confinados'] }, { categoria: 'Fenómenos Naturales', opciones: ['Sismo','Erupcion volcanica', 'Terremoto', 'Vendaval', 'Inundación', 'Derrumbe', 'Precipitaciones'] }];
+  const riesgosDisponibles = [{ categoria: 'Biológico', opciones: ['Virus', 'Bacterias', 'Hongos', 'Parásitos', 'Picaduras', 'Mordeduras', 'Fluidos corporales'] }, { categoria: 'Físico', opciones: ['Ruido', 'Iluminación', 'Vibración', 'Temperaturas extremas', 'Radiación ionizante', 'Radiación no ionizante ', 'Presión atmosférica'] }, { categoria: 'Químico', opciones: ['Polvos', 'Vapores', 'Líquidos', 'Gases', 'Humos', 'Material particulado'] }, { categoria: 'Psicosocial', opciones: ['Estrés', 'Carga mental', 'Contenido de la tarea', 'Demandas emocionales', 'Sistemas de control', 'Relaciones humanas', 'Liderazgo'] }, { categoria: 'Biomecánico', opciones: ['Postura', 'Esfuerzo', 'Movimiento repetitivo', 'Manipulación manual de cargas'] }, { categoria: 'Condiciones de Seguridad', opciones: ['Mecánico', 'Eléctrico', 'Locativo', 'Tecnológico', 'Accidentes de tránsito', 'Público', 'Trabajo en alturas', 'Espacios confinados'] }, { categoria: 'Fenómenos Naturales', opciones: ['Sismo', 'Erupcion volcanica', 'Terremoto', 'Vendaval', 'Inundación', 'Derrumbe', 'Precipitaciones'] }];
   const eppDisponibles = [{ zona: 'Protección de Cabeza', opciones: ['Casco de seguridad', 'Gorra', 'Capucha', 'Casco con barbuquejo'] }, { zona: 'Protección Ocular y Facial', opciones: ['Gafas de seguridad', 'Monogafas', 'Careta facial', 'Pantalla facial'] }, { zona: 'Protección Respiratoria', opciones: ['Mascarilla desechable', 'Respirador con filtros', 'Mascarilla N95', 'Equipos de aire suministrado'] }, { zona: 'Protección Auditiva', opciones: ['Tapones auditivos', 'Copa auditiva', 'Tapones moldeables', 'Protección dual'] }, { zona: 'Protección de Manos', opciones: ['Guantes de cuero', 'Guantes de caucho', 'Guantes dieléctricos', 'Guantes químicos', 'Guantes térmicos', 'Guantes desechables'] }, { zona: 'Protección Corporal', opciones: ['Overol', 'Delantal', 'Chaleco reflectivo', 'Ropa impermeable', 'Ropa térmica', 'Uniforme antiestático'] }, { zona: 'Protección de Pies', opciones: ['Botas de seguridad', 'Botas dieléctricas', 'Botas químicas', 'Zapatos antideslizantes', 'Botas impermeables'] }];
   const examenesMedicosDisponibles = ['Examen médico general', 'Audiometría', 'Visiometría', 'Espirometría', 'Electrocardiograma', 'Radiografía de tórax', 'Hemograma completo', 'Glicemia', 'Creatinina', 'Parcial de orina', 'Pruebas de función hepática', 'Examen osteomuscular', 'Examen neurológico', 'Examen dermatológico', 'Valoración psicológica', 'Test de coordinación', 'Examen de agudeza visual', 'Campimetría visual', 'Examen de fondo de ojo'];
 
@@ -66,12 +66,6 @@ const PerfilesCargo = () => {
   const generarSugerenciasConIA = async (nombrePuesto, areaDepartamento = '') => {
     try {
       setLoadingIA(true);
-      
-      // Verificar que existe la API key
-      const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
-      if (!apiKey) {
-        throw new Error('API Key de OpenAI no configurada. Agrega REACT_APP_OPENAI_API_KEY a tu archivo .env');
-      }
 
       const prompt = `
 Actúa como un experto en recursos humanos y gestión de talento. Necesito que generes un perfil de cargo completo y profesional para el puesto de "${nombrePuesto}"${areaDepartamento ? ` en el área de ${areaDepartamento}` : ''}.
@@ -99,26 +93,15 @@ Por favor, proporciona información específica y realista para cada uno de los 
 Formato de respuesta: Proporciona cada sección claramente separada y con contenido específico para el puesto solicitado. Evita generalidades y sé específico según el tipo de trabajo.
 `;
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      // LLamada al Backend (Netlify Function) en lugar de API directa
+      const response = await fetch('/.netlify/functions/chat-ia', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: 'Eres un experto consultor en recursos humanos especializado en la creación de perfiles de cargo profesionales y detallados.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 1500,
-          temperature: 0.7
+          type: 'profile_generation',
+          consulta: prompt
         })
       });
 
@@ -132,7 +115,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
 
       // Parsear la respuesta para extraer cada sección
       const sugerencias = parsearRespuestaIA(contenidoGenerado);
-      
+
       return sugerencias;
 
     } catch (error) {
@@ -183,10 +166,10 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
       if (!sugerencias.misionObjetivo) {
         const lineas = contenido.split('\n').filter(linea => linea.trim());
         let seccionActual = '';
-        
+
         lineas.forEach(linea => {
           const lineaLimpia = linea.trim();
-          
+
           if (lineaLimpia.includes('MISIÓN') || lineaLimpia.includes('OBJETIVO PRINCIPAL')) {
             seccionActual = 'misionObjetivo';
           } else if (lineaLimpia.includes('CONTRIBUCIÓN ESTRATÉGICA')) {
@@ -231,7 +214,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
 
     try {
       const sugerencias = await generarSugerenciasConIA(formData.nombrePuesto, formData.areaDepartamento);
-      
+
       // Aplicar las sugerencias al formulario
       setFormData(prev => ({
         ...prev,
@@ -247,7 +230,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
       }));
 
       alert('¡Sugerencias generadas exitosamente! Puedes revisar y modificar el contenido según tus necesidades.');
-      
+
     } catch (error) {
       console.error('Error al generar sugerencias:', error);
       alert(`Error al generar sugerencias con IA: ${error.message}`);
@@ -393,7 +376,8 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
   };
 
   const exportarExcel = () => {
-    const datosExport = perfilesFiltrados.map(perfil => ({'Código': perfil.codigo, 'Nombre del Puesto': perfil.nombrePuesto, 'Área/Departamento': perfil.areaDepartamento, 'Reporta a': perfil.reportaA, 'Personal a Cargo': perfil.personalACargo, 'Ubicación y Modalidad': perfil.ubicacionModalidad, 'Jornada Laboral': perfil.jornadaLaboral, 'Misión/Objetivo': perfil.misionObjetivo, 'Contribución Estratégica': perfil.contribucionEstrategica, 'Funciones Principales': perfil.funcionesPrincipales, 'Funciones Periódicas': perfil.funcionesPeriodicas, 'KPIs': perfil.indicadoresKPI, 'Formación Académica': perfil.formacionAcademica, 'Experiencia Laboral': perfil.experienciaLaboral, 'Habilidades Técnicas': perfil.habilidadesTecnicas, 'Competencias Conductuales': perfil.competenciasConductuales, 'Ambiente y Condiciones': perfil.ambienteCondiciones, 'Riesgos Laborales': perfil.riesgosLaborales?.join(', ') || '', 'Equipos EPP': perfil.equiposEPP?.join(', ') || '', 'Exámenes Médicos': perfil.examenesMedicos?.join(', ') || '', 'Fecha Creación': perfil.fechaCreacion ? new Date(perfil.fechaCreacion).toLocaleDateString() : '', 'Fecha Actualización': perfil.fechaActualizacion ? new Date(perfil.fechaActualizacion).toLocaleDateString() : ''
+    const datosExport = perfilesFiltrados.map(perfil => ({
+      'Código': perfil.codigo, 'Nombre del Puesto': perfil.nombrePuesto, 'Área/Departamento': perfil.areaDepartamento, 'Reporta a': perfil.reportaA, 'Personal a Cargo': perfil.personalACargo, 'Ubicación y Modalidad': perfil.ubicacionModalidad, 'Jornada Laboral': perfil.jornadaLaboral, 'Misión/Objetivo': perfil.misionObjetivo, 'Contribución Estratégica': perfil.contribucionEstrategica, 'Funciones Principales': perfil.funcionesPrincipales, 'Funciones Periódicas': perfil.funcionesPeriodicas, 'KPIs': perfil.indicadoresKPI, 'Formación Académica': perfil.formacionAcademica, 'Experiencia Laboral': perfil.experienciaLaboral, 'Habilidades Técnicas': perfil.habilidadesTecnicas, 'Competencias Conductuales': perfil.competenciasConductuales, 'Ambiente y Condiciones': perfil.ambienteCondiciones, 'Riesgos Laborales': perfil.riesgosLaborales?.join(', ') || '', 'Equipos EPP': perfil.equiposEPP?.join(', ') || '', 'Exámenes Médicos': perfil.examenesMedicos?.join(', ') || '', 'Fecha Creación': perfil.fechaCreacion ? new Date(perfil.fechaCreacion).toLocaleDateString() : '', 'Fecha Actualización': perfil.fechaActualizacion ? new Date(perfil.fechaActualizacion).toLocaleDateString() : ''
     }));
     const ws = XLSX.utils.json_to_sheet(datosExport);
     const wb = XLSX.utils.book_new();
@@ -414,7 +398,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
     tempDiv.style.backgroundColor = 'white';
     tempDiv.style.padding = '20px';
     tempDiv.style.fontFamily = 'Arial, sans-serif';
-    
+
     // Generar el HTML del perfil
     tempDiv.innerHTML = `
       <div style="font-family: Arial, sans-serif; padding: 20px; background: white;">
@@ -499,21 +483,21 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
             <div>
               <strong>Riesgos Laborales:</strong>
               <div style="margin-top: 8px;">
-                ${perfil.riesgosLaborales?.length > 0 ? 
-                  perfil.riesgosLaborales.map(riesgo => 
-                    `<span style="background: #ffc107; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; display: inline-block;">${riesgo}</span>`
-                  ).join('') : 'N/A'
-                }
+                ${perfil.riesgosLaborales?.length > 0 ?
+        perfil.riesgosLaborales.map(riesgo =>
+          `<span style="background: #ffc107; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; display: inline-block;">${riesgo}</span>`
+        ).join('') : 'N/A'
+      }
               </div>
             </div>
             <div>
               <strong>EPP Requeridos:</strong>
               <div style="margin-top: 8px;">
-                ${perfil.equiposEPP?.length > 0 ? 
-                  perfil.equiposEPP.map(epp => 
-                    `<span style="background: #198754; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; display: inline-block;">${epp}</span>`
-                  ).join('') : 'N/A'
-                }
+                ${perfil.equiposEPP?.length > 0 ?
+        perfil.equiposEPP.map(epp =>
+          `<span style="background: #198754; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; display: inline-block;">${epp}</span>`
+        ).join('') : 'N/A'
+      }
               </div>
             </div>
           </div>
@@ -523,9 +507,9 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
           <div style="margin-bottom: 25px; padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; background-color: #f8f9fa;">
             <h3 style="color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 15px;">6️⃣ Exámenes Médicos Sugeridos</h3>
             <div>
-              ${perfil.examenesMedicos.map(examen => 
-                `<span style="background: #0dcaf0; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; display: inline-block;">${examen}</span>`
-              ).join('')}
+              ${perfil.examenesMedicos.map(examen =>
+        `<span style="background: #0dcaf0; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; display: inline-block;">${examen}</span>`
+      ).join('')}
             </div>
           </div>
         ` : ''}
@@ -557,7 +541,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
       const ratio = canvasWidth / canvasHeight;
-      
+
       // Calcular dimensiones manteniendo la proporción
       const width = pdfWidth - 20; // Margen de 10mm a cada lado
       const height = width / ratio;
@@ -635,7 +619,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const ratio = canvasWidth / canvasHeight;
-        
+
         // Calcular dimensiones manteniendo la proporción
         const width = pdfWidth - 20; // Margen de 10mm a cada lado
         const height = width / ratio;
@@ -671,7 +655,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
   };
 
   const handleCheckboxChange = (value, field) => {
-    setFormData(prev => ({...prev, [field]: prev[field].includes(value) ? prev[field].filter(item => item !== value) : [...prev[field], value] }));
+    setFormData(prev => ({ ...prev, [field]: prev[field].includes(value) ? prev[field].filter(item => item !== value) : [...prev[field], value] }));
   };
 
   const generarSugerenciasExamenes = () => {
@@ -758,7 +742,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                 type="text"
                 className="form-control"
                 value={filtros.nombre}
-                onChange={(e) => setFiltros({...filtros, nombre: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, nombre: e.target.value })}
                 placeholder="Buscar por nombre..."
               />
             </div>
@@ -768,7 +752,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                 type="text"
                 className="form-control"
                 value={filtros.area}
-                onChange={(e) => setFiltros({...filtros, area: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, area: e.target.value })}
                 placeholder="Buscar por área..."
               />
             </div>
@@ -777,7 +761,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
               <select
                 className="form-select"
                 value={filtros.modalidad}
-                onChange={(e) => setFiltros({...filtros, modalidad: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, modalidad: e.target.value })}
               >
                 <option value="">Todas las modalidades</option>
                 {modalidadesWork.map(modalidad => (
@@ -791,7 +775,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                 type="text"
                 className="form-control"
                 value={filtros.codigo}
-                onChange={(e) => setFiltros({...filtros, codigo: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, codigo: e.target.value })}
                 placeholder="Buscar por código..."
               />
             </div>
@@ -863,7 +847,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           >
                             ✏️
                           </button>
-                      
+
                           <button
                             className="btn btn-outline-success btn-sm"
                             onClick={() => generarPDFDirecto(perfil)}
@@ -907,7 +891,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                   }}
                 ></button>
               </div>
-              
+
               <div className="modal-body">
                 <form onSubmit={handleSubmit}>
                   <div className="form-section">
@@ -919,7 +903,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           type="text"
                           className="form-control"
                           value={formData.nombrePuesto}
-                          onChange={(e) => setFormData({...formData, nombrePuesto: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, nombrePuesto: e.target.value })}
                           required
                         />
                       </div>
@@ -929,7 +913,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           type="text"
                           className="form-control"
                           value={formData.areaDepartamento}
-                          onChange={(e) => setFormData({...formData, areaDepartamento: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, areaDepartamento: e.target.value })}
                           required
                         />
                       </div>
@@ -941,7 +925,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           type="text"
                           className="form-control"
                           value={formData.reportaA}
-                          onChange={(e) => setFormData({...formData, reportaA: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, reportaA: e.target.value })}
                         />
                       </div>
                       <div className="col-md-6">
@@ -950,7 +934,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           type="text"
                           className="form-control"
                           value={formData.personalACargo}
-                          onChange={(e) => setFormData({...formData, personalACargo: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, personalACargo: e.target.value })}
                           placeholder="Ej: 5 personas, Ninguno, etc."
                         />
                       </div>
@@ -961,7 +945,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         <select
                           className="form-select"
                           value={formData.ubicacionModalidad}
-                          onChange={(e) => setFormData({...formData, ubicacionModalidad: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, ubicacionModalidad: e.target.value })}
                         >
                           <option value="">Seleccionar modalidad...</option>
                           {modalidadesWork.map(modalidad => (
@@ -974,7 +958,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         <select
                           className="form-select"
                           value={formData.jornadaLaboral}
-                          onChange={(e) => setFormData({...formData, jornadaLaboral: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, jornadaLaboral: e.target.value })}
                         >
                           <option value="">Seleccionar jornada...</option>
                           {jornadasLaborales.map(jornada => (
@@ -983,14 +967,14 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         </select>
                       </div>
                     </div>
-                    
+
                     {/* Botón de IA para generar sugerencias */}
                     <div className="row mt-4">
                       <div className="col-12">
                         <div className="alert alert-info">
                           <h6 className="alert-heading">🤖 Asistente de IA</h6>
                           <p className="mb-2">
-                            ¿Necesitas ayuda para redactar el perfil de cargo? Nuestro asistente de IA puede generar 
+                            ¿Necesitas ayuda para redactar el perfil de cargo? Nuestro asistente de IA puede generar
                             sugerencias profesionales para todos los campos basándose en el nombre del puesto.
                           </p>
                           <button
@@ -1011,7 +995,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                             )}
                           </button>
                           <small className="d-block mt-2 text-muted">
-                            💡 Primero ingresa el nombre del puesto y opcionalmente el área/departamento, 
+                            💡 Primero ingresa el nombre del puesto y opcionalmente el área/departamento,
                             luego haz clic para generar sugerencias que podrás revisar y modificar.
                           </small>
                         </div>
@@ -1027,7 +1011,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         className="form-control"
                         rows="3"
                         value={formData.misionObjetivo}
-                        onChange={(e) => setFormData({...formData, misionObjetivo: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, misionObjetivo: e.target.value })}
                         placeholder="Describe el propósito principal del puesto..."
                       ></textarea>
                     </div>
@@ -1037,7 +1021,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         className="form-control"
                         rows="3"
                         value={formData.contribucionEstrategica}
-                        onChange={(e) => setFormData({...formData, contribucionEstrategica: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, contribucionEstrategica: e.target.value })}
                         placeholder="¿Cómo contribuye este puesto a los objetivos organizacionales?"
                       ></textarea>
                     </div>
@@ -1051,7 +1035,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         className="form-control"
                         rows="4"
                         value={formData.funcionesPrincipales}
-                        onChange={(e) => setFormData({...formData, funcionesPrincipales: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, funcionesPrincipales: e.target.value })}
                         placeholder="Lista las actividades principales que realiza diaria o semanalmente..."
                       ></textarea>
                     </div>
@@ -1061,7 +1045,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         className="form-control"
                         rows="3"
                         value={formData.funcionesPeriodicas}
-                        onChange={(e) => setFormData({...formData, funcionesPeriodicas: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, funcionesPeriodicas: e.target.value })}
                         placeholder="Actividades que se realizan mensual, trimestral o anualmente..."
                       ></textarea>
                     </div>
@@ -1071,7 +1055,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         className="form-control"
                         rows="3"
                         value={formData.indicadoresKPI}
-                        onChange={(e) => setFormData({...formData, indicadoresKPI: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, indicadoresKPI: e.target.value })}
                         placeholder="¿Cómo se mide el desempeño en este puesto?"
                       ></textarea>
                     </div>
@@ -1086,7 +1070,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           className="form-control"
                           rows="3"
                           value={formData.formacionAcademica}
-                          onChange={(e) => setFormData({...formData, formacionAcademica: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, formacionAcademica: e.target.value })}
                           placeholder="Nivel educativo mínimo, carreras, especializaciones..."
                         ></textarea>
                       </div>
@@ -1096,7 +1080,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           className="form-control"
                           rows="3"
                           value={formData.experienciaLaboral}
-                          onChange={(e) => setFormData({...formData, experienciaLaboral: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, experienciaLaboral: e.target.value })}
                           placeholder="Años de experiencia, áreas específicas..."
                         ></textarea>
                       </div>
@@ -1108,7 +1092,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           className="form-control"
                           rows="4"
                           value={formData.habilidadesTecnicas}
-                          onChange={(e) => setFormData({...formData, habilidadesTecnicas: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, habilidadesTecnicas: e.target.value })}
                           placeholder="Software, herramientas, certificaciones, idiomas..."
                         ></textarea>
                       </div>
@@ -1118,7 +1102,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           className="form-control"
                           rows="4"
                           value={formData.competenciasConductuales}
-                          onChange={(e) => setFormData({...formData, competenciasConductuales: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, competenciasConductuales: e.target.value })}
                           placeholder="Liderazgo, comunicación, trabajo en equipo, adaptabilidad..."
                         ></textarea>
                       </div>
@@ -1133,11 +1117,11 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         className="form-control"
                         rows="3"
                         value={formData.ambienteCondiciones}
-                        onChange={(e) => setFormData({...formData, ambienteCondiciones: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, ambienteCondiciones: e.target.value })}
                         placeholder="Describe el ambiente físico de trabajo, condiciones especiales..."
                       ></textarea>
                     </div>
-                    
+
                     <div className="row">
                       <div className="col-md-6">
                         <label className="form-label">5.2. Riesgos Laborales (GTC 45)</label>
@@ -1160,7 +1144,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="col-md-6">
                         <label className="form-label">5.3. Equipos de Protección Personal (EPP)</label>
                         <div className="checkbox-group">
@@ -1212,7 +1196,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                         ))}
                       </div>
                       <small className="form-text text-muted">
-                        💡 Selecciona primero los riesgos laborales y haz clic en "Generar Sugerencias con IA" 
+                        💡 Selecciona primero los riesgos laborales y haz clic en "Generar Sugerencias con IA"
                         para obtener recomendaciones automáticas de exámenes médicos.
                       </small>
                     </div>
@@ -1262,7 +1246,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                   }}
                 ></button>
               </div>
-              
+
               <div className="modal-body" id="perfil-a-pdf">
                 <div className="form-section">
                   <h4>1️⃣ Identificación del Cargo</h4>
@@ -1362,7 +1346,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                     <div className="col-md-6">
                       <strong>Riesgos Laborales:</strong>
                       <div className="mt-2">
-                        {perfilSeleccionado.riesgosLaborales?.length > 0 ? 
+                        {perfilSeleccionado.riesgosLaborales?.length > 0 ?
                           perfilSeleccionado.riesgosLaborales.map(riesgo => (
                             <span key={riesgo} className="badge bg-warning me-1 mb-1">{riesgo}</span>
                           )) : 'N/A'
@@ -1372,7 +1356,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
                     <div className="col-md-6">
                       <strong>EPP Requeridos:</strong>
                       <div className="mt-2">
-                        {perfilSeleccionado.equiposEPP?.length > 0 ? 
+                        {perfilSeleccionado.equiposEPP?.length > 0 ?
                           perfilSeleccionado.equiposEPP.map(epp => (
                             <span key={epp} className="badge bg-success me-1 mb-1">{epp}</span>
                           )) : 'N/A'
