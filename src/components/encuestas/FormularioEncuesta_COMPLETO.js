@@ -7,17 +7,24 @@ const FormularioEncuesta = ({ trabajadorData, onSubmit = () => { }, onCancel = (
   const [formData, setFormData] = useState({});
   const [firma, setFirma] = useState(null); // Estado para la firma
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   // --- CONFIGURACIÓN DE PREGUNTAS ---
 
+  // Paso 1: Datos Sociodemográficos + Emergencia
   // Paso 1: Datos Sociodemográficos + Emergencia
   const preguntasPagina1 = [
     {
       titulo: "Información Básica", campos: [
         { id: 'fechaNacimiento', label: 'Fecha de nacimiento', tipo: 'date', requerida: true },
+        { id: 'edad', label: 'Edad', tipo: 'number', requerida: true, readonly: true },
         {
           id: 'genero', label: 'Género', tipo: 'select', requerida: true,
           opciones: ['Masculino', 'Femenino', 'No binario', 'Prefiero no decirlo']
+        },
+        {
+          id: 'raza', label: 'Raza/Etnia', tipo: 'select', requerida: true,
+          opciones: ['Indígena', 'Raizal', 'Afrodescendiente', 'Mestizo', 'Otro']
         },
         {
           id: 'estadoCivil', label: 'Estado civil', tipo: 'select', requerida: true,
@@ -30,6 +37,20 @@ const FormularioEncuesta = ({ trabajadorData, onSubmit = () => { }, onCancel = (
         {
           id: 'estratoSocial', label: 'Estrato social', tipo: 'select', requerida: true,
           opciones: ['1', '2', '3', '4', '5', '6']
+        },
+        { id: 'peso', label: 'Peso (kg)', tipo: 'number', requerida: true, min: 30, max: 200 },
+        { id: 'estatura', label: 'Estatura (cm)', tipo: 'number', requerida: true, min: 100, max: 220 },
+        { id: 'imc', label: 'IMC (Calculado)', tipo: 'text', requerida: false, readonly: true },
+        {
+          id: 'grupoSanguineo', label: 'Grupo sanguíneo', tipo: 'select', requerida: true,
+          opciones: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'No sé']
+        },
+        {
+          id: 'salario', label: 'Rango salarial', tipo: 'select', requerida: true,
+          opciones: [
+            'Menos de 1 SMMLV', '1-2 SMMLV', '2-3 SMMLV', '3-4 SMMLV',
+            '4-5 SMMLV', '5-7 SMMLV', '7-10 SMMLV', 'Más de 10 SMMLV'
+          ]
         }
       ]
     },
@@ -123,246 +144,276 @@ const FormularioEncuesta = ({ trabajadorData, onSubmit = () => { }, onCancel = (
         opciones: ['Sí', 'No', 'No sé']
       }))
     };
-    if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < fechaNacimiento.getDate())) {
-      edad = edad - 1;
-    }
-
-    setFormData(prev => ({ ...prev, edad: edad }));
+    numeroPagina++;
   }
-}, [formData.fechaNacimiento]);
 
-const handleInputChange = (preguntaId, valor) => {
-  setFormData(prev => ({
-    ...prev,
-    [preguntaId]: valor
-  }));
+  const totalPaginas = Object.keys(preguntasPorPagina).length;
 
-  // Limpiar error si existe
-  if (errors[preguntaId]) {
-    setErrors(prev => ({
+  // Calcular edad automáticamente
+  React.useEffect(() => {
+    if (formData.fechaNacimiento) {
+      const fechaNacimiento = new Date(formData.fechaNacimiento);
+      const hoy = new Date();
+      let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+      const mesActual = hoy.getMonth();
+      const mesNacimiento = fechaNacimiento.getMonth();
+
+      if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < fechaNacimiento.getDate())) {
+        edad = edad - 1;
+      }
+
+      setFormData(prev => ({ ...prev, edad: edad }));
+    }
+  }, [formData.fechaNacimiento]);
+
+  // Calcular IMC automáticamente
+  React.useEffect(() => {
+    if (formData.peso && formData.estatura) {
+      const peso = parseFloat(formData.peso);
+      const estatura = parseFloat(formData.estatura) / 100; // Convertir a metros
+      if (peso > 0 && estatura > 0) {
+        const imc = (peso / (estatura * estatura)).toFixed(2);
+        setFormData(prev => {
+          // Solo actualizar si cambió para evitar loop infinito
+          if (prev.imc === imc) return prev;
+          return { ...prev, imc: imc };
+        });
+      }
+    }
+  }, [formData.peso, formData.estatura]);
+
+  const handleInputChange = (preguntaId, valor) => {
+    setFormData(prev => ({
       ...prev,
-      [preguntaId]: null
+      [preguntaId]: valor
     }));
-  }
-};
 
-const validarPagina = (pagina) => {
-  const paginaData = preguntasPorPagina[pagina];
-  const erroresPagina = {};
-
-  paginaData.preguntas.forEach(pregunta => {
-    if (pregunta.requerida && (!formData[pregunta.id] || formData[pregunta.id].toString().trim() === '')) {
-      erroresPagina[pregunta.id] = 'Este campo es requerido';
+    // Limpiar error si existe
+    if (errors[preguntaId]) {
+      setErrors(prev => ({
+        ...prev,
+        [preguntaId]: null
+      }));
     }
+  };
 
-    // Validaciones específicas
-    if (formData[pregunta.id]) {
-      switch (pregunta.tipo) {
-        case 'email':
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(formData[pregunta.id])) {
-            erroresPagina[pregunta.id] = 'Email inválido';
-          }
-          break;
-        case 'tel':
-          const telRegex = /^\d{7,10}$/;
-          if (!telRegex.test(formData[pregunta.id].replace(/\s/g, ''))) {
-            erroresPagina[pregunta.id] = 'Teléfono inválido (7-10 dígitos)';
-          }
-          break;
-        case 'number':
-          if (pregunta.min && formData[pregunta.id] < pregunta.min) {
-            erroresPagina[pregunta.id] = `Valor mínimo: ${pregunta.min}`;
-          }
-          if (pregunta.max && formData[pregunta.id] > pregunta.max) {
-            erroresPagina[pregunta.id] = `Valor máximo: ${pregunta.max}`;
-          }
-          break;
+  const validarPagina = (pagina) => {
+    const paginaData = preguntasPorPagina[pagina];
+    const erroresPagina = {};
+
+    paginaData.preguntas.forEach(pregunta => {
+      if (pregunta.requerida && (!formData[pregunta.id] || formData[pregunta.id].toString().trim() === '')) {
+        erroresPagina[pregunta.id] = 'Este campo es requerido';
+      }
+
+      // Validaciones específicas
+      if (formData[pregunta.id]) {
+        switch (pregunta.tipo) {
+          case 'email':
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData[pregunta.id])) {
+              erroresPagina[pregunta.id] = 'Email inválido';
+            }
+            break;
+          case 'tel':
+            const telRegex = /^\d{7,10}$/;
+            if (!telRegex.test(formData[pregunta.id].replace(/\s/g, ''))) {
+              erroresPagina[pregunta.id] = 'Teléfono inválido (7-10 dígitos)';
+            }
+            break;
+          case 'number':
+            if (pregunta.min && formData[pregunta.id] < pregunta.min) {
+              erroresPagina[pregunta.id] = `Valor mínimo: ${pregunta.min}`;
+            }
+            if (pregunta.max && formData[pregunta.id] > pregunta.max) {
+              erroresPagina[pregunta.id] = `Valor máximo: ${pregunta.max}`;
+            }
+            break;
+        }
+      }
+    });
+
+    setErrors(erroresPagina);
+    return Object.keys(erroresPagina).length === 0;
+  };
+
+  const handleNext = () => {
+    if (validarPagina(currentPage)) {
+      if (currentPage < totalPaginas) {
+        setCurrentPage(currentPage + 1);
       }
     }
-  });
+  };
 
-  setErrors(erroresPagina);
-  return Object.keys(erroresPagina).length === 0;
-};
-
-const handleNext = () => {
-  if (validarPagina(currentPage)) {
-    if (currentPage < totalPaginas) {
-      setCurrentPage(currentPage + 1);
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
-  }
-};
+  };
 
-const handlePrevious = () => {
-  if (currentPage > 1) {
-    setCurrentPage(currentPage - 1);
-  }
-};
-
-const handleSubmit = async () => {
-  if (validarPagina(currentPage)) {
-    setLoading(true);
-    try {
-      if (typeof onSubmit === 'function') {
-        await onSubmit(formData);
-        // No mostrar alert, dejar que el componente padre maneje la transición
-        console.log('✅ Encuesta enviada exitosamente');
-      } else {
-        console.log('📋 Datos de la encuesta:', formData);
-        alert('✅ Encuesta completada (modo demo)');
+  const handleSubmit = async () => {
+    if (validarPagina(currentPage)) {
+      setLoading(true);
+      try {
+        if (typeof onSubmit === 'function') {
+          await onSubmit(formData);
+          // No mostrar alert, dejar que el componente padre maneje la transición
+          console.log('✅ Encuesta enviada exitosamente');
+        } else {
+          console.log('📋 Datos de la encuesta:', formData);
+          alert('✅ Encuesta completada (modo demo)');
+        }
+      } catch (error) {
+        console.error('❌ Error al enviar formulario:', error);
+        alert('❌ Error al enviar la encuesta: ' + error.message);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('❌ Error al enviar formulario:', error);
-      alert('❌ Error al enviar la encuesta: ' + error.message);
-    } finally {
-      setLoading(false);
     }
-  }
-};
+  };
 
-const renderPregunta = (pregunta) => {
-  const valor = formData[pregunta.id] || '';
-  const error = errors[pregunta.id];
+  const renderPregunta = (pregunta) => {
+    const valor = formData[pregunta.id] || '';
+    const error = errors[pregunta.id];
+
+    return (
+      <div key={pregunta.id} className="form-group">
+        <label className="form-label">
+          {pregunta.label}
+          {pregunta.requerida && <span className="text-danger">*</span>}
+        </label>
+
+        {pregunta.tipo === 'select' ? (
+          <select
+            className={`form-control ${error ? 'is-invalid' : ''}`}
+            value={valor}
+            onChange={(e) => handleInputChange(pregunta.id, e.target.value)}
+            disabled={pregunta.readonly}
+          >
+            <option value="">Seleccione una opción</option>
+            {pregunta.opciones.map(opcion => (
+              <option key={opcion} value={opcion}>{opcion}</option>
+            ))}
+          </select>
+        ) : pregunta.tipo === 'radio' ? (
+          <div className="radio-group">
+            {pregunta.opciones.map(opcion => (
+              <div key={opcion} className="form-check form-check-inline">
+                <input
+                  className="form-check-input"
+                  type="radio"
+                  name={pregunta.id}
+                  id={`${pregunta.id}_${opcion}`}
+                  value={opcion}
+                  checked={valor === opcion}
+                  onChange={(e) => handleInputChange(pregunta.id, e.target.value)}
+                />
+                <label className="form-check-label" htmlFor={`${pregunta.id}_${opcion}`}>
+                  {opcion}
+                </label>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <input
+            type={pregunta.tipo}
+            className={`form-control ${error ? 'is-invalid' : ''}`}
+            value={valor}
+            onChange={(e) => handleInputChange(pregunta.id, e.target.value)}
+            min={pregunta.min}
+            max={pregunta.max}
+            readOnly={pregunta.readonly}
+            disabled={pregunta.readonly}
+          />
+        )}
+
+        {error && <div className="invalid-feedback">{error}</div>}
+      </div>
+    );
+  };
+
+  const paginaActual = preguntasPorPagina[currentPage];
 
   return (
-    <div key={pregunta.id} className="form-group">
-      <label className="form-label">
-        {pregunta.label}
-        {pregunta.requerida && <span className="text-danger">*</span>}
-      </label>
-
-      {pregunta.tipo === 'select' ? (
-        <select
-          className={`form-control ${error ? 'is-invalid' : ''}`}
-          value={valor}
-          onChange={(e) => handleInputChange(pregunta.id, e.target.value)}
-          disabled={pregunta.readonly}
-        >
-          <option value="">Seleccione una opción</option>
-          {pregunta.opciones.map(opcion => (
-            <option key={opcion} value={opcion}>{opcion}</option>
-          ))}
-        </select>
-      ) : pregunta.tipo === 'radio' ? (
-        <div className="radio-group">
-          {pregunta.opciones.map(opcion => (
-            <div key={opcion} className="form-check form-check-inline">
-              <input
-                className="form-check-input"
-                type="radio"
-                name={pregunta.id}
-                id={`${pregunta.id}_${opcion}`}
-                value={opcion}
-                checked={valor === opcion}
-                onChange={(e) => handleInputChange(pregunta.id, e.target.value)}
-              />
-              <label className="form-check-label" htmlFor={`${pregunta.id}_${opcion}`}>
-                {opcion}
-              </label>
-            </div>
-          ))}
+    <div className="formulario-encuesta">
+      {/* Encabezado con datos del trabajador */}
+      <div className="encabezado-trabajador">
+        <h3>Encuesta de Salud Ocupacional</h3>
+        <div className="datos-trabajador">
+          <p><strong>Trabajador:</strong> {trabajadorData?.nombres} {trabajadorData?.apellidos}</p>
+          <p><strong>Identificación:</strong> {trabajadorData?.tipoDocumento} {trabajadorData?.numeroDocumento}</p>
+          <p><strong>Cargo:</strong> {trabajadorData?.cargo}</p>
+          <p><strong>Área:</strong> {trabajadorData?.area}</p>
         </div>
-      ) : (
-        <input
-          type={pregunta.tipo}
-          className={`form-control ${error ? 'is-invalid' : ''}`}
-          value={valor}
-          onChange={(e) => handleInputChange(pregunta.id, e.target.value)}
-          min={pregunta.min}
-          max={pregunta.max}
-          readOnly={pregunta.readonly}
-          disabled={pregunta.readonly}
-        />
-      )}
+      </div>
 
-      {error && <div className="invalid-feedback">{error}</div>}
+      {/* Indicador de progreso */}
+      <div className="progress-container">
+        <div className="progress">
+          <div
+            className="progress-bar"
+            style={{ width: `${(currentPage / totalPaginas) * 100}%` }}
+          ></div>
+        </div>
+        <span className="progress-text">Página {currentPage} de {totalPaginas}</span>
+      </div>
+
+      {/* Contenido de la página actual */}
+      <div className="pagina-contenido">
+        <h4>{paginaActual.titulo}</h4>
+        <div className="preguntas-container">
+          {paginaActual.preguntas.map(pregunta => renderPregunta(pregunta))}
+        </div>
+      </div>
+
+      {/* Botones de navegación */}
+      <div className="botones-navegacion">
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={onCancel}
+        >
+          Cancelar
+        </button>
+
+        {currentPage > 1 && (
+          <button
+            type="button"
+            className="btn btn-outline-primary"
+            onClick={handlePrevious}
+          >
+            ← Anterior
+          </button>
+        )}
+
+        {currentPage < totalPaginas ? (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleNext}
+          >
+            Siguiente →
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-success"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? 'Enviando...' : 'Finalizar Encuesta'}
+          </button>
+        )}
+      </div>
+
+      {/* Auto-guardado */}
+      <div className="auto-guardado">
+        <small className="text-muted">
+          ✓ Los datos se guardan automáticamente
+        </small>
+      </div>
     </div>
   );
-};
-
-const paginaActual = preguntasPorPagina[currentPage];
-
-return (
-  <div className="formulario-encuesta">
-    {/* Encabezado con datos del trabajador */}
-    <div className="encabezado-trabajador">
-      <h3>Encuesta de Salud Ocupacional</h3>
-      <div className="datos-trabajador">
-        <p><strong>Trabajador:</strong> {trabajadorData?.nombres} {trabajadorData?.apellidos}</p>
-        <p><strong>Identificación:</strong> {trabajadorData?.tipoDocumento} {trabajadorData?.numeroDocumento}</p>
-        <p><strong>Cargo:</strong> {trabajadorData?.cargo}</p>
-        <p><strong>Área:</strong> {trabajadorData?.area}</p>
-      </div>
-    </div>
-
-    {/* Indicador de progreso */}
-    <div className="progress-container">
-      <div className="progress">
-        <div
-          className="progress-bar"
-          style={{ width: `${(currentPage / totalPaginas) * 100}%` }}
-        ></div>
-      </div>
-      <span className="progress-text">Página {currentPage} de {totalPaginas}</span>
-    </div>
-
-    {/* Contenido de la página actual */}
-    <div className="pagina-contenido">
-      <h4>{paginaActual.titulo}</h4>
-      <div className="preguntas-container">
-        {paginaActual.preguntas.map(pregunta => renderPregunta(pregunta))}
-      </div>
-    </div>
-
-    {/* Botones de navegación */}
-    <div className="botones-navegacion">
-      <button
-        type="button"
-        className="btn btn-secondary"
-        onClick={onCancel}
-      >
-        Cancelar
-      </button>
-
-      {currentPage > 1 && (
-        <button
-          type="button"
-          className="btn btn-outline-primary"
-          onClick={handlePrevious}
-        >
-          ← Anterior
-        </button>
-      )}
-
-      {currentPage < totalPaginas ? (
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={handleNext}
-        >
-          Siguiente →
-        </button>
-      ) : (
-        <button
-          type="button"
-          className="btn btn-success"
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? 'Enviando...' : 'Finalizar Encuesta'}
-        </button>
-      )}
-    </div>
-
-    {/* Auto-guardado */}
-    <div className="auto-guardado">
-      <small className="text-muted">
-        ✓ Los datos se guardan automáticamente
-      </small>
-    </div>
-  </div>
-);
 };
 
 export default FormularioEncuesta;
