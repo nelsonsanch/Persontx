@@ -36,7 +36,8 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
       grupoSanguineo: {},
       distribucionSalarial: {},
       rangoPeso: {},
-      rangoEstatura: {}
+      rangoEstatura: {},
+      imc: {}
     };
 
     respuestas.forEach(respuesta => {
@@ -101,6 +102,26 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
       else if (estatura >= 170 && estatura < 180) rangoEstatura = '170-179cm';
       else if (estatura >= 180) rangoEstatura = '180cm o más';
       distribuciones.rangoEstatura[rangoEstatura] = (distribuciones.rangoEstatura[rangoEstatura] || 0) + 1;
+
+      // Distribución por clasificación IMC (Nuevo)
+      // Usamos el campo imcInterpretacion si existe, o calculamos al vuelo si falta (retrocompatibilidad)
+      let imcLabel = datos.imcInterpretacion;
+
+      if (!imcLabel && datos.peso && datos.estatura) {
+        // Calcular si no está guardado (datos viejos)
+        const p = parseFloat(datos.peso);
+        const e = parseFloat(datos.estatura) / 100;
+        if (p > 0 && e > 0) {
+          const val = p / (e * e);
+          if (val < 18.5) imcLabel = 'Bajo peso';
+          else if (val < 24.9) imcLabel = 'Peso normal';
+          else if (val < 29.9) imcLabel = 'Sobrepeso';
+          else imcLabel = 'Obesidad';
+        }
+      }
+
+      if (!imcLabel) imcLabel = 'No especificado';
+      distribuciones.imc[imcLabel] = (distribuciones.imc[imcLabel] || 0) + 1;
     });
 
     return distribuciones;
@@ -325,6 +346,27 @@ const DashboardSalud = ({ respuestas = [], trabajadores = [] }) => {
                   </div>
                   <div className="card-body">
                     <Pie data={crearDatosGrafico(distribuciones.distribucionSalarial)} options={opcionesGrafico} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Distribución por IMC */}
+              <div className="col-md-6 mb-4">
+                <div className="card h-100">
+                  <div className="card-header bg-info text-white">
+                    <h6 className="mb-0">⚖️ Distribución por IMC (Índice Masa Corporal)</h6>
+                  </div>
+                  <div className="card-body">
+                    <Doughnut
+                      data={crearDatosGrafico(distribuciones.imc, [
+                        '#36A2EB', // Peso normal (Blue)
+                        '#FFCE56', // Sobrepeso (Yellow)
+                        '#FF6384', // Obesidad (Red)
+                        '#4BC0C0', // Bajo peso (Teal)
+                        '#C9CBCF'  // No especificado
+                      ])}
+                      options={opcionesGrafico}
+                    />
                   </div>
                 </div>
               </div>

@@ -98,6 +98,33 @@ const DatosDemograficos = ({ trabajador }) => {
                     </div>
                 </div>
 
+                {/* Sección 2: Datos Biométricos */}
+                <h6 className="text-secondary border-bottom pb-2 mb-3">Datos Biométricos (Última Encuesta)</h6>
+                <div className="row g-3 mb-4">
+                    <div className="col-md-3">
+                        <label className="fw-bold text-muted small d-block">Peso</label>
+                        <span>{getRespuesta('peso') !== 'No reportado' ? `${getRespuesta('peso')} kg` : 'No reportado'}</span>
+                    </div>
+                    <div className="col-md-3">
+                        <label className="fw-bold text-muted small d-block">Estatura</label>
+                        <span>{getRespuesta('estatura') !== 'No reportado' ? `${getRespuesta('estatura')} cm` : 'No reportado'}</span>
+                    </div>
+                    <div className="col-md-3">
+                        <label className="fw-bold text-muted small d-block">IMC</label>
+                        <span className="fw-bold">{getRespuesta('imc')}</span>
+                    </div>
+                    <div className="col-md-3">
+                        <label className="fw-bold text-muted small d-block">Interpretación</label>
+                        <span className={`badge ${getRespuesta('imcInterpretacion') === 'Peso normal' ? 'bg-success' :
+                                getRespuesta('imcInterpretacion') === 'Bajo peso' ? 'bg-info' :
+                                    getRespuesta('imcInterpretacion') === 'Sobrepeso' ? 'bg-warning text-dark' :
+                                        getRespuesta('imcInterpretacion') === 'Obesidad' ? 'bg-danger' : 'bg-secondary'
+                            }`}>
+                            {getRespuesta('imcInterpretacion')}
+                        </span>
+                    </div>
+                </div>
+
                 {/* Sección 2: Datos Recientes de Encuesta (Demográficos) */}
                 <h6 className="text-secondary border-bottom pb-2 mb-3">Datos Sociodemográficos (Última Encuesta)</h6>
                 {loading ? (

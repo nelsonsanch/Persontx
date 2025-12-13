@@ -11,7 +11,7 @@ const TrabajadoresList = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  
+
   // Estados para filtros
   const [filtros, setFiltros] = useState({
     eps: '',
@@ -82,10 +82,10 @@ const TrabajadoresList = () => {
         collection(db, 'perfiles_cargo'),
         where('clienteId', '==', user.uid)
       );
-      
+
       const querySnapshot = await getDocs(q);
       const perfilesData = [];
-      
+
       querySnapshot.forEach((doc) => {
         perfilesData.push({
           id: doc.id,
@@ -124,10 +124,10 @@ const TrabajadoresList = () => {
         collection(db, 'trabajadores'),
         where('clienteId', '==', user.uid)
       );
-      
+
       const querySnapshot = await getDocs(q);
       const trabajadoresData = [];
-      
+
       querySnapshot.forEach((doc) => {
         trabajadoresData.push({
           id: doc.id,
@@ -171,35 +171,35 @@ const TrabajadoresList = () => {
 
     // Filtro por EPS
     if (filtros.eps) {
-      trabajadoresFiltrados = trabajadoresFiltrados.filter(t => 
+      trabajadoresFiltrados = trabajadoresFiltrados.filter(t =>
         t.eps && t.eps.toLowerCase().includes(filtros.eps.toLowerCase())
       );
     }
 
     // Filtro por AFP
     if (filtros.afp) {
-      trabajadoresFiltrados = trabajadoresFiltrados.filter(t => 
+      trabajadoresFiltrados = trabajadoresFiltrados.filter(t =>
         t.afp && t.afp.toLowerCase().includes(filtros.afp.toLowerCase())
       );
     }
 
     // Filtro por Estado
     if (filtros.estado) {
-      trabajadoresFiltrados = trabajadoresFiltrados.filter(t => 
+      trabajadoresFiltrados = trabajadoresFiltrados.filter(t =>
         t.estado === filtros.estado
       );
     }
 
     // Filtro por Cargo
     if (filtros.cargo) {
-      trabajadoresFiltrados = trabajadoresFiltrados.filter(t => 
+      trabajadoresFiltrados = trabajadoresFiltrados.filter(t =>
         t.cargo && t.cargo.toLowerCase().includes(filtros.cargo.toLowerCase())
       );
     }
 
     // Filtro por Cédula
     if (filtros.cedula) {
-      trabajadoresFiltrados = trabajadoresFiltrados.filter(t => 
+      trabajadoresFiltrados = trabajadoresFiltrados.filter(t =>
         t.numeroDocumento && t.numeroDocumento.includes(filtros.cedula)
       );
     }
@@ -248,11 +248,11 @@ const TrabajadoresList = () => {
     const ws = XLSX.utils.json_to_sheet(datosParaExcel);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Trabajadores Filtrados');
-    
+
     // Generar nombre del archivo con fecha y filtros aplicados
     const fecha = new Date().toISOString().split('T')[0];
     let nombreArchivo = `trabajadores_${fecha}`;
-    
+
     const filtrosActivos = [];
     if (filtros.eps) filtrosActivos.push(`EPS-${filtros.eps}`);
     if (filtros.afp) filtrosActivos.push(`AFP-${filtros.afp}`);
@@ -260,11 +260,11 @@ const TrabajadoresList = () => {
     if (filtros.cargo) filtrosActivos.push(`Cargo-${filtros.cargo}`);
     if (filtros.cedula) filtrosActivos.push(`Cedula-${filtros.cedula}`);
     if (filtros.nombre) filtrosActivos.push(`Nombre-${filtros.nombre}`);
-    
+
     if (filtrosActivos.length > 0) {
       nombreArchivo += `_filtrado_${filtrosActivos.join('_')}`;
     }
-    
+
     XLSX.writeFile(wb, `${nombreArchivo}.xlsx`);
   };
 
@@ -287,7 +287,7 @@ const TrabajadoresList = () => {
       );
 
       const novedadesSnapshot = await getDocs(novedadesQuery);
-      
+
       if (novedadesSnapshot.empty) {
         console.log('No se encontraron novedades para actualizar');
         return 0;
@@ -295,7 +295,7 @@ const TrabajadoresList = () => {
 
       // Preparar los datos actualizados para las novedades
       const nombreCompleto = `${datosActualizados.nombres} ${datosActualizados.apellidos}`;
-      
+
       const datosParaActualizar = {
         empleadoNombre: nombreCompleto,
         fechaActualizacionEmpleado: new Date().toISOString()
@@ -309,9 +309,9 @@ const TrabajadoresList = () => {
       });
 
       await Promise.all(promesasActualizacion);
-      
+
       console.log(`${novedadesSnapshot.size} novedades actualizadas exitosamente`);
-      
+
       return novedadesSnapshot.size;
     } catch (error) {
       console.error('Error al actualizar novedades del trabajador:', error);
@@ -322,7 +322,7 @@ const TrabajadoresList = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -357,25 +357,25 @@ const TrabajadoresList = () => {
         // Actualizar trabajador existente
         console.log('Actualizando trabajador con ID:', editingId);
         console.log('Datos a actualizar:', trabajadorData);
-        
+
         // Agregar fecha de actualización
         trabajadorData.fechaActualizacion = new Date().toISOString();
-        
+
         await updateDoc(doc(db, 'trabajadores', editingId), trabajadorData);
         console.log('Trabajador actualizado en Firebase');
-        
+
         // Actualizar novedades relacionadas
         let novedadesActualizadas = 0;
         try {
           novedadesActualizadas = await actualizarNovedadesDelTrabajador(
-            formData.numeroDocumento, 
+            formData.numeroDocumento,
             formData
           );
         } catch (errorNovedades) {
           console.error('Error al actualizar novedades:', errorNovedades);
           // Continuar aunque falle la actualización de novedades
         }
-        
+
         if (novedadesActualizadas > 0) {
           alert(`Trabajador actualizado exitosamente.\n${novedadesActualizadas} novedades también fueron actualizadas con los nuevos datos.`);
         } else {
@@ -385,7 +385,7 @@ const TrabajadoresList = () => {
         // Crear nuevo trabajador
         console.log('Creando nuevo trabajador');
         trabajadorData.fechaCreacion = new Date().toISOString();
-        
+
         await addDoc(collection(db, 'trabajadores'), trabajadorData);
         console.log('Nuevo trabajador creado en Firebase');
         alert('Trabajador creado exitosamente');
@@ -404,21 +404,22 @@ const TrabajadoresList = () => {
         afp: '',
         discapacidades: '',
         enfermedadesDiagnosticadas: '',
-        estado: 'activo'
+        estado: 'activo',
+        fechaIngreso: ''
       });
       setShowForm(false);
       setEditingId(null);
-      
+
       // Recargar la lista de trabajadores
       await cargarTrabajadores();
-      
+
     } catch (error) {
       console.error('Error detallado al guardar trabajador:', error);
       console.error('Código de error:', error.code);
       console.error('Mensaje de error:', error.message);
-      
+
       let mensajeError = 'Error al guardar trabajador';
-      
+
       if (error.code === 'permission-denied') {
         mensajeError = 'No tienes permisos para realizar esta operación';
       } else if (error.code === 'not-found') {
@@ -426,7 +427,7 @@ const TrabajadoresList = () => {
       } else if (error.message) {
         mensajeError = `Error: ${error.message}`;
       }
-      
+
       alert(mensajeError);
     }
   };
@@ -444,14 +445,14 @@ const TrabajadoresList = () => {
       );
 
       const novedadesSnapshot = await getDocs(novedadesQuery);
-      
+
       if (!novedadesSnapshot.empty) {
         const confirmacion = window.confirm(
           `Este trabajador tiene ${novedadesSnapshot.size} novedad(es) asociada(s).\n\n` +
           `¿Está seguro de eliminar el trabajador?\n\n` +
           `Nota: Las novedades NO se eliminarán, pero quedarán huérfanas (sin trabajador asociado).`
         );
-        
+
         if (!confirmacion) return;
       } else {
         if (!window.confirm('¿Está seguro de eliminar este trabajador?')) return;
@@ -480,7 +481,9 @@ const TrabajadoresList = () => {
       afp: trabajador.afp || '',
       discapacidades: trabajador.discapacidades || '',
       enfermedadesDiagnosticadas: trabajador.enfermedadesDiagnosticadas || '',
-      estado: trabajador.estado || 'activo'
+      enfermedadesDiagnosticadas: trabajador.enfermedadesDiagnosticadas || '',
+      estado: trabajador.estado || 'activo',
+      fechaIngreso: trabajador.fechaIngreso || ''
     });
     setEditingId(trabajador.id);
     setShowForm(true);
@@ -522,7 +525,7 @@ const TrabajadoresList = () => {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const data = XLSX.utils.sheet_to_json(worksheet);
-        
+
         procesarDatos(data);
       } catch (error) {
         console.error('Error al procesar archivo:', error);
@@ -561,18 +564,18 @@ const TrabajadoresList = () => {
 
           // Verificar si el trabajador ya existe
           const trabajadorExistente = trabajadores.find(t => t.numeroDocumento === trabajadorData.numeroDocumento);
-          
+
           if (trabajadorExistente) {
             // Actualizar trabajador existente
             trabajadorData.fechaActualizacion = new Date().toISOString();
             await updateDoc(doc(db, 'trabajadores', trabajadorExistente.id), trabajadorData);
-            
+
             // Actualizar novedades relacionadas
             await actualizarNovedadesDelTrabajador(
               trabajadorData.numeroDocumento,
               trabajadorData
             );
-            
+
             actualizados++;
           } else {
             // Crear nuevo trabajador
@@ -596,6 +599,32 @@ const TrabajadoresList = () => {
     return tipo ? tipo.label : value;
   };
 
+  const calcularAntiguedad = (fechaIngreso) => {
+    if (!fechaIngreso) return 'No registrada';
+    const fechaInicio = new Date(fechaIngreso);
+    const fechaFin = new Date();
+
+    let years = fechaFin.getFullYear() - fechaInicio.getFullYear();
+    let months = fechaFin.getMonth() - fechaInicio.getMonth();
+
+    if (months < 0 || (months === 0 && fechaFin.getDate() < fechaInicio.getDate())) {
+      years--;
+      months += 12;
+    }
+
+    if (fechaFin.getDate() < fechaInicio.getDate()) {
+      months--;
+    }
+
+    if (years === 0 && months === 0) return 'Menos de 1 mes';
+
+    let resultado = '';
+    if (years > 0) resultado += `${years} año${years !== 1 ? 's' : ''} `;
+    if (months > 0) resultado += `${months} mes${months !== 1 ? 'es' : ''}`;
+
+    return resultado.trim();
+  };
+
   if (loading) {
     return (
       <div className="text-center">
@@ -614,7 +643,7 @@ const TrabajadoresList = () => {
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h3>Gestión de Trabajadores</h3>
             <div>
-              <button 
+              <button
                 className="btn btn-success me-2"
                 onClick={descargarPlantilla}
               >
@@ -629,7 +658,7 @@ const TrabajadoresList = () => {
                   style={{ display: 'none' }}
                 />
               </label>
-              <button 
+              <button
                 className="btn btn-primary"
                 onClick={() => setShowForm(!showForm)}
               >
@@ -651,7 +680,7 @@ const TrabajadoresList = () => {
                   <select
                     className="form-select"
                     value={filtros.eps}
-                    onChange={(e) => setFiltros({...filtros, eps: e.target.value})}
+                    onChange={(e) => setFiltros({ ...filtros, eps: e.target.value })}
                   >
                     <option value="">Todas las EPS</option>
                     {listaEPS.map(eps => (
@@ -665,7 +694,7 @@ const TrabajadoresList = () => {
                   <select
                     className="form-select"
                     value={filtros.afp}
-                    onChange={(e) => setFiltros({...filtros, afp: e.target.value})}
+                    onChange={(e) => setFiltros({ ...filtros, afp: e.target.value })}
                   >
                     <option value="">Todas las AFP</option>
                     {listaAFP.map(afp => (
@@ -679,7 +708,7 @@ const TrabajadoresList = () => {
                   <select
                     className="form-select"
                     value={filtros.estado}
-                    onChange={(e) => setFiltros({...filtros, estado: e.target.value})}
+                    onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
                   >
                     <option value="">Todos los estados</option>
                     <option value="activo">Activo</option>
@@ -692,7 +721,7 @@ const TrabajadoresList = () => {
                   <select
                     className="form-select"
                     value={filtros.cargo}
-                    onChange={(e) => setFiltros({...filtros, cargo: e.target.value})}
+                    onChange={(e) => setFiltros({ ...filtros, cargo: e.target.value })}
                   >
                     <option value="">Todos los cargos</option>
                     {listaCargos.map(cargo => (
@@ -711,7 +740,7 @@ const TrabajadoresList = () => {
                     className="form-control"
                     placeholder="Ingrese número de cédula"
                     value={filtros.cedula}
-                    onChange={(e) => setFiltros({...filtros, cedula: e.target.value})}
+                    onChange={(e) => setFiltros({ ...filtros, cedula: e.target.value })}
                   />
                 </div>
 
@@ -722,20 +751,20 @@ const TrabajadoresList = () => {
                     className="form-control"
                     placeholder="Ingrese nombre o apellido"
                     value={filtros.nombre}
-                    onChange={(e) => setFiltros({...filtros, nombre: e.target.value})}
+                    onChange={(e) => setFiltros({ ...filtros, nombre: e.target.value })}
                   />
                 </div>
 
                 <div className="col-md-4 mb-3">
                   <label className="form-label">Acciones</label>
                   <div className="d-flex gap-2">
-                    <button 
+                    <button
                       className="btn btn-secondary"
                       onClick={limpiarFiltros}
                     >
                       🗑️ Limpiar Filtros
                     </button>
-                    <button 
+                    <button
                       className="btn btn-success"
                       onClick={descargarExcelFiltrado}
                       disabled={trabajadoresFiltrados.length === 0}
@@ -750,7 +779,7 @@ const TrabajadoresList = () => {
               <div className="row">
                 <div className="col-12">
                   <div className="alert alert-info mb-0">
-                    <strong>Resultados:</strong> Se encontraron {trabajadoresFiltrados.length} trabajador(es) 
+                    <strong>Resultados:</strong> Se encontraron {trabajadoresFiltrados.length} trabajador(es)
                     de un total de {trabajadores.length} registrados.
                     {(filtros.eps || filtros.afp || filtros.estado || filtros.cargo || filtros.cedula || filtros.nombre) && (
                       <span className="ms-2">
@@ -773,8 +802,8 @@ const TrabajadoresList = () => {
           <div className="alert alert-info mb-4">
             <h6 className="alert-heading">🔄 Actualización Automática de Datos</h6>
             <p className="mb-0">
-              <strong>Importante:</strong> Cuando edites los datos de un trabajador (nombre, apellidos, etc.), 
-              todas las novedades asociadas a ese trabajador se actualizarán automáticamente para mantener 
+              <strong>Importante:</strong> Cuando edites los datos de un trabajador (nombre, apellidos, etc.),
+              todas las novedades asociadas a ese trabajador se actualizarán automáticamente para mantener
               la consistencia de la información.
             </p>
           </div>
@@ -799,7 +828,7 @@ const TrabajadoresList = () => {
                       <select
                         className="form-select"
                         value={formData.tipoCedula}
-                        onChange={(e) => setFormData({...formData, tipoCedula: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, tipoCedula: e.target.value })}
                         required
                       >
                         {tiposCedula.map(tipo => (
@@ -815,7 +844,7 @@ const TrabajadoresList = () => {
                         type="text"
                         className="form-control"
                         value={formData.numeroDocumento}
-                        onChange={(e) => setFormData({...formData, numeroDocumento: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, numeroDocumento: e.target.value })}
                         required
                         disabled={editingId} // No permitir cambiar el número de documento al editar
                       />
@@ -834,7 +863,7 @@ const TrabajadoresList = () => {
                         type="text"
                         className="form-control"
                         value={formData.nombres}
-                        onChange={(e) => setFormData({...formData, nombres: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
                         required
                       />
                     </div>
@@ -844,7 +873,7 @@ const TrabajadoresList = () => {
                         type="text"
                         className="form-control"
                         value={formData.apellidos}
-                        onChange={(e) => setFormData({...formData, apellidos: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
                         required
                       />
                     </div>
@@ -856,7 +885,7 @@ const TrabajadoresList = () => {
                       <select
                         className="form-select"
                         value={formData.cargo}
-                        onChange={(e) => setFormData({...formData, cargo: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
                       >
                         <option value="">Seleccionar cargo...</option>
                         {perfilesCargo.map(perfil => (
@@ -875,7 +904,7 @@ const TrabajadoresList = () => {
                         type="tel"
                         className="form-control"
                         value={formData.telefono}
-                        onChange={(e) => setFormData({...formData, telefono: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                       />
                     </div>
                   </div>
@@ -887,7 +916,7 @@ const TrabajadoresList = () => {
                         type="email"
                         className="form-control"
                         value={formData.correo}
-                        onChange={(e) => setFormData({...formData, correo: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
                       />
                     </div>
                     <div className="col-md-6 mb-3">
@@ -896,33 +925,42 @@ const TrabajadoresList = () => {
                         type="text"
                         className="form-control"
                         value={formData.eps}
-                        onChange={(e) => setFormData({...formData, eps: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, eps: e.target.value })}
                         placeholder="Ej: Sura EPS, Nueva EPS, etc."
                       />
                     </div>
                   </div>
 
                   <div className="row">
-                    <div className="col-md-6 mb-3">
+                    <div className="col-md-4 mb-3">
                       <label className="form-label">AFP</label>
                       <input
                         type="text"
                         className="form-control"
                         value={formData.afp}
-                        onChange={(e) => setFormData({...formData, afp: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, afp: e.target.value })}
                         placeholder="Ej: Protección, Porvenir, etc."
                       />
                     </div>
-                    <div className="col-md-6 mb-3">
+                    <div className="col-md-4 mb-3">
                       <label className="form-label">Estado</label>
                       <select
                         className="form-select"
                         value={formData.estado}
-                        onChange={(e) => setFormData({...formData, estado: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
                       >
                         <option value="activo">Activo</option>
                         <option value="inactivo">Inactivo</option>
                       </select>
+                    </div>
+                    <div className="col-md-4 mb-3">
+                      <label className="form-label">Fecha de Ingreso</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={formData.fechaIngreso}
+                        onChange={(e) => setFormData({ ...formData, fechaIngreso: e.target.value })}
+                      />
                     </div>
                   </div>
 
@@ -933,7 +971,7 @@ const TrabajadoresList = () => {
                         className="form-control"
                         rows="3"
                         value={formData.discapacidades}
-                        onChange={(e) => setFormData({...formData, discapacidades: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, discapacidades: e.target.value })}
                         placeholder="Describir discapacidades si las hay, o escribir 'Ninguna'"
                       ></textarea>
                     </div>
@@ -943,7 +981,7 @@ const TrabajadoresList = () => {
                         className="form-control"
                         rows="3"
                         value={formData.enfermedadesDiagnosticadas}
-                        onChange={(e) => setFormData({...formData, enfermedadesDiagnosticadas: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, enfermedadesDiagnosticadas: e.target.value })}
                         placeholder="Describir enfermedades diagnosticadas si las hay, o escribir 'Ninguna'"
                       ></textarea>
                     </div>
@@ -968,7 +1006,8 @@ const TrabajadoresList = () => {
                           afp: '',
                           discapacidades: '',
                           enfermedadesDiagnosticadas: '',
-                          estado: 'activo'
+                          estado: 'activo',
+                          fechaIngreso: ''
                         });
                       }}
                     >
@@ -1010,6 +1049,7 @@ const TrabajadoresList = () => {
                         <th>EPS</th>
                         <th>AFP</th>
                         <th>Estado</th>
+                        <th>Antigüedad</th>
                         <th>Acciones</th>
                       </tr>
                     </thead>
@@ -1029,31 +1069,32 @@ const TrabajadoresList = () => {
                               {trabajador.estado}
                             </span>
                           </td>
+                          <td>{calcularAntiguedad(trabajador.fechaIngreso)}</td>
                           <td>
-  <div className="btn-group" role="group">
-    <Link 
-      to={`/cliente/trabajador/${trabajador.id}`} 
-      className="btn btn-sm btn-outline-info" 
-      title="Ver Hoja de Vida"
-    >
-      👁️
-    </Link>
-    <button
-      className="btn btn-sm btn-outline-warning"
-      onClick={() => editarTrabajador(trabajador)}
-      title="Editar Trabajador"
-    >
-      ✏️
-    </button>
-    <button
-      className="btn btn-sm btn-outline-danger"
-      onClick={() => eliminarTrabajador(trabajador.id, trabajador.numeroDocumento)}
-      title="Eliminar Trabajador"
-    >
-      🗑️
-    </button>
-  </div>
-</td>
+                            <div className="btn-group" role="group">
+                              <Link
+                                to={`/cliente/trabajador/${trabajador.id}`}
+                                className="btn btn-sm btn-outline-info"
+                                title="Ver Hoja de Vida"
+                              >
+                                👁️
+                              </Link>
+                              <button
+                                className="btn btn-sm btn-outline-warning"
+                                onClick={() => editarTrabajador(trabajador)}
+                                title="Editar Trabajador"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => eliminarTrabajador(trabajador.id, trabajador.numeroDocumento)}
+                                title="Eliminar Trabajador"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

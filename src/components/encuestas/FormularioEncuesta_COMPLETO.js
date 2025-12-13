@@ -41,6 +41,7 @@ const FormularioEncuesta = ({ trabajadorData, onSubmit = () => { }, onCancel = (
         { id: 'peso', label: 'Peso (kg)', tipo: 'number', requerida: true, min: 30, max: 200 },
         { id: 'estatura', label: 'Estatura (cm)', tipo: 'number', requerida: true, min: 100, max: 220 },
         { id: 'imc', label: 'IMC (Calculado)', tipo: 'text', requerida: false, readonly: true },
+        { id: 'imcInterpretacion', label: 'Diagnóstico IMC', tipo: 'text', requerida: false, readonly: true },
         {
           id: 'grupoSanguineo', label: 'Grupo sanguíneo', tipo: 'select', requerida: true,
           opciones: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'No sé']
@@ -172,11 +173,18 @@ const FormularioEncuesta = ({ trabajadorData, onSubmit = () => { }, onCancel = (
       const peso = parseFloat(formData.peso);
       const estatura = parseFloat(formData.estatura) / 100; // Convertir a metros
       if (peso > 0 && estatura > 0) {
-        const imc = (peso / (estatura * estatura)).toFixed(2);
+        const imcNum = peso / (estatura * estatura);
+        const imc = imcNum.toFixed(2);
+
+        let interpretacion = '';
+        if (imcNum < 18.5) interpretacion = 'Bajo peso';
+        else if (imcNum < 24.9) interpretacion = 'Peso normal';
+        else if (imcNum < 29.9) interpretacion = 'Sobrepeso';
+        else interpretacion = 'Obesidad';
+
         setFormData(prev => {
-          // Solo actualizar si cambió para evitar loop infinito
-          if (prev.imc === imc) return prev;
-          return { ...prev, imc: imc };
+          if (prev.imc === imc && prev.imcInterpretacion === interpretacion) return prev;
+          return { ...prev, imc: imc, imcInterpretacion: interpretacion };
         });
       }
     }
