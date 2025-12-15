@@ -17,9 +17,10 @@ const RecargosList = () => {
         { id: 'he_diurna', label: 'Hora Extra Diurna', factor: 1.25 },
         { id: 'he_nocturna', label: 'Hora Extra Nocturna', factor: 1.75 },
         { id: 'rec_nocturno', label: 'Recargo Nocturno', factor: 1.35 },
-        { id: 'he_diurna_fest', label: 'H.E. Diurna Dominical/Festiva', factor: 2.00 },
-        { id: 'he_nocturna_fest', label: 'H.E. Nocturna Dominical/Festiva', factor: 2.50 },
-        { id: 'rec_festivo', label: 'Recargo Dominical/Festivo', factor: 1.75 }, // Base (1.0) + Recargo (0.75)
+        { id: 'he_diurna_fest', label: 'H.E. Diurna Dominical/Festiva (25% + 80%)', factor: 2.05 },
+        { id: 'he_nocturna_fest', label: 'H.E. Nocturna Dominical/Festiva (75% + 80%)', factor: 2.55 },
+        { id: 'rec_festivo', label: 'Recargo Dominical/Festivo (80%)', factor: 1.80 },
+        { id: 'rec_nocturno_fest', label: 'Recargo Nocturno Dom/Fest (35% + 80%)', factor: 2.15 },
     ]);
 
     // Estado para filtros de fecha
@@ -28,6 +29,7 @@ const RecargosList = () => {
 
     // Estado para horas laborales mensuales (Configurable)
     const [horasMensuales, setHorasMensuales] = useState(240);
+    const [anioConfig, setAnioConfig] = useState(2025); // Año de vigencia
 
     // Estado del formulario
     const [formData, setFormData] = useState({
@@ -43,6 +45,48 @@ const RecargosList = () => {
         observaciones: ''
     });
 
+    // Actualizar factores automáticamente según el año
+    useEffect(() => {
+        let recargoDominicalPct = 0.80; // 2025
+        if (anioConfig === 2026) recargoDominicalPct = 0.90;
+        if (anioConfig >= 2027) recargoDominicalPct = 1.00;
+
+        const pctLabel = Math.round(recargoDominicalPct * 100) + '%';
+
+        setParametros(prev => prev.map(p => {
+            // No tocar los ordinarios
+            if (['he_diurna', 'he_nocturna', 'rec_nocturno'].includes(p.id)) return p;
+
+            // Actualizar dominicales/festivos
+            let nuevoFactor = p.factor;
+            let nuevaLabel = p.label;
+
+            switch (p.id) {
+                case 'he_diurna_fest': // 25% + Dom
+                    nuevoFactor = 1.0 + 0.25 + recargoDominicalPct;
+                    nuevaLabel = `H.E. Diurna Dominical/Festiva (25% + ${pctLabel})`;
+                    break;
+                case 'he_nocturna_fest': // 75% + Dom
+                    nuevoFactor = 1.0 + 0.75 + recargoDominicalPct;
+                    nuevaLabel = `H.E. Nocturna Dominical/Festiva (75% + ${pctLabel})`;
+                    break;
+                case 'rec_festivo': // 80/90/100%
+                    nuevoFactor = 1.0 + recargoDominicalPct;
+                    nuevaLabel = `Recargo Dominical/Festivo (${pctLabel})`;
+                    break;
+                case 'rec_nocturno_fest': // 35% + Dom
+                    nuevoFactor = 1.0 + 0.35 + recargoDominicalPct;
+                    nuevaLabel = `Recargo Nocturno Dom/Fest (35% + ${pctLabel})`;
+                    break;
+                default:
+                    break;
+            }
+            // Redondear a 2 decimales para evitar problemas de punto flotante
+            return { ...p, factor: parseFloat(nuevoFactor.toFixed(2)), label: nuevaLabel };
+        }));
+
+    }, [anioConfig]);
+
     useEffect(() => {
         cargarDatosIniciales();
     }, []);
@@ -54,8 +98,8 @@ const RecargosList = () => {
             if (!user) return;
 
             // 1. Cargar Parametros
-            const paramRef = doc(db, 'parametros_recargos', 'config_' + user.uid);
-            // Intenta cargar, si no existe usa defaults (que ya estan en estado inicial)
+            // Intentar cargar configuración guardada si existiera (aquí solo simulamos por ahora)
+            // Si hubiera lógica de persistencia, aquí recuperaríamos 'anioConfig' y 'horasMensuales'
             // ... logica de carga de parametros opcional, por ahora usamos defaults o podriamos guardar/leer
 
             // 2. Cargar Trabajadores
@@ -250,7 +294,24 @@ const RecargosList = () => {
                                     <span className="input-group-text">Horas</span>
                                 </div>
                                 <small className="text-muted mt-2 d-block">
-                                    Valor usado para calcular la hora ordinaria (Ej: 240 para 48h/semana, 230 para 46h/semana).
+                                    Valor para el cálculo de hora ordinaria (Ej: 240, 230, 220).
+                                </small>
+                            </div>
+                        </div>
+                        <div className="col-md-6">
+                            <div className="card bg-light border-0 p-3">
+                                <label className="form-label fw-bold">Año de Vigencia (Normativa)</label>
+                                <select
+                                    className="form-select"
+                                    value={anioConfig}
+                                    onChange={(e) => setAnioConfig(parseInt(e.target.value))}
+                                >
+                                    <option value={2025}>2025 (Recargo Dom. 80%)</option>
+                                    <option value={2026}>2026 (Recargo Dom. 90%)</option>
+                                    <option value={2027}>2027+ (Recargo Dom. 100%)</option>
+                                </select>
+                                <small className="text-muted mt-2 d-block">
+                                    Actualiza automáticamente los factores de recargo dominical y festivo.
                                 </small>
                             </div>
                         </div>
