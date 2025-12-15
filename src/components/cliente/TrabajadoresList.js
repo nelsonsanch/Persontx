@@ -350,6 +350,8 @@ const TrabajadoresList = () => {
         discapacidades: formData.discapacidades || '',
         enfermedadesDiagnosticadas: formData.enfermedadesDiagnosticadas || '',
         estado: formData.estado || 'activo',
+        fechaIngreso: formData.fechaIngreso || '',
+        salario: formData.salario || 0,
         clienteId: user.uid
       };
 
@@ -405,7 +407,8 @@ const TrabajadoresList = () => {
         discapacidades: '',
         enfermedadesDiagnosticadas: '',
         estado: 'activo',
-        fechaIngreso: ''
+        fechaIngreso: '',
+        salario: ''
       });
       setShowForm(false);
       setEditingId(null);
@@ -483,7 +486,8 @@ const TrabajadoresList = () => {
       enfermedadesDiagnosticadas: trabajador.enfermedadesDiagnosticadas || '',
       enfermedadesDiagnosticadas: trabajador.enfermedadesDiagnosticadas || '',
       estado: trabajador.estado || 'activo',
-      fechaIngreso: trabajador.fechaIngreso || ''
+      fechaIngreso: trabajador.fechaIngreso || '',
+      salario: trabajador.salario || ''
     });
     setEditingId(trabajador.id);
     setShowForm(true);
@@ -558,7 +562,10 @@ const TrabajadoresList = () => {
             afp: row.afp || '',
             discapacidades: row.discapacidades || '',
             enfermedadesDiagnosticadas: row.enfermedadesDiagnosticadas || '',
+            enfermedadesDiagnosticadas: row.enfermedadesDiagnosticadas || '',
             estado: row.estado || 'activo',
+            fechaIngreso: row.fechaIngreso || '',
+            salario: row.salario || 0,
             clienteId: user.uid
           };
 
@@ -880,7 +887,7 @@ const TrabajadoresList = () => {
                   </div>
 
                   <div className="row">
-                    <div className="col-md-6 mb-3">
+                    <div className="col-md-4 mb-3">
                       <label className="form-label">Cargo</label>
                       <select
                         className="form-select"
@@ -894,11 +901,22 @@ const TrabajadoresList = () => {
                           </option>
                         ))}
                       </select>
-                      <small className="form-text text-muted">
-                        💡 Los cargos provienen de los Perfiles de Cargo creados ({perfilesCargo.length} disponibles). Si no ves el cargo deseado, créalo primero en la sección de Perfiles de Cargo.
-                      </small>
                     </div>
-                    <div className="col-md-6 mb-3">
+                    <div className="col-md-4 mb-3">
+                      <label className="form-label">Salario Base *</label>
+                      <div className="input-group">
+                        <span className="input-group-text">$</span>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={formData.salario}
+                          onChange={(e) => setFormData({ ...formData, salario: e.target.value })}
+                          placeholder="0"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="col-md-4 mb-3">
                       <label className="form-label">Teléfono</label>
                       <input
                         type="tel"
@@ -906,6 +924,13 @@ const TrabajadoresList = () => {
                         value={formData.telefono}
                         onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                       />
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-12 mb-2">
+                      <small className="form-text text-muted">
+                        💡 Los cargos provienen de los Perfiles de Cargo creados ({perfilesCargo.length} disponibles). El salario base se usará para recargos.
+                      </small>
                     </div>
                   </div>
 
@@ -1007,7 +1032,8 @@ const TrabajadoresList = () => {
                           discapacidades: '',
                           enfermedadesDiagnosticadas: '',
                           estado: 'activo',
-                          fechaIngreso: ''
+                          fechaIngreso: '',
+                          salario: ''
                         });
                       }}
                     >

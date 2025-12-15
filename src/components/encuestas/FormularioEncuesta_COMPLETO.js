@@ -52,7 +52,8 @@ const FormularioEncuesta = ({ trabajadorData, onSubmit = () => { }, onCancel = (
             'Menos de 1 SMMLV', '1-2 SMMLV', '2-3 SMMLV', '3-4 SMMLV',
             '4-5 SMMLV', '5-7 SMMLV', '7-10 SMMLV', 'Más de 10 SMMLV'
           ]
-        }
+        },
+        { id: 'correo', label: 'Correo Electrónico Personal', tipo: 'email', requerida: true }
       ]
     },
     {

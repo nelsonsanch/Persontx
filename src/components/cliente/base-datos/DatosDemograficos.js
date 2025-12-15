@@ -116,9 +116,9 @@ const DatosDemograficos = ({ trabajador }) => {
                     <div className="col-md-3">
                         <label className="fw-bold text-muted small d-block">Interpretación</label>
                         <span className={`badge ${getRespuesta('imcInterpretacion') === 'Peso normal' ? 'bg-success' :
-                                getRespuesta('imcInterpretacion') === 'Bajo peso' ? 'bg-info' :
-                                    getRespuesta('imcInterpretacion') === 'Sobrepeso' ? 'bg-warning text-dark' :
-                                        getRespuesta('imcInterpretacion') === 'Obesidad' ? 'bg-danger' : 'bg-secondary'
+                            getRespuesta('imcInterpretacion') === 'Bajo peso' ? 'bg-info' :
+                                getRespuesta('imcInterpretacion') === 'Sobrepeso' ? 'bg-warning text-dark' :
+                                    getRespuesta('imcInterpretacion') === 'Obesidad' ? 'bg-danger' : 'bg-secondary'
                             }`}>
                             {getRespuesta('imcInterpretacion')}
                         </span>
@@ -164,11 +164,42 @@ const DatosDemograficos = ({ trabajador }) => {
                             <label className="fw-bold text-muted small d-block">Peso / Talla</label>
                             <span>{getRespuesta('peso')} kg / {getRespuesta('estatura')} cm</span>
                         </div>
+                        <div className="col-md-3">
+                            <label className="fw-bold text-muted small d-block">Correo Electrónico</label>
+                            <span>{getRespuesta('correo')}</span>
+                        </div>
                     </div>
                 ) : (
                     <div className="alert alert-light text-center">
                         <small>El trabajador no ha diligenciado encuestas demográficas recientemente.</small>
                     </div>
+                )}
+
+                {/* Sección 3: Datos de Emergencia */}
+                {datosEncuesta && (
+                    <>
+                        <h6 className="text-secondary border-bottom pb-2 mb-3 mt-4">Contacto de Emergencia 🚨</h6>
+                        <div className="row g-3">
+                            <div className="col-md-4">
+                                <label className="fw-bold text-muted small d-block">Nombre Contacto</label>
+                                <span>{getRespuesta('nombreEmergencia')}</span>
+                            </div>
+                            <div className="col-md-4">
+                                <label className="fw-bold text-muted small d-block">Parentesco</label>
+                                <span>{getRespuesta('parentescoEmergencia')}</span>
+                            </div>
+                            <div className="col-md-4">
+                                <label className="fw-bold text-muted small d-block">Teléfono</label>
+                                <span>{getRespuesta('telefonoEmergencia')}</span>
+                            </div>
+                            {getRespuesta('direccionEmergencia') !== 'No reportado' && (
+                                <div className="col-md-12">
+                                    <label className="fw-bold text-muted small d-block">Dirección</label>
+                                    <span>{getRespuesta('direccionEmergencia')}</span>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
         </div>
