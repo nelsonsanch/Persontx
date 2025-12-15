@@ -16,15 +16,18 @@ const RecargosList = () => {
     const [parametros, setParametros] = useState([
         { id: 'he_diurna', label: 'Hora Extra Diurna', factor: 1.25 },
         { id: 'he_nocturna', label: 'Hora Extra Nocturna', factor: 1.75 },
-        { id: 'rec_nocturno', label: 'Recargo Nocturno', factor: 0.35 },
+        { id: 'rec_nocturno', label: 'Recargo Nocturno', factor: 1.35 },
         { id: 'he_diurna_fest', label: 'H.E. Diurna Dominical/Festiva', factor: 2.00 },
         { id: 'he_nocturna_fest', label: 'H.E. Nocturna Dominical/Festiva', factor: 2.50 },
-        { id: 'rec_festivo', label: 'Recargo Dominical/Festivo', factor: 0.75 }, // Corregido a 0.75 usualmente, usuario dijo 1.75 total quizas, pero factor recargo suele ser base + recargo. Usaremos factor multiplicador total.
+        { id: 'rec_festivo', label: 'Recargo Dominical/Festivo', factor: 1.75 }, // Base (1.0) + Recargo (0.75)
     ]);
 
     // Estado para filtros de fecha
     const [fechaInicio, setFechaInicio] = useState('');
     const [fechaFin, setFechaFin] = useState('');
+
+    // Estado para horas laborales mensuales (Configurable)
+    const [horasMensuales, setHorasMensuales] = useState(240);
 
     // Estado del formulario
     const [formData, setFormData] = useState({
@@ -110,13 +113,13 @@ const RecargosList = () => {
     // Calculo automático del valor
     useEffect(() => {
         if (formData.salarioBase && formData.cantidadHoras && formData.factor) {
-            // Formula estandar Colombia: (Salario / 240) * Factor * Horas
-            // Asumiendo 240 horas laborales al mes (30 dias * 8 horas)
-            const valorHoraOrdinaria = parseFloat(formData.salarioBase) / 240;
+            // Formula estandar Colombia: (Salario / HorasMensuales) * Factor * Horas
+            // El divisor depende de la configuración (240, 230, etc.)
+            const valorHoraOrdinaria = parseFloat(formData.salarioBase) / horasMensuales;
             const total = valorHoraOrdinaria * parseFloat(formData.factor) * parseFloat(formData.cantidadHoras);
             setFormData(prev => ({ ...prev, valorTotal: Math.round(total) }));
         }
-    }, [formData.salarioBase, formData.cantidadHoras, formData.factor]);
+    }, [formData.salarioBase, formData.cantidadHoras, formData.factor, horasMensuales]);
 
     const handleTipoRecargoChange = (e) => {
         const tipoLabel = e.target.value;
@@ -231,7 +234,29 @@ const RecargosList = () => {
             {/* VISTA: CONFIGURACIÓN */}
             {activeTab === 'config' && (
                 <div className="card shadow-sm p-4">
-                    <h4>⚙️ Configuración de Incrementos</h4>
+                    <h4 className="mb-4">⚙️ Configuración General</h4>
+
+                    <div className="row mb-5">
+                        <div className="col-md-6">
+                            <div className="card bg-light border-0 p-3">
+                                <label className="form-label fw-bold">Horas Laborales Mensuales (Divisor)</label>
+                                <div className="input-group">
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        value={horasMensuales}
+                                        onChange={(e) => setHorasMensuales(parseFloat(e.target.value))}
+                                    />
+                                    <span className="input-group-text">Horas</span>
+                                </div>
+                                <small className="text-muted mt-2 d-block">
+                                    Valor usado para calcular la hora ordinaria (Ej: 240 para 48h/semana, 230 para 46h/semana).
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 className="mb-3">📊 Factores de Recargo</h4>
                     <p className="text-muted">Define los factores multiplicadores para cada tipo de recargo.</p>
                     <div className="table-responsive">
                         <table className="table table-bordered">
