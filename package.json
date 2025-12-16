@@ -37,6 +37,7 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
+    "dev": "netlify dev",
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview"
