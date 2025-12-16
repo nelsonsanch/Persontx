@@ -111,7 +111,7 @@ Formato de respuesta: Proporciona cada sección claramente separada y con conten
       }
 
       const data = await response.json();
-      const contenidoGenerado = data.choices[0].message.content;
+      const contenidoGenerado = data.resultado;
 
       // Parsear la respuesta para extraer cada sección
       const sugerencias = parsearRespuestaIA(contenidoGenerado);
