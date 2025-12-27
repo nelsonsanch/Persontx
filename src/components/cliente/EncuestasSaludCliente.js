@@ -417,7 +417,9 @@ const EncuestasSaludCliente = () => {
         const respuestasPreguntas = {};
         preguntasEncuesta.forEach((pregunta, index) => {
           const numeroPregunta = index + 1;
-          const respuestaPregunta = respuesta?.respuestas?.[numeroPregunta] || 'No sé';
+          // Ajuste clave: Las respuestas se guardan como 'salud_1', 'salud_2', etc.
+          const key = `salud_${numeroPregunta}`;
+          const respuestaPregunta = respuesta?.respuestas?.[key] || respuesta?.respuestas?.[numeroPregunta] || 'No reportado';
           respuestasPreguntas[pregunta] = respuestaPregunta;
         });
 
@@ -561,7 +563,9 @@ const EncuestasSaludCliente = () => {
           // Agregar respuestas a cada pregunta
           preguntasCompletas.forEach((pregunta, index) => {
             const numeroPregunta = index + 1;
-            row.push(respuesta?.respuestas?.[numeroPregunta] || 'Sin respuesta');
+            const key = `salud_${numeroPregunta}`;
+            const val = respuesta?.respuestas?.[key] || respuesta?.respuestas?.[numeroPregunta] || 'Sin respuesta';
+            row.push(val);
           });
 
           return row;
@@ -812,8 +816,8 @@ const EncuestasSaludCliente = () => {
                               </td>
                               <td>
                                 <span className={`badge ${encuesta.estado === 'activa' ? 'bg-success' :
-                                    encuesta.estado === 'inactiva' ? 'bg-warning' :
-                                      encuesta.estado === 'cerrada' ? 'bg-secondary' : 'bg-info'
+                                  encuesta.estado === 'inactiva' ? 'bg-warning' :
+                                    encuesta.estado === 'cerrada' ? 'bg-secondary' : 'bg-info'
                                   }`}>
                                   {encuesta.estado === 'activa' ? 'Activa' :
                                     encuesta.estado === 'inactiva' ? 'Inactiva' :
@@ -1161,7 +1165,7 @@ const EncuestasSaludCliente = () => {
                   <p><strong>Descripción:</strong> {selectedEncuesta.descripcion || 'Sin descripción'}</p>
                   <p><strong>Período:</strong> {selectedEncuesta.fechaInicio} - {selectedEncuesta.fechaFin}</p>
                   <p><strong>Estado:</strong> <span className={`badge ${selectedEncuesta.estado === 'activa' ? 'bg-success' :
-                      selectedEncuesta.estado === 'inactiva' ? 'bg-warning' : 'bg-secondary'
+                    selectedEncuesta.estado === 'inactiva' ? 'bg-warning' : 'bg-secondary'
                     }`}>
                     {selectedEncuesta.estado === 'activa' ? 'Activa' :
                       selectedEncuesta.estado === 'inactiva' ? 'Inactiva' : selectedEncuesta.estado}
@@ -1199,7 +1203,7 @@ const EncuestasSaludCliente = () => {
                             </td>
                             <td>
                               <span className={`badge ${respuesta?.estado === 'completada' ? 'bg-success' :
-                                  respuesta?.estado === 'en_progreso' ? 'bg-warning' : 'bg-secondary'
+                                respuesta?.estado === 'en_progreso' ? 'bg-warning' : 'bg-secondary'
                                 }`}>
                                 {respuesta?.estado || 'sin_respuesta'}
                               </span>
@@ -1211,7 +1215,7 @@ const EncuestasSaludCliente = () => {
                               <div className="progress" style={{ height: '20px', minWidth: '80px' }}>
                                 <div
                                   className={`progress-bar ${respuesta?.estado === 'completada' ? 'bg-success' :
-                                      respuesta?.estado === 'en_progreso' ? 'bg-warning' : 'bg-secondary'
+                                    respuesta?.estado === 'en_progreso' ? 'bg-warning' : 'bg-secondary'
                                     }`}
                                   style={{
                                     width: respuesta?.estado === 'completada' ? '100%' :
