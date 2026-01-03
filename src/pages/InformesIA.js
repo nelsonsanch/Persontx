@@ -21,13 +21,14 @@ const InformesIA = () => {
 
     try {
       // 1. Recopilar datos de Firestore (Igual que antes)
-      const colecciones = ['trabajadores', 'novedades', 'emos'];
+      const colecciones = ['trabajadores', 'novedades', 'emos', 'respuestas_encuestas'];
       const promesas = colecciones.map(col => getDocs(query(collection(db, col), where('clienteId', '==', user.uid))));
-      const [trabajadoresSnap, novedadesSnap, emosSnap] = await Promise.all(promesas);
+      const [trabajadoresSnap, novedadesSnap, emosSnap, encuestasSnap] = await Promise.all(promesas);
 
       const trabajadores = trabajadoresSnap.docs.map(doc => doc.data());
       const novedades = novedadesSnap.docs.map(doc => doc.data());
       const emos = emosSnap.docs.map(doc => doc.data());
+      const encuestas = encuestasSnap.docs.map(doc => doc.data());
 
       if (trabajadores.length === 0) {
         setInforme("⚠️ No encontré trabajadores registrados. Registra algunos trabajadores primero para poder analizarlos.");
@@ -55,7 +56,16 @@ const InformesIA = () => {
           concepto: e.conceptoAptitud,
           costo: e.valorExamen,
           doc_empleado: e.numeroDocumento
-        }))
+        })),
+        encuestas: encuestas.map(enc => {
+          // Encontrar nombre del trabajador para contexto
+          const trabajador = trabajadores.find(t => t.id === enc.trabajadorId);
+          return {
+            fecha: enc.fechaRespuesta ? new Date(enc.fechaRespuesta.seconds * 1000).toISOString().split('T')[0] : 'N/A',
+            empleado: trabajador ? `${trabajador.nombres} ${trabajador.apellidos}` : 'Desconocido',
+            respuestas: enc.respuestas
+          };
+        })
       };
 
       // 3. Lógica Híbrida: Backend Seguro (Prod) vs Directo (Local)
