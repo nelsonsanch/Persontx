@@ -60,10 +60,15 @@ const InformesIA = () => {
         encuestas: encuestas.map(enc => {
           // Encontrar nombre del trabajador para contexto
           const trabajador = trabajadores.find(t => t.id === enc.trabajadorId);
+          // Filtrar respuestas irrelevantes para ahorrar tokens
+          const respuestasFiltradas = Object.entries(enc.respuestas || {})
+            .filter(([key, val]) => val && val !== 'No' && val !== 'No sé' && val !== 'No reportado' && val !== 'N/A')
+            .reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {});
+
           return {
             fecha: enc.fechaRespuesta ? new Date(enc.fechaRespuesta.seconds * 1000).toISOString().split('T')[0] : 'N/A',
             empleado: trabajador ? `${trabajador.nombres} ${trabajador.apellidos}` : 'Desconocido',
-            respuestas: enc.respuestas
+            respuestas: respuestasFiltradas
           };
         })
       };
@@ -89,7 +94,8 @@ const InformesIA = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || `Error del servidor: ${response.status}`);
+          // MOSTRAR DETALLES DEL ERROR para depuración
+          throw new Error(errorData.detalles || errorData.error || `Error del servidor: ${response.status}`);
         }
 
         const data = await response.json();
