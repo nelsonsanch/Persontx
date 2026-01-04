@@ -1,2 +1,10 @@
-[build]
-  functions = "netlify/functions"
+[dev]
+  framework = "#custom"
+  command = "npm run start"
+  targetPort = 3000
+  port = 8888
+  publish = "build"
+  autoLaunch = true
+
+[functions]
+  node_bundler = "esbuild"

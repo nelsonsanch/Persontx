@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import ReactMarkdown from 'react-markdown';
+import { AiContextService } from '../services/AiContextService';
 
 const InformesIA = () => {
   const { user } = useAuth();
@@ -36,41 +37,13 @@ const InformesIA = () => {
         return;
       }
 
-      // 2. Preparar los datos para el servidor
+      // 2. Preparar los datos para el servidor usando el servicio de contexto
+      const contextoUnificado = AiContextService.prepararDatosParaIA(trabajadores, novedades, emos, encuestas);
+
       const payload = {
         consulta,
-        trabajadores: trabajadores.map(t => ({
-          nombre: `${t.nombres} ${t.apellidos}`,
-          doc: t.numeroDocumento,
-          cargo: t.cargo,
-          salario: t.salario,
-          area: t.area
-        })),
-        novedades: novedades.map(n => ({
-          tipo: n.tipoNovedad,
-          dias: n.dias,
-          doc_empleado: n.numeroDocumento
-        })),
-        emos: emos.map(e => ({
-          tipo: e.tipoExamen,
-          concepto: e.conceptoAptitud,
-          costo: e.valorExamen,
-          doc_empleado: e.numeroDocumento
-        })),
-        encuestas: encuestas.map(enc => {
-          // Encontrar nombre del trabajador para contexto
-          const trabajador = trabajadores.find(t => t.id === enc.trabajadorId);
-          // Filtrar respuestas irrelevantes para ahorrar tokens
-          const respuestasFiltradas = Object.entries(enc.respuestas || {})
-            .filter(([key, val]) => val && val !== 'No' && val !== 'No sé' && val !== 'No reportado' && val !== 'N/A')
-            .reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {});
-
-          return {
-            fecha: enc.fechaRespuesta ? new Date(enc.fechaRespuesta.seconds * 1000).toISOString().split('T')[0] : 'N/A',
-            empleado: trabajador ? `${trabajador.nombres} ${trabajador.apellidos}` : 'Desconocido',
-            respuestas: respuestasFiltradas
-          };
-        })
+        contexto: contextoUnificado, // Nuevo formato unificado
+        type: 'hr_analytics'
       };
 
       // 3. Lógica Híbrida: Backend Seguro (Prod) vs Directo (Local)

@@ -1,6 +1,6 @@
-const OpenAI = require('openai');
+import OpenAI from 'openai';
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
     // Solo permitir solicitudes POST
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
@@ -18,7 +18,7 @@ exports.handler = async (event, context) => {
     const openai = new OpenAI({ apiKey });
 
     try {
-        const { consulta, trabajadores, novedades, emos, encuestas, type, promptContext } = JSON.parse(event.body);
+        const { consulta, contexto, type } = JSON.parse(event.body);
 
         let systemPrompt = '';
         let userPrompt = '';
@@ -32,47 +32,37 @@ exports.handler = async (event, context) => {
              `;
             userPrompt = consulta; // In this case 'consulta' contains the detailed instructions
         } else {
-            // Default: Analista de HR
+            // "ANALISTA EXPERTO" (Advanced Agent)
             if (!consulta) {
                 return { statusCode: 400, body: JSON.stringify({ error: 'La consulta es requerida.' }) };
             }
 
             systemPrompt = `
-              Eres el "Analista Senior de Datos de Recursos Humanos (HR)" de la empresa.
-              Tu misión es ayudar al gerente a tomar decisiones estratégicas basadas en la salud y el comportamiento de los empleados.
-        
-              OBJETIVOS DE TUS RESPUESTAS:
-              1.  **Analítica Profunda**: No solo cuentes datos, busca patrones (ej. "Hay un aumento de incapacidades en el área X").
-              2.  **Contexto Legal**: Si ves enfermedades graves, recuerda sutilmente la normativa de salud laboral en Colombia (SG-SST) sin ser abogado.
-              3.  **Accionable**: Cada respuesta debe sugerir al menos una acción preventiva o correctiva.
-        
-              FORMATO DE SALIDA (IMPORTANTE):
-              Responde SIEMPRE usando Markdown enriquecido:
-              - Usa TABLAS para listas de empleados o costos.
-              - Usa \`Negritas\` para resaltar cifras clave.
-              - Usa Listas para enumerar hallazgos.
+              Eres el "Analista Auditor de Datos de Recursos Humanos" de la empresa.
+              Tu capacidad supera a la de un asistente simple: Tienes acceso a una base de datos unificada de trabajadores, historial médico, ausentismo y encuestas.
+
+              TUS SUPERPODERES:
+              1.  **Precisión Quirúrgica**: Si te piden una fecha, da la fecha. Si te piden un nombre, da el nombre.
+              2.  **Cruce de Datos**: Tienes la capacidad de relacionar eventos. 
+                  - Ej: "Juan reporta dolor (Encuesta) y tiene restricción de carga (EMO)". -> ¡Detecta esto!
+              3.  **Memoria Cronológica**: Tienes el historial de eventos de cada trabajador. Úsalo para ver tendencias.
+
+              FORMATO DE RESPUESTA:
+              - Usa Markdown avanzado (Tablas, Negritas, Citas).
+              - **EVIDENCIA**: Cada afirmación debe estar respaldada. Ej: "Se recomienda inspección de puesto para Juan Pérez (Fuente: Encuesta 'Dolor espalda' + EMO 'Restricción Lumbar')".
               
-              Los datos que recibirás son JSON crudo de la base de datos:
-              - Trabajadores: Info personal y contractual.
-              - Novedades: Incapacidades, permisos, vacaciones.
-              - EMOs: Exámenes médicos ocupacionales y diagnósticos.
-              
-              IMPORTANTE:
-              - Si te piden "Costos", suma el valor de los EMOs o estima costos de incapacidad (salario / 30 * dias).
-              - Si te piden "Diagnóstico", cruza las enfermedades reportadas en encuestas/EMOs con las incapacidades.
-              - **ENCUESTAS DE SALUD**: Tienes acceso a las respuestas de las encuestas de salud (Sintomatología, hábitos, demografía). Úsalas para identificar riesgos psicosociales o biomecánicos antes de que se conviertan en ausentismo.
-              - Si no hay datos suficientes, dilo claramente.
+              INSTRUCCIONES DE ANÁLISIS:
+              - Recibirás un objeto "Contexto Unificado".
+              - Dentro hay "Fichas de Trabajadores" con su "Historial" y "Riesgos".
+              - Si te piden "Costos", suma los costos del historial.
+              - Si te piden "Diagnóstico General", lee el "Resumen Ejecutivo".
             `;
 
             userPrompt = `
-              PREGUNTA DEL USUARIO: "${consulta}"
+              CONSULTA DEL GERENTE: "${consulta}"
         
-              DATOS DISPONIBLES (JSON):
-              - Trabajadores (${trabajadores?.length || 0} registros): ${JSON.stringify(trabajadores)}
-              - Novedades (${novedades?.length || 0} registros): ${JSON.stringify(novedades)}
-              - Novedades (${novedades?.length || 0} registros): ${JSON.stringify(novedades)}
-              - EMOs (${emos?.length || 0} registros): ${JSON.stringify(emos)}
-              - Encuestas de Salud (${encuestas?.length || 0} registros): ${JSON.stringify(encuestas)}
+              CONTEXTO UNIFICADO (BASE DE DATOS):
+              ${JSON.stringify(contexto)}
             `;
         }
 
