@@ -59,14 +59,28 @@ export const AiContextService = {
         });
 
         // 4. Procesar Encuestas (Sintomatología)
+        // 4. Procesar Encuestas (Sintomatología)
         encuestas.forEach(enc => {
             // Intentar vincular por ID de trabajador guardado en la encuesta
-            // Si no existe, intentar buscar por otro método o ignorar si no hay vínculo claro
-            // Asumimos que enc.trabajadorId mapea al ID del documento de trabajador en Firebase
+            const id = enc.trabajadorId; // ID de Firestore
 
-            // Nota: trabajadores es un array de objetos data(), puede que no tenga el ID de documento 'id'.
-            // En InformesIA se mapeaba: trabajadores.find(t => t.id === enc.trabajadorId)
-            // Necesitamos asegurar que los objetos trabajador tengan su ID de Firestore.
+            if (mapaTrabajadores[id]) {
+                mapaTrabajadores[id].historial.push({
+                    tipo: 'ENCUESTA_SALUD',
+                    fecha: enc.fechaRespuesta ? new Date(enc.fechaRespuesta.seconds * 1000).toISOString().split('T')[0] : 'N/A',
+                    detalle: 'Respondió encuesta de condiciones de salud'
+                });
+
+                // Analizar respuestas de riesgo
+                const respuestas = enc.respuestas || {};
+                Object.entries(respuestas).forEach(([key, val]) => {
+                    // Detectar respuestas de dolor o síntomas (Valores distintos a 'No'/'No sé'/'N/A')
+                    if (val && typeof val === 'string' && val !== 'No' && val !== 'No sé' && val !== 'N/A' && val !== 'No reportado' && val.length > 2) {
+                        // Es un síntoma reportado
+                        mapaTrabajadores[id].riesgos.push(`SÍNTOMA (${key}): ${val}`);
+                    }
+                });
+            }
         });
 
         // REVISIÓN: La función necesita recibir trabajadores con su ID de Firestore para cruzar encuestas.

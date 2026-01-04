@@ -26,7 +26,7 @@ const InformesIA = () => {
       const promesas = colecciones.map(col => getDocs(query(collection(db, col), where('clienteId', '==', user.uid))));
       const [trabajadoresSnap, novedadesSnap, emosSnap, encuestasSnap] = await Promise.all(promesas);
 
-      const trabajadores = trabajadoresSnap.docs.map(doc => doc.data());
+      const trabajadores = trabajadoresSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const novedades = novedadesSnap.docs.map(doc => doc.data());
       const emos = emosSnap.docs.map(doc => doc.data());
       const encuestas = encuestasSnap.docs.map(doc => doc.data());
