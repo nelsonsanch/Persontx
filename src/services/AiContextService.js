@@ -39,8 +39,15 @@ export const AiContextService = {
             }
         });
 
+        // FECHA DE CORTE: Filtrar eventos antiguos (2 años atrás) para ahorrar tokens (TPM Limit Fix)
+        const fechaCorte = new Date();
+        fechaCorte.setFullYear(fechaCorte.getFullYear() - 2);
+        const fechaCorteStr = fechaCorte.toISOString().split('T')[0];
+
         // 2. Procesar Novedades (Ausentismo) - Usan Cédula
         novedades.forEach(nov => {
+            if (nov.fechaInicio < fechaCorteStr) return; // Ignorar registros antiguos
+
             const cedula = nov.numeroDocumento || nov.doc_empleado;
             const workerId = indiceCedula[cedula]; // Buscar ID real usando la Cédula
 
@@ -49,10 +56,14 @@ export const AiContextService = {
                 const diagnostico = nov.diagnosticoEnfermedad || nov.diagnostico || 'Sin diagnóstico';
                 const costo = nov.valorTotal || nov.costo || 0;
 
+                // Truncar detalle para ahorrar tokens
+                let detalle = `${nov.tipoNovedad} - ${diagnostico}`;
+                if (detalle.length > 100) detalle = detalle.substring(0, 100) + '...';
+
                 mapaTrabajadores[workerId].historial.push({
                     tipo: 'AUSENTISMO',
                     fecha: nov.fechaInicio,
-                    detalle: `${nov.tipoNovedad} - ${diagnostico} (${nov.dias} días)`,
+                    detalle: `${detalle} (${nov.dias}d)`,
                     costo: costo
                 });
             }
@@ -60,19 +71,25 @@ export const AiContextService = {
 
         // 3. Procesar EMOs (Exámenes Médicos) - Usan Cédula
         emos.forEach(emo => {
+            if (emo.fechaExamen < fechaCorteStr) return; // Ignorar registros antiguos
+
             const cedula = emo.numeroDocumento || emo.doc_empleado;
             const workerId = indiceCedula[cedula];
 
             if (workerId && mapaTrabajadores[workerId]) {
+                let detalle = `${emo.tipoExamen}: ${emo.conceptoAptitud}`;
+                if (emo.recomendaciones) detalle += ` - ${emo.recomendaciones}`;
+                if (detalle.length > 100) detalle = detalle.substring(0, 100) + '...';
+
                 mapaTrabajadores[workerId].historial.push({
                     tipo: 'SALUD_EMO',
                     fecha: emo.fechaExamen,
-                    detalle: `${emo.tipoExamen}: ${emo.conceptoAptitud} - ${emo.recomendaciones || 'Sin recomendaciones'}`,
+                    detalle: detalle,
                     enfasis: emo.enfasis
                 });
 
                 if (emo.conceptoAptitud !== 'Apto') {
-                    mapaTrabajadores[workerId].riesgos.push(`Restricción Médica: ${emo.conceptoAptitud}`);
+                    mapaTrabajadores[workerId].riesgos.push(`Restricción: ${emo.conceptoAptitud}`);
                 }
             }
         });
@@ -82,18 +99,23 @@ export const AiContextService = {
             const workerId = enc.trabajadorId; // ID directo de Firestore
 
             if (workerId && mapaTrabajadores[workerId]) {
-                mapaTrabajadores[workerId].historial.push({
-                    tipo: 'ENCUESTA_SALUD',
-                    fecha: enc.fechaRespuesta ? new Date(enc.fechaRespuesta.seconds * 1000).toISOString().split('T')[0] : 'N/A',
-                    detalle: 'Respondió encuesta de condiciones de salud'
-                });
+                // Solo agregar el evento cronológico si es reciente
+                const fechaEnc = enc.fechaRespuesta ? new Date(enc.fechaRespuesta.seconds * 1000).toISOString().split('T')[0] : 'N/A';
 
-                // Analizar respuestas de riesgo
+                if (fechaEnc >= fechaCorteStr) {
+                    mapaTrabajadores[workerId].historial.push({
+                        tipo: 'ENCUESTA_SALUD',
+                        fecha: fechaEnc,
+                        detalle: 'Encuesta Salud'
+                    });
+                }
+
+                // Analizar respuestas de riesgo (Siempre relevantes)
                 const respuestas = enc.respuestas || {};
                 Object.entries(respuestas).forEach(([key, val]) => {
                     // Detectar respuestas relevantes
                     if (val && typeof val === 'string' && val !== 'No' && val !== 'No sé' && val !== 'N/A' && val !== 'No reportado' && val.length > 2) {
-                        mapaTrabajadores[workerId].riesgos.push(`SÍNTOMA (${key}): ${val}`);
+                        mapaTrabajadores[workerId].riesgos.push(`SINTOMA: ${val.substring(0, 50)}`);
                     }
                 });
             }
