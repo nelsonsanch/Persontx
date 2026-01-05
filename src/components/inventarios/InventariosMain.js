@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Tab, Nav, Card } from 'react-bootstrap';
-import { FireExtinguisher, FlaskConical, Stethoscope } from 'lucide-react';
+// Se eliminan los iconos de Lucide para evitar errores de versión
+// import { FireExtinguisher, FlaskConical, Stethoscope } from 'lucide-react';
 
 // Importar Configuraciones
 import { extintoresConfig } from './configs/extintoresConfig';
@@ -13,11 +14,11 @@ import GestorInventario from './GestorInventario';
 const InventariosMain = () => {
     const [activeTab, setActiveTab] = useState('extintores');
 
-    // Mapa de íconos para cada tab (Visual Candy)
+    // Mapa de íconos (Emojis para cero errores)
     const icons = {
-        extintores: <FireExtinguisher size={18} className="me-2" />,
-        quimicos: <FlaskConical size={18} className="me-2" />,
-        botiquin: <Stethoscope size={18} className="me-2" />
+        extintores: <span className="me-2">🧯</span>,
+        quimicos: <span className="me-2">🧪</span>,
+        botiquin: <span className="me-2">🩺</span>
     };
 
     return (

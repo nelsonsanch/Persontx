@@ -20,14 +20,28 @@ export const extintoresConfig = {
             options: ['2.5 Lbs', '5 Lbs', '10 Lbs', '20 Lbs', '150 Lbs (Satélite)'],
             required: true
         },
-        { name: 'fechaUltimaRecarga', label: 'Última Recarga', type: 'date', required: true },
-        { name: 'fechaVencimiento', label: 'Próximo Vencimiento', type: 'date', required: true },
+        { name: 'fechaCompra', label: 'Fecha de Compra/Adquisición', type: 'date', required: true },
+        { name: 'valor', label: 'Valor Comercial ($)', type: 'number', required: true },
         {
-            name: 'estadoFisico',
-            label: 'Estado Físico',
-            type: 'select',
-            options: ['Bueno', 'Regular', 'Malo - Requiere Mantenimiento', 'Baja Presión'],
-            required: true
+            name: 'componentes',
+            label: 'Componentes y Accesorios Incluidos',
+            type: 'checklist',
+            options: [
+                'Cilindro',
+                'Anilla de seguridad',
+                'Manómetro',
+                'Válvula',
+                'Agente extintor',
+                'Gas propelente',
+                'Tubo sifón',
+                'Manguera',
+                'Boquilla',
+                'Llantas (Ruedas)',
+                'Manguera de largo alcance (Satélite)',
+                'Boquilla de control (Pistola)',
+                'Chasis o Carretilla',
+                'Guantes de carnaza'
+            ]
         }
     ]
 };

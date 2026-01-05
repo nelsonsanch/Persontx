@@ -91,6 +91,16 @@ const GestorInventario = ({ config }) => {
         }
     };
 
+    // Manejar cambios en inputs Checkbox (Array)
+    const handleChecklistChange = (fieldName, option) => {
+        const currentValues = formData[fieldName] || [];
+        if (currentValues.includes(option)) {
+            setFormData({ ...formData, [fieldName]: currentValues.filter(v => v !== option) });
+        } else {
+            setFormData({ ...formData, [fieldName]: [...currentValues, option] });
+        }
+    };
+
     // Renderizar Input Dinámico
     const renderInput = (field) => {
         switch (field.type) {
@@ -116,6 +126,20 @@ const GestorInventario = ({ config }) => {
                         onChange={(e) => handleInputChange(e, field.name)}
                         placeholder={field.placeholder}
                     />
+                );
+            case 'checklist':
+                return (
+                    <div className="border p-2 rounded" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                        {field.options.map((opt, idx) => (
+                            <Form.Check
+                                key={idx}
+                                type="checkbox"
+                                label={opt}
+                                checked={(formData[field.name] || []).includes(opt)}
+                                onChange={() => handleChecklistChange(field.name, opt)}
+                            />
+                        ))}
+                    </div>
                 );
             default: // text, date, number
                 return (
