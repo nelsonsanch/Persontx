@@ -94,8 +94,8 @@ const InformesIA = () => {
   return (
     <div className="container-fluid">
       <div className="d-flex align-items-center mb-4">
-        <h2 className="text-primary mb-0 me-3">🧠 Analista de HR Inteligente</h2>
-        <span className="badge bg-success">Potenciado por AI</span>
+        <h2 className="text-primary mb-0 me-3">✨ Entix AI - Asistente Virtual</h2>
+        <span className="badge bg-gradient-primary">Expert Mode</span>
       </div>
 
       <div className="card mb-4 shadow-sm">
