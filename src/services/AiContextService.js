@@ -10,42 +10,61 @@ export const AiContextService = {
      * Genera el Paylaod optimizado para la IA
      */
     prepararDatosParaIA: (trabajadores, novedades, emos, encuestas) => {
-        // 1. Crear Mapa de Trabajadores (Key: ID/Cedula -> Data)
+        // 1. Crear Mapa de Trabajadores (Key: Firestore ID) y Índice por Cédula
         const mapaTrabajadores = {};
+        const indiceCedula = {}; // Para buscar rápido por número de documento
 
         trabajadores.forEach(t => {
-            const id = t.numeroDocumento || t.id;
-            mapaTrabajadores[id] = {
-                basico: {
-                    nombre: `${t.nombres} ${t.apellidos}`,
-                    cargo: t.cargo,
-                    area: t.area,
-                    fechaIngreso: t.fechaIngreso,
-                    salario: t.salario
-                },
-                historial: [], // Línea de tiempo unificada
-                riesgos: []    // Alertas detectadas
-            };
+            // Asegurar que tenemos ID y Documento
+            const firestoreId = t.id;
+            const cedula = t.numeroDocumento;
+
+            if (firestoreId) {
+                mapaTrabajadores[firestoreId] = {
+                    basico: {
+                        nombre: `${t.nombres} ${t.apellidos}`,
+                        cargo: t.cargo,
+                        area: t.area,
+                        cedula: cedula, // Importante para referencia
+                        fechaIngreso: t.fechaIngreso,
+                        salario: t.salario
+                    },
+                    historial: [], // Línea de tiempo unificada
+                    riesgos: []    // Alertas detectadas
+                };
+            }
+
+            if (cedula && firestoreId) {
+                indiceCedula[cedula] = firestoreId;
+            }
         });
 
-        // 2. Procesar Novedades (Ausentismo)
+        // 2. Procesar Novedades (Ausentismo) - Usan Cédula
         novedades.forEach(nov => {
-            const id = nov.numeroDocumento || nov.doc_empleado;
-            if (mapaTrabajadores[id]) {
-                mapaTrabajadores[id].historial.push({
+            const cedula = nov.numeroDocumento || nov.doc_empleado;
+            const workerId = indiceCedula[cedula]; // Buscar ID real usando la Cédula
+
+            if (workerId && mapaTrabajadores[workerId]) {
+                // Mapeo corregido de campos
+                const diagnostico = nov.diagnosticoEnfermedad || nov.diagnostico || 'Sin diagnóstico';
+                const costo = nov.valorTotal || nov.costo || 0;
+
+                mapaTrabajadores[workerId].historial.push({
                     tipo: 'AUSENTISMO',
                     fecha: nov.fechaInicio,
-                    detalle: `${nov.tipoNovedad} - ${nov.diagnostico || 'Sin diagnóstico'} (${nov.dias} días)`,
-                    costo: nov.costo || 0
+                    detalle: `${nov.tipoNovedad} - ${diagnostico} (${nov.dias} días)`,
+                    costo: costo
                 });
             }
         });
 
-        // 3. Procesar EMOs (Exámenes Médicos)
+        // 3. Procesar EMOs (Exámenes Médicos) - Usan Cédula
         emos.forEach(emo => {
-            const id = emo.numeroDocumento || emo.doc_empleado;
-            if (mapaTrabajadores[id]) {
-                mapaTrabajadores[id].historial.push({
+            const cedula = emo.numeroDocumento || emo.doc_empleado;
+            const workerId = indiceCedula[cedula];
+
+            if (workerId && mapaTrabajadores[workerId]) {
+                mapaTrabajadores[workerId].historial.push({
                     tipo: 'SALUD_EMO',
                     fecha: emo.fechaExamen,
                     detalle: `${emo.tipoExamen}: ${emo.conceptoAptitud} - ${emo.recomendaciones || 'Sin recomendaciones'}`,
@@ -53,19 +72,17 @@ export const AiContextService = {
                 });
 
                 if (emo.conceptoAptitud !== 'Apto') {
-                    mapaTrabajadores[id].riesgos.push(`Restricción Médica: ${emo.conceptoAptitud}`);
+                    mapaTrabajadores[workerId].riesgos.push(`Restricción Médica: ${emo.conceptoAptitud}`);
                 }
             }
         });
 
-        // 4. Procesar Encuestas (Sintomatología)
-        // 4. Procesar Encuestas (Sintomatología)
+        // 4. Procesar Encuestas (Sintomatología) - Usan Firestore ID
         encuestas.forEach(enc => {
-            // Intentar vincular por ID de trabajador guardado en la encuesta
-            const id = enc.trabajadorId; // ID de Firestore
+            const workerId = enc.trabajadorId; // ID directo de Firestore
 
-            if (mapaTrabajadores[id]) {
-                mapaTrabajadores[id].historial.push({
+            if (workerId && mapaTrabajadores[workerId]) {
+                mapaTrabajadores[workerId].historial.push({
                     tipo: 'ENCUESTA_SALUD',
                     fecha: enc.fechaRespuesta ? new Date(enc.fechaRespuesta.seconds * 1000).toISOString().split('T')[0] : 'N/A',
                     detalle: 'Respondió encuesta de condiciones de salud'
@@ -74,18 +91,16 @@ export const AiContextService = {
                 // Analizar respuestas de riesgo
                 const respuestas = enc.respuestas || {};
                 Object.entries(respuestas).forEach(([key, val]) => {
-                    // Detectar respuestas de dolor o síntomas (Valores distintos a 'No'/'No sé'/'N/A')
+                    // Detectar respuestas relevantes
                     if (val && typeof val === 'string' && val !== 'No' && val !== 'No sé' && val !== 'N/A' && val !== 'No reportado' && val.length > 2) {
-                        // Es un síntoma reportado
-                        mapaTrabajadores[id].riesgos.push(`SÍNTOMA (${key}): ${val}`);
+                        mapaTrabajadores[workerId].riesgos.push(`SÍNTOMA (${key}): ${val}`);
                     }
                 });
             }
         });
 
-        // REVISIÓN: La función necesita recibir trabajadores con su ID de Firestore para cruzar encuestas.
-        // Ajustaremos la lógica de cruce en 'generarResumenEjecutivo'.
-
+        // Retornar solo fichas activas (con historial o riesgos) para ahorrar tokens
+        // O retornar todas si se pide análisis global
         return {
             resumenGlobal: AiContextService.generarResumenEjecutivo(trabajadores, novedades, emos, encuestas),
             fichasTrabajadores: mapaTrabajadores
