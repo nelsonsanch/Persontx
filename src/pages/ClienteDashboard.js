@@ -12,6 +12,7 @@ import PerfilesCargo from '../components/cliente/PerfilesCargo';
 import InformesIA from './InformesIA';
 import RecargosList from '../components/cliente/RecargosList';
 import BaseDatosUnificada from '../components/cliente/base-datos/BaseDatosUnificada';
+import InventariosMain from '../components/inventarios/InventariosMain';
 // --- FIN DE CÓDIGO NUEVO ---
 
 
@@ -46,6 +47,8 @@ const ClienteDashboard = () => {
         return <RecargosList />;
       case 'base-datos':
         return <BaseDatosUnificada />;
+      case 'inventarios':
+        return <InventariosMain />;
       // --- FIN DE CÓDIGO NUEVO ---
 
       default:
@@ -228,6 +231,21 @@ const ClienteDashboard = () => {
             }}
           >
             📋 Encuestas de Salud
+          </button>
+          <button
+            className="btn me-2 mb-2"
+            onClick={() => setActiveTab('inventarios')}
+            style={{
+              backgroundColor: activeTab === 'inventarios' ? '#007bff' : '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderBottom: activeTab === 'inventarios' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+              borderRadius: '8px 8px 0 0',
+              color: activeTab === 'inventarios' ? 'white' : '#495057',
+              padding: '10px 20px',
+              marginBottom: '-1px'
+            }}
+          >
+            📦 Inventarios
           </button>
           {/* --- FIN DE CÓDIGO NUEVO --- */}
 
