@@ -12,13 +12,15 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { Table, Button, Modal, Form, Badge, Alert } from 'react-bootstrap';
-import { Trash2, Edit, Plus, FileText } from 'lucide-react';
+import { Trash2, Edit, Plus, FileText, Eye } from 'lucide-react';
 
 const GestorInventario = ({ config }) => {
     const { user } = useAuth();
     const [items, setItems] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [viewModalOpen, setViewModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
+    const [viewingItem, setViewingItem] = useState(null);
     const [formData, setFormData] = useState({});
     const [loading, setLoading] = useState(true);
 
@@ -57,6 +59,14 @@ const GestorInventario = ({ config }) => {
         }
         setShowModal(true);
     };
+
+    // Abrir modal de visualización
+    const openViewModal = (item) => {
+        setViewingItem(item);
+        setViewModalOpen(true);
+    };
+
+
 
     // Guardar (Crear o Actualizar)
     const handleSave = async (e) => {
@@ -330,6 +340,15 @@ const GestorInventario = ({ config }) => {
                                     ))}
                                     <td className="text-center">
                                         <Button
+                                            variant="outline-info"
+                                            size="sm"
+                                            className="me-2"
+                                            title="Ver Detalle"
+                                            onClick={() => openViewModal(item)}
+                                        >
+                                            <Eye size={16} />
+                                        </Button>
+                                        <Button
                                             variant="outline-primary"
                                             size="sm"
                                             className="me-2"
@@ -352,7 +371,7 @@ const GestorInventario = ({ config }) => {
                 </div>
             )}
 
-            {/* Modal Dinámico */}
+            {/* Modal de Creación/Edición */}
             <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
                 <Modal.Header closeButton>
                     <Modal.Title>{editingItem ? 'Editar Elemento' : 'Nuevo Elemento'}</Modal.Title>
@@ -375,6 +394,59 @@ const GestorInventario = ({ config }) => {
                         <Button variant="primary" type="submit">Guardar</Button>
                     </Modal.Footer>
                 </Form>
+            </Modal>
+
+            {/* Modal de Visualización (Solo Lectura) */}
+            <Modal show={viewModalOpen} onHide={() => setViewModalOpen(false)} size="lg">
+                <Modal.Header closeButton>
+                    <Modal.Title>Detalle del Elemento</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {viewingItem && (
+                        <div className="row">
+                            {config.campos.map((field, idx) => {
+                                const val = viewingItem[field.name];
+                                return (
+                                    <div key={idx} className="col-md-6 mb-4">
+                                        <h6 className="text-muted small text-uppercase mb-1">{field.label}</h6>
+
+                                        {field.type === 'nfpa_diamond' ? (
+                                            // Renderizar Rombo ReadOnly
+                                            renderCell(viewingItem, field)
+                                        ) : field.type === 'checklist_with_quantity' ? (
+                                            // Renderizar Lista de Cantidades
+                                            <div className="border rounded p-2 bg-light">
+                                                {val && Object.keys(val).length > 0 ? (
+                                                    <ul className="list-unstyled mb-0 small">
+                                                        {Object.entries(val).map(([k, v], i) => (
+                                                            <li key={i} className="d-flex justify-content-between border-bottom py-1">
+                                                                <span>{k}</span>
+                                                                <Badge bg="primary" pill>{v}</Badge>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : <span className="text-muted fst-italic">Sin elementos registrados</span>}
+                                            </div>
+                                        ) : field.type === 'checklist' ? (
+                                            // Renderizar Lista Simple
+                                            <ul className="list-unstyled mb-0 small border rounded p-2 bg-light">
+                                                {val && val.length > 0 ? val.map((opt, i) => (
+                                                    <li key={i}>✓ {opt}</li>
+                                                )) : <span className="text-muted">Ninguno</span>}
+                                            </ul>
+                                        ) : (
+                                            // Texto plano
+                                            <p className="fw-bold mb-0">{val || '-'}</p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setViewModalOpen(false)}>Cerrar</Button>
+                </Modal.Footer>
             </Modal>
         </div>
     );
