@@ -101,6 +101,19 @@ const GestorInventario = ({ config }) => {
         }
     };
 
+    // Manejar cambios en inputs de Cantidad (Checklist con Valor)
+    const handleQuantityChange = (fieldName, item, value) => {
+        const currentData = formData[fieldName] || {};
+        // Si el valor está vacío, lo eliminamos del objeto para no guardar basura
+        if (value === '' || value === '0') {
+            const newData = { ...currentData };
+            delete newData[item];
+            setFormData({ ...formData, [fieldName]: newData });
+        } else {
+            setFormData({ ...formData, [fieldName]: { ...currentData, [item]: value } });
+        }
+    };
+
     // Renderizar Input Dinámico
     const renderInput = (field) => {
         switch (field.type) {
@@ -141,6 +154,93 @@ const GestorInventario = ({ config }) => {
                         ))}
                     </div>
                 );
+            case 'checklist_with_quantity':
+                return (
+                    <div className="border p-2 rounded bg-light" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        <small className="text-muted d-block mb-2">Ingrese la cantidad para los elementos disponibles:</small>
+                        {field.options.map((opt, idx) => (
+                            <div key={idx} className="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1">
+                                <label className="small mb-0 flex-grow-1" style={{ lineHeight: '1.2' }}>{opt}</label>
+                                <Form.Control
+                                    type="number"
+                                    size="sm"
+                                    style={{ width: '70px' }}
+                                    placeholder="Cant."
+                                    value={(formData[field.name] || {})[opt] || ''}
+                                    onChange={(e) => handleQuantityChange(field.name, opt, e.target.value)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                );
+            case 'nfpa_diamond':
+                // Inicializar objeto si no existe
+                const diamond = formData[field.name] || { salud: 0, inflamabilidad: 0, reactividad: 0, especial: '' };
+
+                const handleDiamondChange = (subField, value) => {
+                    setFormData({ ...formData, [field.name]: { ...diamond, [subField]: value } });
+                };
+
+                return (
+                    <div className="d-flex justify-content-center p-3 border rounded bg-light">
+                        <div style={{ width: '200px', position: 'relative', height: '200px' }}>
+                            {/* Azul - Salud (Izquierda) */}
+                            <div style={{ position: 'absolute', left: '0', top: '50px', width: '100px', height: '100px', backgroundColor: '#007bff', transform: 'rotate(45deg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+                                <Form.Control
+                                    as="select"
+                                    value={diamond.salud}
+                                    onChange={(e) => handleDiamondChange('salud', e.target.value)}
+                                    style={{ transform: 'rotate(-45deg)', width: '60px', textAlign: 'center', background: 'rgba(255,255,255,0.9)', fontWeight: 'bold' }}
+                                >
+                                    {[0, 1, 2, 3, 4].map(n => <option key={n} value={n}>{n}</option>)}
+                                </Form.Control>
+                            </div>
+
+                            {/* Rojo - Inflamabilidad (Arriba) */}
+                            <div style={{ position: 'absolute', left: '50px', top: '0', width: '100px', height: '100px', backgroundColor: '#dc3545', transform: 'rotate(45deg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+                                <Form.Control
+                                    as="select"
+                                    value={diamond.inflamabilidad}
+                                    onChange={(e) => handleDiamondChange('inflamabilidad', e.target.value)}
+                                    style={{ transform: 'rotate(-45deg)', width: '60px', textAlign: 'center', background: 'rgba(255,255,255,0.9)', fontWeight: 'bold' }}
+                                >
+                                    {[0, 1, 2, 3, 4].map(n => <option key={n} value={n}>{n}</option>)}
+                                </Form.Control>
+                            </div>
+
+                            {/* Amarillo - Reactividad (Derecha) */}
+                            <div style={{ position: 'absolute', left: '100px', top: '50px', width: '100px', height: '100px', backgroundColor: '#ffc107', transform: 'rotate(45deg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+                                <Form.Control
+                                    as="select"
+                                    value={diamond.reactividad}
+                                    onChange={(e) => handleDiamondChange('reactividad', e.target.value)}
+                                    style={{ transform: 'rotate(-45deg)', width: '60px', textAlign: 'center', background: 'rgba(255,255,255,0.9)', fontWeight: 'bold' }}
+                                >
+                                    {[0, 1, 2, 3, 4].map(n => <option key={n} value={n}>{n}</option>)}
+                                </Form.Control>
+                            </div>
+
+                            {/* Blanco - Especial (Abajo) */}
+                            <div style={{ position: 'absolute', left: '50px', top: '100px', width: '100px', height: '100px', backgroundColor: 'white', transform: 'rotate(45deg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #ccc' }}>
+                                <Form.Control
+                                    as="select"
+                                    value={diamond.especial}
+                                    onChange={(e) => handleDiamondChange('especial', e.target.value)}
+                                    style={{ transform: 'rotate(-45deg)', width: '70px', textAlign: 'center', fontSize: '11px' }}
+                                >
+                                    <option value="">-</option>
+                                    <option value="OX">OX (Oxidante)</option>
+                                    <option value="W"><s>W</s> (No Agua)</option>
+                                    <option value="ACID">ACID</option>
+                                    <option value="ALC">ALC</option>
+                                    <option value="BIO">BIO</option>
+                                    <option value="RAD">RAD</option>
+                                    <option value="COR">COR</option>
+                                </Form.Control>
+                            </div>
+                        </div>
+                    </div>
+                );
             default: // text, date, number
                 return (
                     <Form.Control
@@ -153,6 +253,47 @@ const GestorInventario = ({ config }) => {
                 );
         }
     };
+
+    // Renderizar Celda Personalizada (Tabla)
+    const renderCell = (item, field) => {
+        const value = item[field.name];
+
+        if (field.type === 'nfpa_diamond') {
+            const diamond = value || { salud: 0, inflamabilidad: 0, reactividad: 0, especial: '-' };
+            return (
+                <div style={{ position: 'relative', width: '40px', height: '40px', margin: '0 auto' }}>
+                    {/* Mini Rombo Visual */}
+                    <div style={{ position: 'absolute', top: '0', left: '10px', width: '20px', height: '20px', background: '#dc3545', color: 'white', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
+                        <span style={{ transform: 'rotate(-45deg)' }}>{diamond.inflamabilidad}</span>
+                    </div>
+                    <div style={{ position: 'absolute', top: '10px', left: '0', width: '20px', height: '20px', background: '#007bff', color: 'white', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
+                        <span style={{ transform: 'rotate(-45deg)' }}>{diamond.salud}</span>
+                    </div>
+                    <div style={{ position: 'absolute', top: '10px', left: '20px', width: '20px', height: '20px', background: '#ffc107', color: 'black', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
+                        <span style={{ transform: 'rotate(-45deg)' }}>{diamond.reactividad}</span>
+                    </div>
+                    <div style={{ position: 'absolute', top: '20px', left: '10px', width: '20px', height: '20px', background: 'white', border: '1px solid #ccc', color: 'black', fontSize: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
+                        <span style={{ transform: 'rotate(-45deg)', marginTop: '2px' }}>{diamond.especial || '-'}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        if (field.type === 'checklist') {
+            return (value || []).length + ' ítems';
+        }
+
+        if (field.type === 'checklist_with_quantity') {
+            const count = Object.keys(value || {}).length;
+            return <Badge bg={count > 0 ? "success" : "secondary"}>{count} elementos</Badge>;
+        }
+
+        return value;
+    };
+
+    // Campos a mostrar en la tabla (filtrados por showInTable o los primeros 5 por defecto)
+    const tableFields = config.campos.filter(f => f.showInTable);
+    const fieldsToRender = tableFields.length > 0 ? tableFields : config.campos.slice(0, 5);
 
     return (
         <div className="p-3">
@@ -170,12 +311,11 @@ const GestorInventario = ({ config }) => {
                 <Alert variant="info">No hay elementos registrados en este inventario.</Alert>
             ) : (
                 <div className="table-responsive shadow-sm rounded">
-                    <Table hover striped bordered>
+                    <Table hover striped bordered className="align-middle">
                         <thead className="bg-light">
                             <tr>
-                                {/* Renderizar headers dinámicamente (solo los primeros 4 campos para no saturar) */}
-                                {config.campos.slice(0, 4).map((field, idx) => (
-                                    <th key={idx}>{field.label}</th>
+                                {fieldsToRender.map((field, idx) => (
+                                    <th key={idx} className="text-center">{field.label}</th>
                                 ))}
                                 <th className="text-center">Acciones</th>
                             </tr>
@@ -183,8 +323,10 @@ const GestorInventario = ({ config }) => {
                         <tbody>
                             {items.map((item) => (
                                 <tr key={item.id}>
-                                    {config.campos.slice(0, 4).map((field, idx) => (
-                                        <td key={idx}>{item[field.name]}</td>
+                                    {fieldsToRender.map((field, idx) => (
+                                        <td key={idx} className="text-center">
+                                            {renderCell(item, field)}
+                                        </td>
                                     ))}
                                     <td className="text-center">
                                         <Button
