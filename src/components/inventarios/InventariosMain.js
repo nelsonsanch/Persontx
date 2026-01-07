@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tab, Nav, Card } from 'react-bootstrap';
+import { Tab, Nav, Card, Button } from 'react-bootstrap';
 // Se eliminan los iconos de Lucide para evitar errores de versión
 // import { FireExtinguisher, FlaskConical, Stethoscope } from 'lucide-react';
 
@@ -12,9 +12,11 @@ import { activosConfig } from './configs/activosConfig';
 
 // Importar Motor
 import GestorInventario from './GestorInventario';
+import MatrizCompatibilidad from './MatrizCompatibilidad';
 
 const InventariosMain = () => {
     const [activeTab, setActiveTab] = useState('extintores');
+    const [showMatrix, setShowMatrix] = useState(false);
 
     // Mapa de íconos (Emojis para cero errores)
     const icons = {
@@ -79,6 +81,16 @@ const InventariosMain = () => {
                                         <GestorInventario config={extintoresConfig} />
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="quimicos">
+                                        <div className="d-flex justify-content-end mb-2">
+                                            <Button
+                                                variant="outline-warning"
+                                                size="sm"
+                                                onClick={() => setShowMatrix(true)}
+                                                className="fw-bold"
+                                            >
+                                                ⚛️ Ver Matriz de Compatibilidad
+                                            </Button>
+                                        </div>
                                         <GestorInventario config={sustanciasQuimicasConfig} />
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="botiquin">
@@ -96,6 +108,9 @@ const InventariosMain = () => {
                     </div>
                 </div>
             </Tab.Container>
+
+            {/* Modal de Matriz */}
+            <MatrizCompatibilidad show={showMatrix} onHide={() => setShowMatrix(false)} />
         </div>
     );
 };
