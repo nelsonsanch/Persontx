@@ -7,6 +7,8 @@ import { Tab, Nav, Card } from 'react-bootstrap';
 import { extintoresConfig } from './configs/extintoresConfig';
 import { sustanciasQuimicasConfig } from './configs/sustanciasQuimicasConfig';
 import { botiquinConfig } from './configs/botiquinConfig';
+import { camillasConfig } from './configs/camillasConfig';
+import { activosConfig } from './configs/activosConfig';
 
 // Importar Motor
 import GestorInventario from './GestorInventario';
@@ -18,7 +20,9 @@ const InventariosMain = () => {
     const icons = {
         extintores: <span className="me-2">🧯</span>,
         quimicos: <span className="me-2">🧪</span>,
-        botiquin: <span className="me-2">🩺</span>
+        botiquin: <span className="me-2">🩺</span>,
+        camillas: <span className="me-2">🛏️</span>,
+        activos: <span className="me-2">🛠️</span>
     };
 
     return (
@@ -46,6 +50,16 @@ const InventariosMain = () => {
                                             {icons.botiquin} Botiquines y Primeros Auxilios
                                         </Nav.Link>
                                     </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="camillas" className="d-flex align-items-center mb-1">
+                                            {icons.camillas} Camillas
+                                        </Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="activos" className="d-flex align-items-center mb-1">
+                                            {icons.activos} Herramientas y Equipos
+                                        </Nav.Link>
+                                    </Nav.Item>
                                     {/* Aquí se agregarán más tabs a futuro: Maquinaria, Herramientas, etc */}
                                 </Nav>
                             </Card.Body>
@@ -69,6 +83,12 @@ const InventariosMain = () => {
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="botiquin">
                                         <GestorInventario config={botiquinConfig} />
+                                    </Tab.Pane>
+                                    <Tab.Pane eventKey="camillas">
+                                        <GestorInventario config={camillasConfig} />
+                                    </Tab.Pane>
+                                    <Tab.Pane eventKey="activos">
+                                        <GestorInventario config={activosConfig} />
                                     </Tab.Pane>
                                 </Tab.Content>
                             </Card.Body>

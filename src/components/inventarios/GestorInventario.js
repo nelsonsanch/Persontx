@@ -8,7 +8,10 @@ import {
     addDoc,
     updateDoc,
     deleteDoc,
-    doc
+    deleteDoc,
+    doc,
+    getDocs,
+    limit
 } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { Table, Button, Modal, Form, Badge, Alert } from 'react-bootstrap';
@@ -23,6 +26,8 @@ const GestorInventario = ({ config }) => {
     const [viewingItem, setViewingItem] = useState(null);
     const [formData, setFormData] = useState({});
     const [loading, setLoading] = useState(true);
+    const [catalogSuggestions, setCatalogSuggestions] = useState([]); // Sugerencias del catálogo global
+    const [catalogQuery, setCatalogQuery] = useState(''); // Lo que escribe el usuario para buscar
 
     // Cargar datos en tiempo real
     useEffect(() => {
@@ -124,6 +129,65 @@ const GestorInventario = ({ config }) => {
         }
     };
 
+    // Buscar en Catálogo Global
+    const handleCatalogSearch = async (text) => {
+        setCatalogQuery(text);
+        if (text.length < 3) {
+            setCatalogSuggestions([]);
+            return;
+        }
+
+        try {
+            // Busqueda simple por prefijo (case-sensitive en Firestore por defecto, idealmente normalizar)
+            const q = query(
+                collection(db, 'catalogo_global_activos'),
+                where('nombre', '>=', text),
+                where('nombre', '<=', text + '\uf8ff'),
+                limit(5)
+            );
+            const snapshot = await getDocs(q);
+            setCatalogSuggestions(snapshot.docs.map(d => d.data().nombre));
+        } catch (error) {
+            console.error("Error buscando en catálogo:", error);
+        }
+    };
+
+    // Agregar al Catálogo Global
+    const addToGlobalCatalog = async (fieldName) => {
+        if (!catalogQuery) return;
+        const nombre = catalogQuery.trim(); // Guardar como está escrito (respetando mayúsculas del usuario)
+
+        try {
+            // Verificar si ya existe (para no duplicar exactos)
+            const q = query(collection(db, 'catalogo_global_activos'), where('nombre', '==', nombre));
+            const snapshot = await getDocs(q);
+
+            if (!snapshot.empty) {
+                alert("Este ítem ya existe en el catálogo global.");
+            } else {
+                await addDoc(collection(db, 'catalogo_global_activos'), {
+                    nombre,
+                    creadoPor: user.email,
+                    fechaCreacion: new Date().toISOString()
+                });
+                alert("¡Agregado al Catálogo Global! Ahora todos pueden verlo.");
+            }
+            // Seleccionar el ítem
+            setFormData({ ...formData, [fieldName]: nombre });
+            setCatalogSuggestions([]);
+        } catch (error) {
+            console.error("Error creando catálogo:", error);
+            alert("Error al conectar con el catálogo global.");
+        }
+    };
+
+    // Seleccionar sugerencia
+    const selectCatalogItem = (fieldName, val) => {
+        setFormData({ ...formData, [fieldName]: val });
+        setCatalogQuery(val);
+        setCatalogSuggestions([]);
+    };
+
     // Renderizar Input Dinámico
     const renderInput = (field) => {
         switch (field.type) {
@@ -139,6 +203,70 @@ const GestorInventario = ({ config }) => {
                             <option key={idx} value={opt}>{opt}</option>
                         ))}
                     </Form.Select>
+                );
+            case 'select_with_description':
+                // Buscar la descripción de la opción seleccionada
+                const selectedOpt = field.options.find(o => o.value === formData[field.name]);
+                return (
+                    <div>
+                        <Form.Select
+                            value={formData[field.name] || ''}
+                            onChange={(e) => handleInputChange(e, field.name)}
+                            required={field.required}
+                        >
+                            <option value="">Seleccione...</option>
+                            {field.options.map((opt, idx) => (
+                                <option key={idx} value={opt.value}>{opt.value}</option>
+                            ))}
+                        </Form.Select>
+                        {selectedOpt && (
+                            <Form.Text className="text-muted d-block mt-1">
+                                <i className="bi bi-info-circle me-1"></i>
+                                {selectedOpt.desc}
+                            </Form.Text>
+                        )}
+                    </div>
+                );
+            case 'global_catalog_select':
+                return (
+                    <div>
+                        <div className="input-group mb-1">
+                            <Form.Control
+                                type="text"
+                                placeholder={field.placeholder || "Buscar en catálogo global..."}
+                                value={formData[field.name] || catalogQuery}
+                                onChange={(e) => {
+                                    handleInputChange(e, field.name);
+                                    handleCatalogSearch(e.target.value);
+                                }}
+                            />
+                            <Button
+                                variant="outline-secondary"
+                                onClick={() => addToGlobalCatalog(field.name)}
+                                title="Crear en Catálogo Global si no existe"
+                            >
+                                <Plus size={18} /> Crear Nuevo
+                            </Button>
+                        </div>
+                        {/* Lista de Sugerencias */}
+                        {catalogSuggestions.length > 0 && (
+                            <ul className="list-group position-absolute shadow w-50" style={{ zIndex: 1000, maxHeight: '200px', overflowY: 'auto' }}>
+                                {catalogSuggestions.map((sug, idx) => (
+                                    <li
+                                        key={idx}
+                                        className="list-group-item list-group-item-action cursor-pointer"
+                                        onClick={() => selectCatalogItem(field.name, sug)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {sug}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        <Form.Text className="text-muted">
+                            Si no aparece en la lista, escríbalo completo y haga clic en "Crear Nuevo" para compartirlo con la comunidad.
+                        </Form.Text>
+                    </div>
                 );
             case 'textarea':
                 return (
