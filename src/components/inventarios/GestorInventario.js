@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase';
+import { db, storage } from '../../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
     collection,
     query,
@@ -27,6 +28,7 @@ const GestorInventario = ({ config }) => {
     const [loading, setLoading] = useState(true);
     const [catalogSuggestions, setCatalogSuggestions] = useState([]); // Sugerencias del catálogo global
     const [catalogQuery, setCatalogQuery] = useState(''); // Lo que escribe el usuario para buscar
+    const [uploading, setUploading] = useState(false); // Estado de carga de imagen
 
     // Cargar datos en tiempo real
     useEffect(() => {
@@ -187,6 +189,24 @@ const GestorInventario = ({ config }) => {
         setCatalogSuggestions([]);
     };
 
+    // Manejar subida de imagenes
+    const handleImageUpload = async (e, fieldName) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const storageRef = ref(storage, `inventarios/${config.filtroCategoria}/${Date.now()}_${file.name}`);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            setFormData({ ...formData, [fieldName]: url });
+        } catch (error) {
+            console.error("Error subiendo imagen:", error);
+            alert("Error al subir la imagen");
+        }
+        setUploading(false);
+    };
+
     // Renderizar Input Dinámico
     const renderInput = (field) => {
         switch (field.type) {
@@ -276,6 +296,36 @@ const GestorInventario = ({ config }) => {
                         onChange={(e) => handleInputChange(e, field.name)}
                         placeholder={field.placeholder}
                     />
+                );
+            case 'image':
+                return (
+                    <div className="border p-2 rounded">
+                        {formData[field.name] ? (
+                            <div className="mb-2 text-center position-relative">
+                                <img
+                                    src={formData[field.name]}
+                                    alt="Vista previa"
+                                    style={{ maxHeight: '150px', maxWidth: '100%', borderRadius: '4px' }}
+                                />
+                                <Button
+                                    variant="danger"
+                                    size="sm"
+                                    className="position-absolute top-0 end-0 m-1"
+                                    onClick={() => setFormData({ ...formData, [field.name]: '' })}
+                                >
+                                    <Trash2 size={12} />
+                                </Button>
+                            </div>
+                        ) : (
+                            <Form.Control
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleImageUpload(e, field.name)}
+                                disabled={uploading}
+                            />
+                        )}
+                        {uploading && <small className="text-primary">Subiendo imagen...</small>}
+                    </div>
                 );
             case 'checklist':
                 return (
@@ -425,6 +475,17 @@ const GestorInventario = ({ config }) => {
             return <Badge bg={count > 0 ? "success" : "secondary"}>{count} elementos</Badge>;
         }
 
+        if (field.type === 'image') {
+            return value ? (
+                <img
+                    src={value}
+                    alt="Img"
+                    style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }}
+                    onClick={() => { setViewingItem(item); setViewModalOpen(true); }}
+                />
+            ) : <span className="text-muted small">Sin foto</span>;
+        }
+
         return value;
     };
 
@@ -564,6 +625,13 @@ const GestorInventario = ({ config }) => {
                                         ) : (
                                             // Texto plano
                                             <p className="fw-bold mb-0">{val || '-'}</p>
+                                        )}
+
+                                        {/* Caso Especial: Si es Imagen renderizar abajo */}
+                                        {field.type === 'image' && val && (
+                                            <div className="mt-2 text-center">
+                                                <img src={val} alt="Detalle" className="img-fluid rounded border shadow-sm" style={{ maxHeight: '300px' }} />
+                                            </div>
                                         )}
                                     </div>
                                 );

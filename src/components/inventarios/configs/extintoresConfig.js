@@ -10,14 +10,14 @@ export const extintoresConfig = {
             name: 'tipoAgente',
             label: 'Tipo Agente',
             type: 'select',
-            options: ['ABC (Polvo Químico)', 'CO2 (Dióxido Carbono)', 'Solkaflam', 'Agua', 'Espuma'],
+            options: ['ABC (Polvo Químico)', 'CO2 (Dióxido Carbono)', 'Solkaflam', 'Agua', 'Espuma', 'Tipo K (Acetato de Aluminio)'],
             required: true
         },
         {
             name: 'capacidad',
             label: 'Capacidad (Lbs/Kg)',
             type: 'select',
-            options: ['2.5 Lbs', '5 Lbs', '10 Lbs', '20 Lbs', '150 Lbs (Satélite)'],
+            options: ['2.5 Lbs', '5 Lbs', '10 Lbs', '20 Lbs', '30 Lbs', '40 Lbs', '150 Lbs (Satélite)'],
             required: true
         },
         { name: 'fechaCompra', label: 'Fecha de Compra/Adquisición', type: 'date', required: true },
