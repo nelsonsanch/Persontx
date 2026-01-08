@@ -5,6 +5,7 @@ export const camillasConfig = {
     filtroCategoria: 'camillas',
     campos: [
         { name: 'codigo', label: 'Código de Identificación', type: 'text', required: true, showInTable: true },
+        { name: 'foto', label: 'Fotografía', type: 'image', showInTable: true },
         {
             name: 'tipoCamilla',
             label: 'Tipo de Camilla',

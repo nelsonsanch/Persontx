@@ -5,6 +5,7 @@ export const sustanciasQuimicasConfig = {
     filtroCategoria: 'quimicos',
     campos: [
         { name: 'nombreProducto', label: 'Nombre del Producto', type: 'text', required: true, showInTable: true },
+        { name: 'foto', label: 'Fotografía', type: 'image', showInTable: true },
         { name: 'fabricante', label: 'Fabricante', type: 'text' },
         { name: 'areaUso', label: 'Área de Uso', type: 'text', required: true, showInTable: true },
         {

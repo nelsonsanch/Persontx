@@ -5,6 +5,7 @@ export const activosConfig = {
     filtroCategoria: 'activos',
     campos: [
         { name: 'codigo', label: 'Código Interno', type: 'text', required: true, showInTable: true },
+        { name: 'foto', label: 'Fotografía', type: 'image', showInTable: true },
         {
             name: 'tipoActivo',
             label: 'Tipo de Activo',

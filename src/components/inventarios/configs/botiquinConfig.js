@@ -5,6 +5,7 @@ export const botiquinConfig = {
     filtroCategoria: 'botiquin',
     campos: [
         { name: 'ubicacion', label: 'Ubicación', type: 'text', required: true },
+        { name: 'foto', label: 'Fotografía', type: 'image', showInTable: true },
         {
             name: 'claseBotiquin', // Antes tipoBotiquin, cambiamos el name para coherencia si se puede, o solo label.
             label: 'Clase de Botiquín',

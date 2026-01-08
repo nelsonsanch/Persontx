@@ -5,6 +5,7 @@ export const extintoresConfig = {
     filtroCategoria: 'extintores', // Campo 'categoria' en Firebase
     campos: [
         { name: 'codigo', label: 'Código/ID', type: 'text', required: true },
+        { name: 'foto', label: 'Fotografía', type: 'image', showInTable: true },
         { name: 'ubicacion', label: 'Ubicación', type: 'text', required: true },
         {
             name: 'tipoAgente',
