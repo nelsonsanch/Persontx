@@ -13,6 +13,7 @@ import InformesIA from './InformesIA';
 import RecargosList from '../components/cliente/RecargosList';
 import BaseDatosUnificada from '../components/cliente/base-datos/BaseDatosUnificada';
 import InventariosMain from '../components/inventarios/InventariosMain';
+import GestorDocumentalMain from '../components/documental/GestorDocumentalMain';
 // --- FIN DE CÓDIGO NUEVO ---
 
 
@@ -49,6 +50,8 @@ const ClienteDashboard = () => {
         return <BaseDatosUnificada />;
       case 'inventarios':
         return <InventariosMain />;
+      case 'documental':
+        return <GestorDocumentalMain />;
       // --- FIN DE CÓDIGO NUEVO ---
 
       default:
@@ -246,6 +249,22 @@ const ClienteDashboard = () => {
             }}
           >
             📦 Inventarios
+          </button>
+          <button
+            className="btn me-2 mb-2"
+            onClick={() => setActiveTab('documental')}
+            style={{
+              backgroundColor: activeTab === 'documental' ? '#007bff' : '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderBottom: activeTab === 'documental' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+              borderRadius: '8px 8px 0 0',
+              color: activeTab === 'documental' ? 'white' : '#495057',
+              padding: '10px 20px',
+              fontWeight: '500'
+            }}
+          >
+            <span style={{ marginRight: '8px' }}>📄</span>
+            Gestor Documental
           </button>
           {/* --- FIN DE CÓDIGO NUEVO --- */}
 
