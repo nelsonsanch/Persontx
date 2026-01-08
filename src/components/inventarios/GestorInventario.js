@@ -317,14 +317,28 @@ const GestorInventario = ({ config }) => {
                                 </Button>
                             </div>
                         ) : (
-                            <Form.Control
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleImageUpload(e, field.name)}
-                                disabled={uploading}
-                            />
+                            <>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleImageUpload(e, field.name)}
+                                    disabled={uploading}
+                                    style={{ display: 'none' }}
+                                    id={`file-upload-${field.name}`}
+                                />
+                                <label htmlFor={`file-upload-${field.name}`} className="w-100">
+                                    <Button
+                                        variant="outline-secondary"
+                                        className="w-100 d-flex align-items-center justify-content-center gap-2"
+                                        as="span"
+                                        disabled={uploading}
+                                    >
+                                        <span style={{ fontSize: '1.2rem' }}>📸</span>
+                                        {uploading ? 'Subiendo...' : 'Tomar Foto / Cargar'}
+                                    </Button>
+                                </label>
+                            </>
                         )}
-                        {uploading && <small className="text-primary">Subiendo imagen...</small>}
                     </div>
                 );
             case 'checklist':
