@@ -622,8 +622,8 @@ const GestorInventario = ({ config }) => {
                                                     <li key={i}>✓ {opt}</li>
                                                 )) : <span className="text-muted">Ninguno</span>}
                                             </ul>
-                                        ) : (
-                                            // Texto plano
+                                        ) : field.type !== 'image' && (
+                                            // Texto plano (NO mostrar si es imagen, ya que la imagen se muestra abajo)
                                             <p className="fw-bold mb-0">{val || '-'}</p>
                                         )}
 
