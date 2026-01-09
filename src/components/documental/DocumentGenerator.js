@@ -53,7 +53,7 @@ const DocumentGenerator = ({ onGoToTemplates }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message: `
+                    consulta: `
                         ACTÚA COMO UN SECRETARIO EXPERTO.
                         TU TAREA: Rellenar el siguiente formato HTML con la información proporcionada.
                         
@@ -73,18 +73,23 @@ const DocumentGenerator = ({ onGoToTemplates }) => {
                         3. Mantén el estilo profesional.
                         4. Si falta información, invéntala de forma coherente y genérica (ej: [Nombre del Asistente]).
                     `,
-                    context: { role: 'admin' } // Contexto dummy
+                    contexto: { role: 'admin' } // Contexto dummy
                 })
             });
 
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Error del servidor (${response.status}): ${errorText}`);
+            }
+
             const data = await response.json();
             // Limpieza básica si la IA devuelve markdown
-            let cleanHtml = data.reply.replace(/```html/g, '').replace(/```/g, '');
+            let cleanHtml = (data.resultado || '').replace(/```html/g, '').replace(/```/g, '');
             setGeneratedContent(cleanHtml);
             setStep(3);
         } catch (error) {
             console.error("Error IA:", error);
-            alert("Error generando el documento. Intenta de nuevo.");
+            alert(`Error generando el documento: ${error.message}`);
         }
         setGenerating(false);
     };
