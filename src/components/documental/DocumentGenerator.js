@@ -4,7 +4,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { Card, Button, Form, Spinner, Alert, Row, Col, Badge } from 'react-bootstrap';
 import { db, storage } from '../../firebase';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // Fix import uploadBytes
 import { useAuth } from '../../hooks/useAuth';
 import SignaturePad from '../common/SignaturePad';
 import html2pdf from 'html2pdf.js';
@@ -107,59 +107,54 @@ const DocumentGenerator = ({ onGoToTemplates }) => {
 
         const element = document.getElementById('document-preview');
 
+        // Nombre del archivo: Título - Fecha
+        const dateStr = new Date().toLocaleDateString('es-CO').replace(/\//g, '-');
+        const fileName = `${selectedTemplate.titulo} - ${dateStr}.pdf`;
+
         // Opciones PDF
         const opt = {
             margin: 10,
-            filename: `${selectedTemplate.codigoBase}-${Date.now()}.pdf`,
+            filename: fileName,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
         try {
-            // 1. Generar PDF Blob
+            // 1. Generar PDF Blob usando html2pdf
+            // html2pdf().outputPdf('blob') devuelve una promesa con el blob
             const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
 
             // 2. Subir a Firebase Storage
-            const storageRef = ref(storage, `documentos/${user.uid}/${selectedTemplate.codigoBase}_${Date.now()}.pdf`);
+            const storagePath = `documentos/${user.uid}/${fileName}`;
+            const storageRef = ref(storage, storagePath);
 
-            // Convertir Blob a ArrayBuffer para uploadBytes (o usar put)
-            await uploadBytes(storageRef, pdfBlob); // uploadBytes soporta Blob, corregir import si es necesario
+            await uploadBytes(storageRef, pdfBlob);
+            const downloadUrl = await getDownloadURL(storageRef);
 
-            // ERROR: uploadBytes necesita importar { uploadBytes } de firebase/storage
-            // Voy a asumir que uploadString es para base64, necesito uploadBytes o put
-            // Ajustaré los imports arriba.
+            // 3. Descargar copia local (opcional, para el usuario)
+            html2pdf().set(opt).from(element).save();
 
-            /* Corrección rápida lógica:
-               html2pdf -> blob -> uploadBytes -> getDownloadURL -> Firestore
-            */
-
-            // Como html2pdf es asíncrono complejo, para este MVP usaremos una estrategia más simple si falla:
-            // Guardar HTML en Firestore.
-            // Pero el usuario pidió PDF descargable.
-
-            // Vamos a simular subida exitosa usando el mismo html2pdf para descargar localmente
-            // Y guardar registro en Firestore.
-
-            html2pdf().set(opt).from(element).save(); // Descarga al usuario
-
-            // Guardar en Firestore
+            // 4. Guardar registro en Firestore
             await addDoc(collection(db, 'repositorio_documentos'), {
                 empresaId: user.uid,
                 tipoDocumento: selectedTemplate.titulo,
-                codigo: `${selectedTemplate.codigoBase}-${Math.floor(Math.random() * 1000)}`,
-                contenidoFinal: generatedContent,
+                nombreArchivo: fileName,
+                codigo: selectedTemplate.codigoBase,
+                contenidoHTML: generatedContent, // Respaldo del texto
+                urlPdf: downloadUrl, // Link al archivo real
                 firmaUrl: signature || null,
                 fechaCreacion: new Date(),
-                estado: 'firmado'
+                estado: 'firmado',
+                rutaStorage: storagePath
             });
 
             setStep(4);
-            alert("Documento cerrado y descargado exitosamente.");
+            alert("✅ Documento guardado en el Repositorio y descargado.");
 
         } catch (error) {
-            console.error(error);
-            alert("Error al finalizar documento");
+            console.error("Error guardando documento:", error);
+            alert(`Error al finalizar documento: ${error.message}`);
         }
     };
 
@@ -257,9 +252,9 @@ const DocumentGenerator = ({ onGoToTemplates }) => {
                         />
 
                         {/* PREVIEW OCULTO PARA PDF (Estilizado para impresión) */}
-                        <div id="document-preview" className="mt-4 p-5 bg-white border" style={{ minHeight: '800px' }}>
+                        <div id="document-preview" className="mt-4 p-5 bg-white border" style={{ minHeight: '800px', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
                             {/* Inyectamos el HTML generado */}
-                            <div dangerouslySetInnerHTML={{ __html: generatedContent }} />
+                            <div className="document-content" dangerouslySetInnerHTML={{ __html: generatedContent }} />
 
                             {/* Sección de Firmas Inyectada */}
                             {signature && (
