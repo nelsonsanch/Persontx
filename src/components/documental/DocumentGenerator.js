@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import { Card, Button, Form, Spinner, Alert, Row, Col, Badge } from 'react-bootstrap';
 import { db, storage } from '../../firebase';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
