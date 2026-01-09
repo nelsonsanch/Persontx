@@ -5,7 +5,73 @@ import { Card, Button, Form, ListGroup, Badge, Spinner, Alert } from 'react-boot
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, doc, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, Save, Edit, FileText } from 'lucide-react';
+import { Plus, Save, Edit, FileText, DownloadCloud } from 'lucide-react';
+
+const STANDARD_TEMPLATES = [
+    {
+        titulo: 'Acta de Reunión General',
+        codigoBase: 'ACT-GEN',
+        contenido: `<h2 style="text-align: center;">ACTA DE REUNIÓN</h2>
+<p><strong>Fecha:</strong> {{FECHA_ACTUAL}}</p>
+<p><strong>Hora:</strong> {{HORA_ACTUAL}}</p>
+<p><strong>Lugar:</strong> {{LUGAR}}</p>
+
+<h3>1. OBJETIVO</h3>
+<p>{{OBJETIVO}}</p>
+
+<h3>2. ASISTENTES</h3>
+<p>{{ASISTENTES}}</p>
+
+<h3>3. TEMAS TRATADOS</h3>
+<p>{{DESARROLLO}}</p>
+
+<h3>4. COMPROMISOS</h3>
+<p>{{COMPROMISOS}}</p>
+
+<br><br>
+<p>__________________________</p>
+<p>Firma Responsable</p>`
+    },
+    {
+        titulo: 'Constancia Laboral',
+        codigoBase: 'RRHH-CT',
+        contenido: `<h2 style="text-align: center;">CONSTANCIA LABORAL</h2>
+<p style="text-align: right;">{{CIUDAD}}, {{FECHA_ACTUAL}}</p>
+<br>
+<p><strong>A QUIEN INTERESE:</strong></p>
+<br>
+<p>Por medio de la presente se certifica que el señor(a) <strong>{{NOMBRE_TRABAJADOR}}</strong>, identificado con cédula de ciudadanía número <strong>{{CEDULA}}</strong>, labora en nuestra empresa <strong>{{EMPRESA}}</strong>.</p>
+<br>
+<p><strong>Cargo:</strong> {{CARGO}}</p>
+<p><strong>Tipo de Contrato:</strong> {{TIPO_CONTRATO}}</p>
+<p><strong>Fecha de Ingreso:</strong> {{FECHA_INGRESO}}</p>
+<p><strong>Salario Mensual:</strong> {{SALARIO}}</p>
+<br>
+<p>Se expide a solicitud del interesado.</p>
+<br><br>
+<p>Atentamente,</p>
+<br>
+<p>__________________________</p>
+<p><strong>Gerencia de Talento Humano</strong></p>`
+    },
+    {
+        titulo: 'Memorando Interno',
+        codigoBase: 'MEMO',
+        contenido: `<h2 style="text-align: center;">MEMORANDO INTERNO</h2>
+<p><strong>Fecha:</strong> {{FECHA_ACTUAL}}</p>
+<p><strong>Para:</strong> {{DESTINATARIO}}</p>
+<p><strong>De:</strong> {{REMITENTE}}</p>
+<p><strong>Asunto:</strong> {{ASUNTO}}</p>
+<hr>
+<br>
+<p>{{CUERPO_DEL_MENSAJE}}</p>
+<br>
+<p>Cordialmente,</p>
+<br>
+<p>__________________________</p>
+<p>{{REMITENTE}}</p>`
+    }
+];
 
 const TemplateEditor = () => {
     const { user } = useAuth();
@@ -89,6 +155,30 @@ const TemplateEditor = () => {
         setSaving(false);
     };
 
+    // Cargar Plantillas Estándar
+    const handleLoadDefaults = async () => {
+        if (!window.confirm("¿Deseas cargar 3 plantillas profesionales (Acta, Constancia, Memo) a tu lista?")) return;
+
+        setSaving(true);
+        try {
+            const batchPromises = STANDARD_TEMPLATES.map(tmpl => {
+                return addDoc(collection(db, 'plantillas_documentos'), {
+                    ...tmpl,
+                    empresaId: user.uid,
+                    version: 1,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+            });
+            await Promise.all(batchPromises);
+            alert("¡Plantillas cargadas! Ahora ve a 'Generar Documento' para usarlas.");
+        } catch (error) {
+            console.error(error);
+            alert("Error cargando plantillas.");
+        }
+        setSaving(false);
+    };
+
     // Configuración de la barra de herramientas de Quill
     const modules = {
         toolbar: [
@@ -110,6 +200,17 @@ const TemplateEditor = () => {
                         <Plus size={16} /> Nueva
                     </Button>
                 </div>
+
+                {/* Botón Mágico de Carga */}
+                {templates.length === 0 && !loading && (
+                    <div className="p-3 mb-3 bg-light rounded text-center">
+                        <small className="d-block mb-2 text-muted">¿No quieres empezar desde cero?</small>
+                        <Button variant="success" size="sm" className="w-100" onClick={handleLoadDefaults} disabled={saving}>
+                            <DownloadCloud size={16} className="me-2" />
+                            {saving ? 'Cargando...' : 'Cargar Modelos Pro'}
+                        </Button>
+                    </div>
+                )}
 
                 {loading ? <Spinner animation="border" size="sm" /> : (
                     <ListGroup variant="flush">
