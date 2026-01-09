@@ -52,7 +52,7 @@ const GestorDocumentalMain = () => {
                 <Col md={9}>
                     <Card className="shadow-sm border-0" style={{ minHeight: '500px' }}>
                         <Card.Body>
-                            {activeTab === 'generar' && <DocumentGenerator />}
+                            {activeTab === 'generar' && <DocumentGenerator onGoToTemplates={() => setActiveTab('plantillas')} />}
                             {activeTab === 'plantillas' && <TemplateEditor />}
                         </Card.Body>
                     </Card>
