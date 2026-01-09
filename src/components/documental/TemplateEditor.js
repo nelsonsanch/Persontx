@@ -5,7 +5,8 @@ import { Card, Button, Form, ListGroup, Badge, Spinner, Alert } from 'react-boot
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, doc, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, Save, Edit, FileText, DownloadCloud } from 'lucide-react';
+import { Plus, Save, Edit, FileText, DownloadCloud, Upload } from 'lucide-react';
+import mammoth from 'mammoth';
 
 const STANDARD_TEMPLATES = [
     {
@@ -130,9 +131,9 @@ const TemplateEditor = () => {
         try {
             const data = {
                 empresaId: user.uid,
-                titulo,
-                codigoBase,
-                contenido,
+                titulo: title,
+                codigoBase: baseCode,
+                contenido: content,
                 version: selectedTemplate ? (selectedTemplate.version || 1) + 1 : 1,
                 updatedAt: new Date()
             };
@@ -153,6 +154,26 @@ const TemplateEditor = () => {
             alert("Error al guardar");
         }
         setSaving(false);
+    };
+
+    // Importar Word
+    const handleWordUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const arrayBuffer = event.target.result;
+                const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+                setContent(result.value); // El HTML crudo del Word
+                alert("Documento importado. Ahora puedes ajustarlo y agregar las variables {{...}}.");
+            } catch (error) {
+                console.error("Error convirtiendo Word:", error);
+                alert("Error al leer el archivo Word. Asegúrate de que sea .docx");
+            }
+        };
+        reader.readAsArrayBuffer(file);
     };
 
     // Cargar Plantillas Estándar
@@ -264,7 +285,26 @@ const TemplateEditor = () => {
                         </Form.Group>
 
                         <Form.Group className="mb-3">
-                            <Form.Label>Diseño del Documento</Form.Label>
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                <Form.Label className="mb-0">Diseño del Documento</Form.Label>
+
+                                {/* Input oculto para carga de Word */}
+                                <div>
+                                    <input
+                                        type="file"
+                                        id="word-upload"
+                                        accept=".docx"
+                                        style={{ display: 'none' }}
+                                        onChange={handleWordUpload}
+                                    />
+                                    <label htmlFor="word-upload">
+                                        <Button variant="outline-success" size="sm" as="span">
+                                            <Upload size={14} className="me-1" />
+                                            Importar Word (.docx)
+                                        </Button>
+                                    </label>
+                                </div>
+                            </div>
                             <ReactQuill
                                 theme="snow"
                                 value={content}
