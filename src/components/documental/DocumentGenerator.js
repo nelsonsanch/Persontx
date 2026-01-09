@@ -10,7 +10,7 @@ import SignaturePad from '../common/SignaturePad';
 import html2pdf from 'html2pdf.js';
 import { Wand2, Download, PenTool, CheckCircle, Smartphone } from 'lucide-react';
 
-const DocumentGenerator = () => {
+const DocumentGenerator = ({ onGoToTemplates }) => {
     const { user } = useAuth();
     const [templates, setTemplates] = useState([]);
     const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -187,7 +187,18 @@ const DocumentGenerator = () => {
                                     </Card>
                                 </Col>
                             ))}
-                            {templates.length === 0 && <p>No hay plantillas. Ve a la pestaña "Gestionar Plantillas".</p>}
+                            {templates.length === 0 && (
+                                <div className="text-center py-5">
+                                    <p className="text-muted mb-3">No hay plantillas disponibles para generar documentos.</p>
+                                    <Button variant="primary" onClick={onGoToTemplates}>
+                                        <Plus size={18} className="me-2" />
+                                        Crear mi primera Plantilla
+                                    </Button>
+                                    <p className="text-muted small mt-2">
+                                        (Ej: Acta de Reunión, Certificado Laboral, etc.)
+                                    </p>
+                                </div>
+                            )}
                         </Row>
                     )}
                 </div>
@@ -302,6 +313,9 @@ const DocumentGenerator = () => {
 // Icono faltante
 const FileText = ({ size, className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>
+);
+const Plus = ({ size, className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 );
 
 export default DocumentGenerator;
