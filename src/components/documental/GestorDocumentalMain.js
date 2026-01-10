@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Nav, Button } from 'react-bootstrap';
 import TemplateEditor from './TemplateEditor';
 import DocumentGenerator from './DocumentGenerator';
+import RepositorioDocumental from './RepositorioDocumental';
 import { FileText, PenTool, Archive } from 'lucide-react';
 
 const GestorDocumentalMain = () => {
@@ -31,9 +32,9 @@ const GestorDocumentalMain = () => {
                                     </Nav.Link>
                                 </Nav.Item>
                                 <Nav.Item>
-                                    <Nav.Link eventKey="repositorio" className="mb-1" disabled>
+                                    <Nav.Link eventKey="repositorio" className="mb-1">
                                         <Archive size={18} className="me-2" />
-                                        Repositorio (Próximamente)
+                                        Repositorio / Bóveda
                                     </Nav.Link>
                                 </Nav.Item>
                             </Nav>
@@ -54,6 +55,7 @@ const GestorDocumentalMain = () => {
                         <Card.Body>
                             {activeTab === 'generar' && <DocumentGenerator onGoToTemplates={() => setActiveTab('plantillas')} />}
                             {activeTab === 'plantillas' && <TemplateEditor />}
+                            {activeTab === 'repositorio' && <RepositorioDocumental />}
                         </Card.Body>
                     </Card>
                 </Col>
