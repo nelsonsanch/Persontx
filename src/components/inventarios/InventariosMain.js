@@ -9,6 +9,8 @@ import { sustanciasQuimicasConfig } from './configs/sustanciasQuimicasConfig';
 import { botiquinConfig } from './configs/botiquinConfig';
 import { camillasConfig } from './configs/camillasConfig';
 import { activosConfig } from './configs/activosConfig';
+import { gabinetesConfig } from './configs/gabinetesConfig';
+import { otrosConfig } from './configs/otrosConfig';
 
 // Importar Motor
 import GestorInventario from './GestorInventario';
@@ -24,7 +26,9 @@ const InventariosMain = () => {
         quimicos: <span className="me-2">🧪</span>,
         botiquin: <span className="me-2">🩺</span>,
         camillas: <span className="me-2">🛏️</span>,
-        activos: <span className="me-2">🛠️</span>
+        activos: <span className="me-2">🛠️</span>,
+        gabinetes: <span className="me-2">🚒</span>,
+        otros: <span className="me-2">📦</span>
     };
 
     return (
@@ -40,6 +44,11 @@ const InventariosMain = () => {
                                     <Nav.Item>
                                         <Nav.Link eventKey="extintores" className="d-flex align-items-center mb-1">
                                             {icons.extintores} Extintores
+                                        </Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="gabinetes" className="d-flex align-items-center mb-1">
+                                            {icons.gabinetes} Gabinetes Contra Incendio
                                         </Nav.Link>
                                     </Nav.Item>
                                     <Nav.Item>
@@ -62,7 +71,11 @@ const InventariosMain = () => {
                                             {icons.activos} Herramientas y Equipos
                                         </Nav.Link>
                                     </Nav.Item>
-                                    {/* Aquí se agregarán más tabs a futuro: Maquinaria, Herramientas, etc */}
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="otros" className="d-flex align-items-center mb-1">
+                                            {icons.otros} Otros Equipos
+                                        </Nav.Link>
+                                    </Nav.Item>
                                 </Nav>
                             </Card.Body>
                         </Card>
@@ -79,6 +92,9 @@ const InventariosMain = () => {
                                 <Tab.Content>
                                     <Tab.Pane eventKey="extintores">
                                         <GestorInventario config={extintoresConfig} />
+                                    </Tab.Pane>
+                                    <Tab.Pane eventKey="gabinetes">
+                                        <GestorInventario config={gabinetesConfig} />
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="quimicos">
                                         <div className="d-flex justify-content-end mb-2">
@@ -102,12 +118,16 @@ const InventariosMain = () => {
                                     <Tab.Pane eventKey="activos">
                                         <GestorInventario config={activosConfig} />
                                     </Tab.Pane>
+                                    <Tab.Pane eventKey="otros">
+                                        <GestorInventario config={otrosConfig} />
+                                    </Tab.Pane>
                                 </Tab.Content>
                             </Card.Body>
                         </Card>
                     </div>
                 </div>
             </Tab.Container>
+
 
             {/* Modal de Matriz */}
             <MatrizCompatibilidad show={showMatrix} onHide={() => setShowMatrix(false)} />
