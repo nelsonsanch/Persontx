@@ -23,7 +23,7 @@ export const gabinetesConfig = {
             required: true,
             showInTable: true
         },
-        { name: 'fechaUltimaInspeccion', label: 'Fecha Última Inspección', type: 'date', required: true },
+        { name: 'fechaUltimaInspeccion', label: 'Fecha de Registro', type: 'date', required: true },
         {
             name: 'componentes',
             label: 'Lista de Chequeo de Componentes (Marcar si cumple/presente)',
