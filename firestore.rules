@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Reglas existentes (genericas)
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Regla ESPECÍFICA para Inspecciones SST
+    // Asegura que solo usuarios autenticados puedan guardar inspecciones
+    match /inspecciones_sst/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para inventarios (seguramente ya las tienes)
+    match /inventarios/{document} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
