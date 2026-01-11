@@ -25,9 +25,9 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
                 inspectorEmail: user.email,
                 activo: {
                     id: activoSeleccionado.id,
-                    nombre: activoSeleccionado.nombre || activoSeleccionado.tipo,
+                    nombre: activoSeleccionado.nombre || activoSeleccionado.tipo || 'Sin Nombre',
                     codigo: activoSeleccionado.codigo || 'S/C',
-                    ubicacion: activoSeleccionado.ubicacion,
+                    ubicacion: activoSeleccionado.ubicacion || 'Sin Ubicación',
                     foto: activoSeleccionado.foto || null
                 },
                 resultados: {
