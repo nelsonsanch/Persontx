@@ -13,6 +13,7 @@ import InformesIA from './InformesIA';
 import RecargosList from '../components/cliente/RecargosList';
 import BaseDatosUnificada from '../components/cliente/base-datos/BaseDatosUnificada';
 import InventariosMain from '../components/inventarios/InventariosMain';
+import InspeccionesMain from '../components/inspecciones/InspeccionesMain';
 import GestorDocumentalMain from '../components/documental/GestorDocumentalMain';
 // --- FIN DE CÓDIGO NUEVO ---
 
@@ -50,6 +51,8 @@ const ClienteDashboard = () => {
         return <BaseDatosUnificada />;
       case 'inventarios':
         return <InventariosMain />;
+      case 'inspecciones':
+        return <InspeccionesMain />;
       case 'documental':
         return <GestorDocumentalMain />;
       // --- FIN DE CÓDIGO NUEVO ---
@@ -249,6 +252,22 @@ const ClienteDashboard = () => {
             }}
           >
             📦 Inventarios
+          </button>
+          <button
+            className="btn me-2 mb-2"
+            onClick={() => setActiveTab('inspecciones')}
+            style={{
+              backgroundColor: activeTab === 'inspecciones' ? '#007bff' : '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderBottom: activeTab === 'inspecciones' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+              borderRadius: '8px 8px 0 0',
+              color: activeTab === 'inspecciones' ? 'white' : '#495057',
+              padding: '10px 20px',
+              fontWeight: '500'
+            }}
+          >
+            <span style={{ marginRight: '8px' }}>✅</span>
+            Inspecciones SST
           </button>
           <button
             className="btn me-2 mb-2"
