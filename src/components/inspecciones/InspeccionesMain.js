@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Nav, Tab } from 'react-bootstrap';
 import InspectorWizard from './InspectorWizard';
-// import HistorialInspecciones from './HistorialInspecciones'; // Lo crearemos luego
+import HistorialInspecciones from './HistorialInspecciones';
 
 const InspeccionesMain = () => {
     const [activeTab, setActiveTab] = useState('nueva');
@@ -33,8 +33,8 @@ const InspeccionesMain = () => {
                             </div>
                         )}
                         {activeTab === 'historial' && (
-                            <div className="text-center py-5 text-muted">
-                                🚧 Módulo de Historial en Construcción
+                            <div className="p-2">
+                                <HistorialInspecciones />
                             </div>
                         )}
                     </Tab.Content>
