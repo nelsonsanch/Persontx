@@ -100,8 +100,10 @@ const SeleccionActivo = ({ categoria, config, onSelect, onBack }) => {
 
                                     {/* Info */}
                                     <Card.Body className="p-2">
-                                        <h6 className="mb-1 text-truncate" title={item.nombre || item.tipo || 'Sin Nombre'}>
-                                            {item.nombre || item.tipo || item.tipoExtintor || 'Ítem Sin Nombre'}
+                                        <h6 className="mb-1 text-truncate" title={item.nombre || item.tipo || item.tipoAgente || 'Sin Nombre'}>
+                                            {item.tipoAgente ? `${item.tipoAgente} - ${item.capacidad || ''}` :
+                                                item.tipo ? item.tipo :
+                                                    item.nombre || 'Ítem Sin Nombre'}
                                         </h6>
 
                                         <div className="small text-muted mb-1">
@@ -115,9 +117,13 @@ const SeleccionActivo = ({ categoria, config, onSelect, onBack }) => {
                                         </div>
 
                                         <div className="mt-2">
-                                            <Badge bg="light" text="dark" className="border">
-                                                {item.estado || item.estadoGeneral || 'N/A'}
-                                            </Badge>
+                                            {item.estadoGeneral || item.estado ? (
+                                                <Badge bg="light" text="dark" className="border">
+                                                    {item.estadoGeneral || item.estado}
+                                                </Badge>
+                                            ) : (
+                                                <span className="text-muted small fst-italic">Sin estado registrado</span>
+                                            )}
                                         </div>
                                     </Card.Body>
                                 </div>
