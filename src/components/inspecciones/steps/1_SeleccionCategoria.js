@@ -2,13 +2,13 @@ import React from 'react';
 import { Row, Col, Card } from 'react-bootstrap';
 
 // Importar configuraciones para saber qué existe
-import { extintoresConfig } from '../inventarios/configs/extintoresConfig';
-import { botiquinConfig } from '../inventarios/configs/botiquinConfig';
-import { camillasConfig } from '../inventarios/configs/camillasConfig';
-import { gabinetesConfig } from '../inventarios/configs/gabinetesConfig';
-import { otrosConfig } from '../inventarios/configs/otrosConfig';
-import { sustanciasQuimicasConfig } from '../inventarios/configs/sustanciasQuimicasConfig';
-import { activosConfig } from '../inventarios/configs/activosConfig';
+import { extintoresConfig } from '../../inventarios/configs/extintoresConfig';
+import { botiquinConfig } from '../../inventarios/configs/botiquinConfig';
+import { camillasConfig } from '../../inventarios/configs/camillasConfig';
+import { gabinetesConfig } from '../../inventarios/configs/gabinetesConfig';
+import { otrosConfig } from '../../inventarios/configs/otrosConfig';
+import { sustanciasQuimicasConfig } from '../../inventarios/configs/sustanciasQuimicasConfig';
+import { activosConfig } from '../../inventarios/configs/activosConfig';
 
 const SeleccionCategoria = ({ onSelect }) => {
 
