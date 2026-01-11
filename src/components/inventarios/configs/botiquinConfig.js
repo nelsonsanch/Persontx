@@ -4,21 +4,23 @@ export const botiquinConfig = {
     coleccion: 'inventarios',
     filtroCategoria: 'botiquin',
     campos: [
-        { name: 'ubicacion', label: 'Ubicación', type: 'text', required: true },
+        { name: 'ubicacion', label: 'Ubicación', type: 'text', required: true, showInTable: true },
         { name: 'foto', label: 'Fotografía', type: 'image', showInTable: true },
         {
             name: 'claseBotiquin', // Antes tipoBotiquin, cambiamos el name para coherencia si se puede, o solo label.
             label: 'Clase de Botiquín',
             type: 'select',
             options: ['Fijo (Pared)', 'Portátil (Tipo Canguro)', 'Maletín de Trauma', 'Vehicular'],
-            required: true
+            required: true,
+            showInTable: true
         },
         {
             name: 'tipo',
             label: 'Tipo (Según Resolución)',
             type: 'select',
             options: ['Tipo A', 'Tipo B', 'Tipo C'],
-            required: true
+            required: true,
+            showInTable: true
         },
         {
             name: 'elementos',
