@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Badge, Button, Form, Row, Col, Card } from 'react-bootstrap';
-import { Eye, FileText, Calendar } from 'lucide-react';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { Eye, FileText, Calendar, Trash2 } from 'lucide-react';
+import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../hooks/useAuth';
+import DetalleInspeccion from './DetalleInspeccion';
 
 const HistorialInspecciones = () => {
     const { user } = useAuth();
@@ -11,34 +12,54 @@ const HistorialInspecciones = () => {
     const [loading, setLoading] = useState(true);
     const [filtroCategoria, setFiltroCategoria] = useState('');
 
-    useEffect(() => {
-        const fetchHistory = async () => {
-            if (!user) return;
-            setLoading(true);
-            try {
-                // Consultar todas las inspecciones de la empresa
-                const ref = collection(db, 'inspecciones_sst');
-                const q = query(
-                    ref,
-                    where('empresaId', '==', user.uid),
-                    orderBy('fechaInspeccion', 'desc')
-                );
+    // Modal state
+    const [showModal, setShowModal] = useState(false);
+    const [selectedInspection, setSelectedInspection] = useState(null);
 
-                const snapshot = await getDocs(q);
-                const data = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    // Convertir Timestamp a Date
-                    fecha: doc.data().fechaInspeccion?.toDate()
-                }));
-                setInspecciones(data);
-            } catch (error) {
-                console.error("Error cargando historial:", error);
-            }
-            setLoading(false);
-        };
+    const fetchHistory = async () => {
+        if (!user) return;
+        setLoading(true);
+        try {
+            const ref = collection(db, 'inspecciones_sst');
+            const q = query(
+                ref,
+                where('empresaId', '==', user.uid),
+                orderBy('fechaInspeccion', 'desc')
+            );
+
+            const snapshot = await getDocs(q);
+            const data = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                fecha: doc.data().fechaInspeccion?.toDate()
+            }));
+            setInspecciones(data);
+        } catch (error) {
+            console.error("Error cargando historial:", error);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
         fetchHistory();
     }, [user]);
+
+    const handleDelete = async (id) => {
+        if (window.confirm("¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.")) {
+            try {
+                await deleteDoc(doc(db, 'inspecciones_sst', id));
+                setInspecciones(prev => prev.filter(item => item.id !== id));
+            } catch (error) {
+                console.error("Error al eliminar", error);
+                alert("No se pudo eliminar el registro. Verifica permisos en Firebase.");
+            }
+        }
+    };
+
+    const handleView = (inspection) => {
+        setSelectedInspection(inspection);
+        setShowModal(true);
+    };
 
     // Filtrado local
     const filteredData = inspecciones.filter(item => {
@@ -99,7 +120,11 @@ const HistorialInspecciones = () => {
                                         </div>
                                     </td>
                                     <td className="fw-medium">
-                                        {insp.activo?.nombre || insp.activo?.tipo || 'Sin Nombre'}
+                                        {insp.activo?.nombre}
+                                        {/* Fallback visual si el nombre se guardó mal antes */}
+                                        {insp.activo?.nombre === 'Sin Nombre' || !insp.activo?.nombre ? (
+                                            <span className="text-muted fst-italic ms-1">(Verifica Detalle)</span>
+                                        ) : null}
                                         <div className="small text-muted">ID: {insp.activo?.codigo}</div>
                                     </td>
                                     <td><small>{insp.activo?.ubicacion}</small></td>
@@ -121,8 +146,22 @@ const HistorialInspecciones = () => {
                                         )}
                                     </td>
                                     <td>
-                                        <Button variant="outline-primary" size="sm" title="Ver Detalle">
+                                        <Button
+                                            variant="outline-primary"
+                                            size="sm"
+                                            className="me-2"
+                                            title="Ver Detalle / PDF"
+                                            onClick={() => handleView(insp)}
+                                        >
                                             <Eye size={16} />
+                                        </Button>
+                                        <Button
+                                            variant="outline-danger"
+                                            size="sm"
+                                            title="Eliminar Registro"
+                                            onClick={() => handleDelete(insp.id)}
+                                        >
+                                            <Trash2 size={16} />
                                         </Button>
                                     </td>
                                 </tr>
@@ -131,6 +170,12 @@ const HistorialInspecciones = () => {
                     </Table>
                 </div>
             )}
+
+            <DetalleInspeccion
+                show={showModal}
+                handleClose={() => setShowModal(false)}
+                inspeccion={selectedInspection}
+            />
         </div>
     );
 };

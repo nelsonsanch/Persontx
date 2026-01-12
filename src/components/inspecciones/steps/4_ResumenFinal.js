@@ -11,6 +11,18 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
+    // Lógica para determinar el nombre correcto del activo (Igual que en paso 2)
+    const getNombreActivo = (item) => {
+        if (!item) return 'Desconocido';
+        if (item.tipoAgente) return `${item.tipoAgente} - ${item.capacidad || ''}`;
+        if (item.tipoCamilla) return item.tipoCamilla;
+        if (item.claseBotiquin) return `${item.claseBotiquin} - ${item.tipo || ''}`;
+        if (item.tipo) return item.tipo;
+        return item.nombre || 'Ítem Sin Nombre';
+    };
+
+    const nombreActivo = getNombreActivo(activoSeleccionado);
+
     // Contar hallazgos
     const hallazgos = Object.entries(checklist).filter(([k, v]) => v === 'Malo');
     const estadoGeneral = hallazgos.length > 0 ? 'No Conforme' : 'Conforme';
@@ -25,7 +37,7 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
                 inspectorEmail: user.email,
                 activo: {
                     id: activoSeleccionado.id,
-                    nombre: activoSeleccionado.nombre || activoSeleccionado.tipo || 'Sin Nombre',
+                    nombre: nombreActivo, // Guardamos el nombre calculado
                     codigo: activoSeleccionado.codigo || 'S/C',
                     ubicacion: activoSeleccionado.ubicacion || 'Sin Ubicación',
                     foto: activoSeleccionado.foto || null
@@ -36,7 +48,7 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
                     hallazgosCount: hallazgos.length
                 },
                 estadoGeneral: estadoGeneral,
-                estado: 'Cerrada' // 'Abierta' si tuviera seguimiento
+                estado: 'Cerrada'
             });
             setSaved(true);
         } catch (error) {
@@ -68,11 +80,10 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
             <Card className="mb-3">
                 <Card.Header>Activo Inspeccionado</Card.Header>
                 <Card.Body>
-                    <strong>{activoSeleccionado.nombre || activoSeleccionado.tipo}</strong>
-                    <br />
-                    ID: {activoSeleccionado.codigo}
-                    <br />
-                    Ubicación: {activoSeleccionado.ubicacion}
+                    {/* Usamos el nombre calculado también para mostrarlo aquí */}
+                    <h5 className="mb-1">{nombreActivo}</h5>
+                    <div>ID: {activoSeleccionado.codigo}</div>
+                    <div className="text-muted">Ubicación: {activoSeleccionado.ubicacion}</div>
                 </Card.Body>
             </Card>
 
