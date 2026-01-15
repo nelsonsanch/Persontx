@@ -17,6 +17,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Table, Button, Modal, Form, Badge, Alert } from 'react-bootstrap';
 import { Trash2, Edit, Plus, FileText, Eye, Bomb, Flame, Skull, Biohazard, Radio, Droplet, Zap, Triangle, Ban } from 'lucide-react';
 import { read, utils, writeFile } from 'xlsx';
+import html2pdf from 'html2pdf.js';
 
 const GHS_DEFINITIONS = [
     { key: 'Clase 1', label: 'Explosivo', bg: '#ff6600', text: '1', color: 'black', renderIcon: (s) => <Bomb size={s} /> },
@@ -646,6 +647,9 @@ const GestorInventario = ({ config }) => {
             const row = {};
             // Mapear cada campo según la configuración
             config.campos.forEach(field => {
+                // OMITIR IMÁGENES: No exportar columnas de tipo imagen
+                if (field.type === 'image') return;
+
                 const val = item[field.name];
 
                 // Formatear valores especiales
@@ -674,6 +678,36 @@ const GestorInventario = ({ config }) => {
         writeFile(wb, `${config.titulo.replace(/ /g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
+    // Exportar a PDF
+    const [pdfGenerating, setPdfGenerating] = useState(false);
+
+    const handleExportPDF = () => {
+        if (filteredItems.length === 0) return alert("No hay datos para exportar");
+        setPdfGenerating(true);
+
+        // Elemento a capturar
+        const element = document.getElementById('inventory-pdf-container');
+
+        const opt = {
+            margin: 10, // mm
+            filename: `${config.titulo.replace(/ /g, '_')}_Reporte.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Mostrar temporalmente el contenedor (aunque esté fuera de pantalla)
+        // html2pdf funciona bien con elementos visibles o fuera del viewport
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            setPdfGenerating(false);
+        }).catch(err => {
+            console.error("Error generando PDF:", err);
+            setPdfGenerating(false);
+            alert("Error al generar el PDF. Intente nuevamente.");
+        });
+    };
+
     return (
         <div className="p-3">
             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -695,6 +729,16 @@ const GestorInventario = ({ config }) => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ width: '250px' }}
                     />
+                    <Button
+                        variant="outline-danger"
+                        onClick={handleExportPDF}
+                        disabled={pdfGenerating}
+                        title="Descargar Reporte PDF"
+                        className="d-flex align-items-center"
+                    >
+                        <FileText size={18} className="me-2" />
+                        {pdfGenerating ? 'Generando...' : 'PDF'}
+                    </Button>
                     <Button variant="outline-success" onClick={handleExportExcel} title="Descargar Excel">
                         <FileText size={18} className="me-2" />
                         Excel
@@ -848,7 +892,116 @@ const GestorInventario = ({ config }) => {
                     <Button variant="secondary" onClick={() => setViewModalOpen(false)}>Cerrar</Button>
                 </Modal.Footer>
             </Modal>
-        </div>
+            {/* CONTENEDOR OCULTO PARA PDF */}
+            <div
+                id="inventory-pdf-container"
+                style={{
+                    position: 'fixed',
+                    top: '0',
+                    left: '-9999px',
+                    width: '210mm',
+                    minHeight: '297mm',
+                    background: 'white',
+                    padding: '15mm',
+                    fontFamily: 'Arial, sans-serif',
+                    color: 'black'
+                }}
+            >
+                <div className="text-center mb-4 pb-2 border-bottom">
+                    <h2 className="mb-1 text-uppercase fw-bold" style={{ color: '#0d6efd' }}>{config.titulo}</h2>
+                    <h5 className="text-muted">Reporte de Inventario / Acta de Entrega</h5>
+                    <div className="d-flex justify-content-between mt-3 small text-muted">
+                        <span><strong>Fecha de Generación:</strong> {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</span>
+                        <span><strong>Total Ítems:</strong> {filteredItems.length}</span>
+                    </div>
+                </div>
+
+                <div className="d-flex flex-column gap-3">
+                    {filteredItems.map((item, index) => (
+                        <div key={item.id} className="border rounded p-3 mb-2 keep-together" style={{ pageBreakInside: 'avoid', backgroundColor: '#f8f9fa' }}>
+                            <div className="row align-items-center">
+                                {/* Información del Ítem */}
+                                <div className="col-8">
+                                    <div className="d-flex align-items-center mb-3">
+                                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '30px', height: '30px', fontSize: '14px', fontWeight: 'bold' }}>
+                                            {index + 1}
+                                        </div>
+                                        <h5 className="mb-0 fw-bold">ID: {item.codigo || item.id}</h5>
+                                    </div>
+
+                                    <div className="row g-2">
+                                        {config.campos.filter(f => f.type !== 'image' && f.type !== 'ghs_pictograms' && f.type !== 'nfpa_diamond').map((field, idx) => {
+                                            const val = item[field.name];
+                                            if (!val) return null;
+                                            return (
+                                                <div key={idx} className="col-6" style={{ fontSize: '11px', lineHeight: '1.4' }}>
+                                                    <strong className="text-secondary d-block" style={{ fontSize: '10px' }}>{field.label}:</strong>
+                                                    {field.type === 'checklist' || field.type === 'checklist_with_quantity' ? (
+                                                        <span>{renderCell(item, field)}</span>
+                                                    ) : (
+                                                        <span>{val}</span>
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Visuales (Foto y Rombos) */}
+                                <div className="col-4 d-flex flex-column align-items-center justify-content-center border-start ps-3">
+                                    {/* Imagen Principal */}
+                                    {config.campos.find(f => f.type === 'image') && item[config.campos.find(f => f.type === 'image').name] ? (
+                                        <img
+                                            src={item[config.campos.find(f => f.type === 'image').name]}
+                                            alt="Item"
+                                            crossOrigin="anonymous"
+                                            className="img-fluid rounded border mb-2 shadow-sm"
+                                            style={{ maxHeight: '120px', objectFit: 'contain', backgroundColor: 'white' }}
+                                        />
+                                    ) : (
+                                        <div className="text-center text-muted border rounded d-flex align-items-center justify-content-center p-2 mb-2" style={{ width: '80px', height: '80px', backgroundColor: '#e9ecef', fontSize: '10px' }}>
+                                            Sin Foto
+                                        </div>
+                                    )}
+
+                                    {/* Rombos y Pictogramas */}
+                                    <div className="d-flex gap-2 justify-content-center flex-wrap">
+                                        {config.campos.find(f => f.type === 'nfpa_diamond') && (
+                                            <div style={{ transform: 'scale(0.8)' }}>
+                                                {renderCell(item, config.campos.find(f => f.type === 'nfpa_diamond'))}
+                                            </div>
+                                        )}
+                                        {config.campos.find(f => f.type === 'ghs_pictograms') && (
+                                            <div style={{ transform: 'scale(0.8)' }}>
+                                                {renderCell(item, config.campos.find(f => f.type === 'ghs_pictograms'))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Pie de Página / Firmas */}
+                <div className="mt-5 pt-5 border-top">
+                    <div className="row text-center mt-3">
+                        <div className="col-6">
+                            <div className="border-top border-dark w-75 mx-auto pt-2" style={{ borderTopWidth: '2px !important' }}>
+                                <strong>Entregado Por</strong><br />
+                                <span className="small text-muted">{user?.email}</span>
+                            </div>
+                        </div>
+                        <div className="col-6">
+                            <div className="border-top border-dark w-75 mx-auto pt-2" style={{ borderTopWidth: '2px !important' }}>
+                                <strong>Recibido Por</strong><br />
+                                <span className="small text-muted">Nombre y Firma</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div >
     );
 };
 
