@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { Table, Button, Modal, Form, Badge, Alert } from 'react-bootstrap';
 import { Trash2, Edit, Plus, FileText, Eye, Bomb, Flame, Skull, Biohazard, Radio, Droplet, Zap, Triangle, Ban } from 'lucide-react';
+import { read, utils, writeFile } from 'xlsx';
 
 const GHS_DEFINITIONS = [
     { key: 'Clase 1', label: 'Explosivo', bg: '#ff6600', text: '1', color: 'black', renderIcon: (s) => <Bomb size={s} /> },
@@ -622,20 +623,95 @@ const GestorInventario = ({ config }) => {
     const tableFields = config.campos.filter(f => f.showInTable);
     const fieldsToRender = tableFields.length > 0 ? tableFields : config.campos.slice(0, 5);
 
+    // Estado para búsqueda local y conteo
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Filtrar items basado en la búsqueda
+    const filteredItems = items.filter(item => {
+        if (!searchTerm) return true;
+        const searchLower = searchTerm.toLowerCase();
+
+        // Buscar en todos los valores del objeto
+        return Object.values(item).some(val => {
+            if (val === null || val === undefined) return false;
+            return String(val).toLowerCase().includes(searchLower);
+        });
+    });
+
+    // Exportar a Excel
+    const handleExportExcel = () => {
+        if (filteredItems.length === 0) return alert("No hay datos para exportar");
+
+        const dataToExport = filteredItems.map(item => {
+            const row = {};
+            // Mapear cada campo según la configuración
+            config.campos.forEach(field => {
+                const val = item[field.name];
+
+                // Formatear valores especiales
+                if (val === null || val === undefined) {
+                    row[field.label] = '';
+                } else if (field.type === 'checklist') {
+                    row[field.label] = Array.isArray(val) ? val.join(', ') : val;
+                } else if (field.type === 'ghs_pictograms') {
+                    row[field.label] = Array.isArray(val) ? val.join(', ') : val;
+                } else if (field.type === 'nfpa_diamond') {
+                    row[field.label] = `Salud: ${val.salud}, Inflam: ${val.inflamabilidad}, React: ${val.reactividad}, Esp: ${val.especial || '-'}`;
+                } else if (field.type === 'checklist_with_quantity') {
+                    row[field.label] = Object.entries(val || {})
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join('; ');
+                } else {
+                    row[field.label] = val;
+                }
+            });
+            return row;
+        });
+
+        const ws = utils.json_to_sheet(dataToExport);
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, ws, "Inventario");
+        writeFile(wb, `${config.titulo.replace(/ /g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
     return (
         <div className="p-3">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h4 className="mb-0 text-primary">{config.titulo}</h4>
-                <Button onClick={() => openModal()} variant="success">
-                    <Plus size={18} className="me-2" />
-                    Agregar Nuevo
-                </Button>
+                <div>
+                    <h4 className="mb-0 text-primary">{config.titulo}</h4>
+                    <span className="text-muted small">
+                        Total Registros: <strong>{items.length}</strong>
+                        {searchTerm && filteredItems.length !== items.length && (
+                            <span> (Filtrados: {filteredItems.length})</span>
+                        )}
+                    </span>
+                </div>
+
+                <div className="d-flex gap-2">
+                    <Form.Control
+                        type="text"
+                        placeholder="Buscar en este inventario..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ width: '250px' }}
+                    />
+                    <Button variant="outline-success" onClick={handleExportExcel} title="Descargar Excel">
+                        <FileText size={18} className="me-2" />
+                        Excel
+                    </Button>
+                    <Button onClick={() => openModal()} variant="success">
+                        <Plus size={18} className="me-2" />
+                        Agregar Nuevo
+                    </Button>
+                </div>
             </div>
 
             {loading ? (
                 <p>Cargando inventario...</p>
-            ) : items.length === 0 ? (
-                <Alert variant="info">No hay elementos registrados en este inventario.</Alert>
+            ) : filteredItems.length === 0 ? (
+                <Alert variant="info">
+                    {items.length === 0 ? "No hay elementos registrados en este inventario." : "No se encontraron resultados para tu búsqueda."}
+                </Alert>
             ) : (
                 <div className="table-responsive shadow-sm rounded">
                     <Table hover striped bordered className="align-middle">
@@ -648,7 +724,7 @@ const GestorInventario = ({ config }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {items.map((item) => (
+                            {filteredItems.map((item) => (
                                 <tr key={item.id}>
                                     {fieldsToRender.map((field, idx) => (
                                         <td key={idx} className="text-center">
