@@ -15,7 +15,68 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { Table, Button, Modal, Form, Badge, Alert } from 'react-bootstrap';
-import { Trash2, Edit, Plus, FileText, Eye } from 'lucide-react';
+import { Trash2, Edit, Plus, FileText, Eye, Bomb, Flame, Skull, Biohazard, Radio, Droplet, Zap, Triangle, Ban } from 'lucide-react';
+
+const GHS_DEFINITIONS = [
+    { key: 'Clase 1', label: 'Explosivo', bg: '#ff6600', text: '1', color: 'black', renderIcon: (s) => <Bomb size={s} /> },
+    { key: 'Clase 2.1', label: 'Gas Inflamable', bg: '#dc3545', text: '2', color: 'white', renderIcon: (s) => <Flame size={s} /> },
+    { key: 'Clase 2.2', label: 'Gas No Inflamable', bg: '#28a745', text: '2', color: 'white', renderIcon: (s) => <span style={{ fontSize: `${s}px`, fontWeight: 'bold' }}>Gas</span> },
+    { key: 'Clase 2.3', label: 'Gas Tóxico', bg: 'white', text: '2', color: 'black', renderIcon: (s) => <Skull size={s} /> },
+    { key: 'Clase 3', label: 'Líquido Inflamable', bg: '#dc3545', text: '3', color: 'white', renderIcon: (s) => <Flame size={s} /> },
+    { key: 'Clase 4.1', label: 'Sólido Inflamable', bg: 'repeating-linear-gradient(90deg, #dc3545, #dc3545 10px, white 10px, white 20px)', text: '4', color: 'black', renderIcon: (s) => <Flame size={s} color="black" /> },
+    { key: 'Clase 4.2', label: 'Combustión Espont.', bg: 'linear-gradient(to bottom, white 50%, #dc3545 50%)', text: '4', color: 'black', renderIcon: (s) => <Flame size={s} color="black" /> },
+    { key: 'Clase 4.3', label: 'Peligroso con Agua', bg: '#007bff', text: '4', color: 'white', renderIcon: (s) => <Flame size={s} /> },
+    { key: 'Clase 5.1', label: 'Comburente', bg: '#ffc107', text: '5.1', color: 'black', renderIcon: (s) => <Flame size={s} color="black" strokeWidth={3} /> },
+    { key: 'Clase 5.2', label: 'Peróxido Orgánico', bg: 'linear-gradient(to bottom, #dc3545 50%, #ffc107 50%)', text: '5.2', color: 'black', renderIcon: (s) => <Flame size={s} /> },
+    { key: 'Clase 6.1', label: 'Tóxico', bg: 'white', text: '6', color: 'black', renderIcon: (s) => <Skull size={s} /> },
+    { key: 'Clase 6.2', label: 'Infeccioso', bg: 'white', text: '6', color: 'black', renderIcon: (s) => <Biohazard size={s} /> },
+    { key: 'Clase 7', label: 'Radiactivo', bg: 'linear-gradient(to bottom, #ffc107 50%, white 50%)', text: '7', color: 'black', renderIcon: (s) => <Radio size={s} color="black" /> },
+    { key: 'Clase 8', label: 'Corrosivo', bg: 'linear-gradient(to bottom, white 50%, black 50%)', text: '8', color: 'white', renderIcon: (s) => <Droplet size={s} color="black" /> },
+    { key: 'Clase 9', label: 'Misceláneos', bg: 'repeating-linear-gradient(180deg, white, white 10px, black 10px, black 11px) top/100% 50% no-repeat, white bottom/100% 50% no-repeat', text: '9', color: 'black', renderIcon: (s) => <span style={{ fontSize: `${s}px`, fontWeight: 'bold' }}>9</span> },
+];
+
+const GHSDiamond = ({ ghs, size = 60, style = {}, className = '', onClick }) => {
+    const iconSize = size * 0.4;
+    const textSize = Math.max(8, size * 0.18);
+    const borderWidth = Math.max(1, size * 0.06);
+
+    return (
+        <div
+            className={className}
+            style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                background: ghs.bg,
+                transform: 'rotate(45deg)',
+                border: `${borderWidth}px solid black`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '1px 1px 3px rgba(0,0,0,0.2)',
+                marginBottom: `${size * 0.2}px`,
+                marginTop: `${size * 0.2}px`,
+                marginLeft: `${size * 0.2}px`,
+                marginRight: `${size * 0.2}px`,
+                ...style
+            }}
+            onClick={onClick}
+        >
+            <div style={{
+                transform: 'rotate(-45deg)',
+                color: ghs.color,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%'
+            }}>
+                {ghs.renderIcon(iconSize)}
+                <span style={{ fontSize: `${textSize}px`, fontWeight: 'bold', marginTop: '2px', lineHeight: 1 }}>{ghs.text}</span>
+            </div>
+        </div>
+    );
+};
 
 const GestorInventario = ({ config }) => {
     const { user } = useAuth();
@@ -442,6 +503,41 @@ const GestorInventario = ({ config }) => {
                         </div>
                     </div>
                 );
+            case 'ghs_pictograms':
+                const selectedGHS = formData[field.name] || []; // Array de seleccionados
+
+                const toggleGHS = (key) => {
+                    const current = Array.isArray(selectedGHS) ? selectedGHS : [];
+                    if (current.includes(key)) {
+                        setFormData({ ...formData, [field.name]: current.filter(k => k !== key) });
+                    } else {
+                        setFormData({ ...formData, [field.name]: [...current, key] });
+                    }
+                };
+
+                return (
+                    <div className="d-flex flex-wrap gap-4 justify-content-center p-3 border rounded bg-light">
+                        {GHS_DEFINITIONS.map((ghs) => {
+                            const isSelected = Array.isArray(selectedGHS) && selectedGHS.includes(ghs.key);
+                            return (
+                                <div
+                                    key={ghs.key}
+                                    onClick={() => toggleGHS(ghs.key)}
+                                    className={`d-flex flex-column align-items-center cursor-pointer p-1 rounded ${isSelected ? 'shadow-lg bg-white border border-primary' : 'opacity-75'}`}
+                                    style={{
+                                        width: '110px',
+                                        cursor: 'pointer',
+                                        transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <GHSDiamond ghs={ghs} size={60} />
+                                    <span className="text-center small fw-bold mt-1" style={{ lineHeight: '1.2' }}>{ghs.label}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
             default: // text, date, number
                 return (
                     <Form.Control
@@ -498,6 +594,25 @@ const GestorInventario = ({ config }) => {
                     onClick={() => { setViewingItem(item); setViewModalOpen(true); }}
                 />
             ) : <span className="text-muted small">Sin foto</span>;
+        }
+
+        if (field.type === 'ghs_pictograms') {
+            const selected = value || []; // Array de strings
+            if (!Array.isArray(selected) || selected.length === 0) return '-';
+
+            return (
+                <div className="d-flex gap-1 justify-content-center flex-wrap">
+                    {selected.map((k, i) => {
+                        const ghs = GHS_DEFINITIONS.find(g => g.key === k);
+                        if (!ghs) return null;
+                        return (
+                            <div key={i} title={ghs.label}>
+                                <GHSDiamond ghs={ghs} size={40} />
+                            </div>
+                        );
+                    })}
+                </div>
+            );
         }
 
         return value;
