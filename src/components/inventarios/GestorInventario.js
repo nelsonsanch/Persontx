@@ -1140,5 +1140,6 @@ const GestorInventario = ({ config }) => {
             </div>
         );
     };
+};
 
-    export default GestorInventario;
+export default GestorInventario;

@@ -3,7 +3,7 @@ import { ALTURAS_CATALOG } from '../data/alturasCatalog';
 export const alturasConfig = {
     id: 'alturas',
     titulo: 'Inventario de Equipo de Alturas',
-    coleccion: 'altura_equipment_assets', // Colección separada como solicitado
+    coleccion: 'inventarios', // Usamos 'inventarios' temporalmente por permisos en 'altura_equipment_assets'
     filtroCategoria: 'alturas', // Para orden interno
     campos: [
         { name: 'codigo_interno', label: 'Código Interno', type: 'text', required: false, showInTable: true, placeholder: 'Opcional (QR)' },
