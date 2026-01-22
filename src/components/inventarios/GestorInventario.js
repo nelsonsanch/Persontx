@@ -108,6 +108,9 @@ const GestorInventario = ({ config }) => {
             const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setItems(docs);
             setLoading(false);
+        }, (error) => {
+            console.error("Error obteniendo inventario:", error);
+            setLoading(false);
         });
 
         return () => unsubscribe();
@@ -642,90 +645,94 @@ const GestorInventario = ({ config }) => {
 
     // Renderizar Celda Personalizada (Tabla)
     const renderCell = (item, field) => {
-        const value = item[field.name];
+        try {
+            const value = item[field.name];
 
-        if (field.type === 'nfpa_diamond') {
-            const diamond = value || { salud: 0, inflamabilidad: 0, reactividad: 0, especial: '-' };
-            return (
-                <div style={{ position: 'relative', width: '40px', height: '40px', margin: '0 auto' }}>
-                    {/* Mini Rombo Visual */}
-                    <div style={{ position: 'absolute', top: '0', left: '10px', width: '20px', height: '20px', background: '#dc3545', color: 'white', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
-                        <span style={{ transform: 'rotate(-45deg)' }}>{diamond.inflamabilidad}</span>
-                    </div>
-                    <div style={{ position: 'absolute', top: '10px', left: '0', width: '20px', height: '20px', background: '#007bff', color: 'white', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
-                        <span style={{ transform: 'rotate(-45deg)' }}>{diamond.salud}</span>
-                    </div>
-                    <div style={{ position: 'absolute', top: '10px', left: '20px', width: '20px', height: '20px', background: '#ffc107', color: 'black', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
-                        <span style={{ transform: 'rotate(-45deg)' }}>{diamond.reactividad}</span>
-                    </div>
-                    <div style={{ position: 'absolute', top: '20px', left: '10px', width: '20px', height: '20px', background: 'white', border: '1px solid #ccc', color: 'black', fontSize: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
-                        <span style={{ transform: 'rotate(-45deg)', marginTop: '2px' }}>{diamond.especial || '-'}</span>
-                    </div>
-                </div>
-            );
-        }
-
-        if (field.type === 'checklist') {
-            return (value || []).length + ' ítems';
-        }
-
-        if (field.type === 'checklist_with_quantity') {
-            const count = Object.keys(value || {}).length;
-            return <Badge bg={count > 0 ? "success" : "secondary"}>{count} elementos</Badge>;
-        }
-
-        if (field.type === 'image') {
-            return value ? (
-                <img
-                    src={value}
-                    alt="Img"
-                    style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }}
-                    onClick={() => { setViewingItem(item); setViewModalOpen(true); }}
-                />
-            ) : <span className="text-muted small">Sin foto</span>;
-        }
-
-        if (field.type === 'ghs_pictograms') {
-            const selected = value || []; // Array de strings
-            if (!Array.isArray(selected) || selected.length === 0) return '-';
-
-            return (
-                <div className="d-flex gap-1 justify-content-center flex-wrap">
-                    {selected.map((k, i) => {
-                        const ghs = GHS_DEFINITIONS.find(g => g.key === k);
-                        if (!ghs) return null;
-                        return (
-                            <div key={i} title={ghs.label}>
-                                <GHSDiamond ghs={ghs} size={40} />
-                            </div>
-                        );
-                    })}
-                </div>
-            );
-        }
-
-        if (field.name === 'fechaProximaRecarga' && value) {
-            const dateVal = new Date(value);
-            const today = new Date();
-            const diffTime = dateVal - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            let variant = 'success';
-            let msg = 'Vigente';
-
-            if (diffDays < 0) {
-                variant = 'danger';
-                msg = `Vencido hace ${Math.abs(diffDays)} días`;
-            } else if (diffDays <= 30) {
-                variant = 'warning';
-                msg = `Vence en ${diffDays} días`;
+            if (field.type === 'nfpa_diamond') {
+                const diamond = value || { salud: 0, inflamabilidad: 0, reactividad: 0, especial: '-' };
                 return (
-                    <div className="d-flex flex-column align-items-center">
-                        <span className="mb-1">{value}</span>
-                        <Badge bg={variant}>{msg}</Badge>
+                    <div style={{ position: 'relative', width: '40px', height: '40px', margin: '0 auto' }}>
+                        {/* Mini Rombo Visual */}
+                        <div style={{ position: 'absolute', top: '0', left: '10px', width: '20px', height: '20px', background: '#dc3545', color: 'white', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
+                            <span style={{ transform: 'rotate(-45deg)' }}>{diamond.inflamabilidad}</span>
+                        </div>
+                        <div style={{ position: 'absolute', top: '10px', left: '0', width: '20px', height: '20px', background: '#007bff', color: 'white', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
+                            <span style={{ transform: 'rotate(-45deg)' }}>{diamond.salud}</span>
+                        </div>
+                        <div style={{ position: 'absolute', top: '10px', left: '20px', width: '20px', height: '20px', background: '#ffc107', color: 'black', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
+                            <span style={{ transform: 'rotate(-45deg)' }}>{diamond.reactividad}</span>
+                        </div>
+                        <div style={{ position: 'absolute', top: '20px', left: '10px', width: '20px', height: '20px', background: 'white', border: '1px solid #ccc', color: 'black', fontSize: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(45deg)' }}>
+                            <span style={{ transform: 'rotate(-45deg)', marginTop: '2px' }}>{diamond.especial || '-'}</span>
+                        </div>
                     </div>
                 );
             }
+
+            if (field.type === 'checklist') {
+                return (value || []).length + ' ítems';
+            }
+
+            if (field.type === 'checklist_with_quantity') {
+                const count = Object.keys(value || {}).length;
+                return <Badge bg={count > 0 ? "success" : "secondary"}>{count} elementos</Badge>;
+            }
+
+            if (field.type === 'image') {
+                return value ? (
+                    <img
+                        src={value}
+                        alt="Img"
+                        style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }}
+                        onClick={() => { setViewingItem(item); setViewModalOpen(true); }}
+                    />
+                ) : <span className="text-muted small">Sin foto</span>;
+            }
+
+            if (field.type === 'ghs_pictograms') {
+                const selected = value || []; // Array de strings
+                if (!Array.isArray(selected) || selected.length === 0) return '-';
+
+                return (
+                    <div className="d-flex gap-1 justify-content-center flex-wrap">
+                        {selected.map((k, i) => {
+                            const ghs = GHS_DEFINITIONS.find(g => g.key === k);
+                            if (!ghs) return null;
+                            return (
+                                <div key={i} title={ghs.label}>
+                                    <GHSDiamond ghs={ghs} size={40} />
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            }
+
+            if (field.name === 'fechaProximaRecarga' && value) {
+                const dateVal = new Date(value);
+                const today = new Date();
+                const diffTime = dateVal - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let variant = 'success';
+                let msg = 'Vigente';
+
+                if (diffDays < 0) {
+                    variant = 'danger';
+                    msg = `Vencido hace ${Math.abs(diffDays)} días`;
+                } else if (diffDays <= 30) {
+                    variant = 'warning';
+                    msg = `Vence en ${diffDays} días`;
+                    return (
+                        <div className="d-flex flex-column align-items-center">
+                            <span className="mb-1">{value}</span>
+                            <Badge bg={variant}>{msg}</Badge>
+                        </div>
+                    );
+                }
+
+                return value;
+            };
 
             // Renderizado especial para Alturas en la tabla
             if (field.type === 'dependent_select') {
@@ -744,299 +751,304 @@ const GestorInventario = ({ config }) => {
                 );
             }
 
+            // --- SAFE GUARD: Evitar que Objetos rompan el render ---
+            if (typeof value === 'object' && value !== null && !React.isValidElement(value)) {
+                return JSON.stringify(value);
+            }
+
             return value;
-        };
+        } catch (err) {
+            console.error("Error renderizando celda:", err);
+            return <span className="text-danger small">Error</span>;
+        }
+    };
 
-        // Campos a mostrar en la tabla (filtrados por showInTable o los primeros 5 por defecto)
-        const tableFields = config.campos.filter(f => f.showInTable);
-        const fieldsToRender = tableFields.length > 0 ? tableFields : config.campos.slice(0, 5);
+    // Campos a mostrar en la tabla (filtrados por showInTable o los primeros 5 por defecto)
+    const tableFields = config.campos.filter(f => f.showInTable);
+    const fieldsToRender = tableFields.length > 0 ? tableFields : config.campos.slice(0, 5);
 
-        // Estado para búsqueda local y conteo
-        const [searchTerm, setSearchTerm] = useState('');
+    // Estado para búsqueda local y conteo
+    const [searchTerm, setSearchTerm] = useState('');
 
-        // Filtrar items basado en la búsqueda
-        const filteredItems = items.filter(item => {
-            if (!searchTerm) return true;
-            const searchLower = searchTerm.toLowerCase();
+    // Filtrar items basado en la búsqueda
+    const filteredItems = items.filter(item => {
+        if (!searchTerm) return true;
+        const searchLower = searchTerm.toLowerCase();
 
-            // Buscar en todos los valores del objeto
-            return Object.values(item).some(val => {
-                if (val === null || val === undefined) return false;
-                return String(val).toLowerCase().includes(searchLower);
+        // Buscar en todos los valores del objeto
+        return Object.values(item).some(val => {
+            if (val === null || val === undefined) return false;
+            return String(val).toLowerCase().includes(searchLower);
+        });
+    });
+
+    // Exportar a Excel
+    const handleExportExcel = () => {
+        if (filteredItems.length === 0) return alert("No hay datos para exportar");
+
+        const dataToExport = filteredItems.map(item => {
+            const row = {};
+            // Mapear cada campo según la configuración
+            config.campos.forEach(field => {
+                // OMITIR IMÁGENES: No exportar columnas de tipo imagen
+                if (field.type === 'image') return;
+
+                const val = item[field.name];
+
+                // Formatear valores especiales
+                if (val === null || val === undefined) {
+                    row[field.label] = '';
+                } else if (field.type === 'checklist') {
+                    row[field.label] = Array.isArray(val) ? val.join(', ') : val;
+                } else if (field.type === 'ghs_pictograms') {
+                    row[field.label] = Array.isArray(val) ? val.join(', ') : val;
+                } else if (field.type === 'nfpa_diamond') {
+                    row[field.label] = `Salud: ${val.salud}, Inflam: ${val.inflamabilidad}, React: ${val.reactividad}, Esp: ${val.especial || '-'}`;
+                } else if (field.type === 'checklist_with_quantity') {
+                    row[field.label] = Object.entries(val || {})
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join('; ');
+                } else {
+                    row[field.label] = val;
+                }
             });
+            return row;
         });
 
-        // Exportar a Excel
-        const handleExportExcel = () => {
-            if (filteredItems.length === 0) return alert("No hay datos para exportar");
+        const ws = utils.json_to_sheet(dataToExport);
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, ws, "Inventario");
+        writeFile(wb, `${config.titulo.replace(/ /g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
 
-            const dataToExport = filteredItems.map(item => {
-                const row = {};
-                // Mapear cada campo según la configuración
-                config.campos.forEach(field => {
-                    // OMITIR IMÁGENES: No exportar columnas de tipo imagen
-                    if (field.type === 'image') return;
+    // Exportar a PDF
+    const [pdfGenerating, setPdfGenerating] = useState(false);
 
-                    const val = item[field.name];
+    const handleExportPDF = () => {
+        if (filteredItems.length === 0) return alert("No hay datos para exportar");
+        setPdfGenerating(true);
 
-                    // Formatear valores especiales
-                    if (val === null || val === undefined) {
-                        row[field.label] = '';
-                    } else if (field.type === 'checklist') {
-                        row[field.label] = Array.isArray(val) ? val.join(', ') : val;
-                    } else if (field.type === 'ghs_pictograms') {
-                        row[field.label] = Array.isArray(val) ? val.join(', ') : val;
-                    } else if (field.type === 'nfpa_diamond') {
-                        row[field.label] = `Salud: ${val.salud}, Inflam: ${val.inflamabilidad}, React: ${val.reactividad}, Esp: ${val.especial || '-'}`;
-                    } else if (field.type === 'checklist_with_quantity') {
-                        row[field.label] = Object.entries(val || {})
-                            .map(([k, v]) => `${k}: ${v}`)
-                            .join('; ');
-                    } else {
-                        row[field.label] = val;
-                    }
-                });
-                return row;
+        // Esperar a que el estado actualice el DOM y muestre el contenedor
+        setTimeout(() => {
+            const element = document.getElementById('inventory-pdf-container');
+
+            const opt = {
+                margin: 10, // mm
+                filename: `${config.titulo.replace(/ /g, '_')}_Reporte.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                setPdfGenerating(false);
+            }).catch(err => {
+                console.error("Error generando PDF:", err);
+                setPdfGenerating(false);
+                alert("Error al generar el PDF. Intente nuevamente.");
             });
+        }, 500);
+    };
 
-            const ws = utils.json_to_sheet(dataToExport);
-            const wb = utils.book_new();
-            utils.book_append_sheet(wb, ws, "Inventario");
-            writeFile(wb, `${config.titulo.replace(/ /g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
-        };
-
-        // Exportar a PDF
-        const [pdfGenerating, setPdfGenerating] = useState(false);
-
-        const handleExportPDF = () => {
-            if (filteredItems.length === 0) return alert("No hay datos para exportar");
-            setPdfGenerating(true);
-
-            // Esperar a que el estado actualice el DOM y muestre el contenedor
-            setTimeout(() => {
-                const element = document.getElementById('inventory-pdf-container');
-
-                const opt = {
-                    margin: 10, // mm
-                    filename: `${config.titulo.replace(/ /g, '_')}_Reporte.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                html2pdf().set(opt).from(element).save().then(() => {
-                    setPdfGenerating(false);
-                }).catch(err => {
-                    console.error("Error generando PDF:", err);
-                    setPdfGenerating(false);
-                    alert("Error al generar el PDF. Intente nuevamente.");
-                });
-            }, 500);
-        };
-
-        return (
-            <div className="p-3">
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h4 className="mb-0 text-primary">{config.titulo}</h4>
-                        <span className="text-muted small">
-                            Total Registros: <strong>{items.length}</strong>
-                            {searchTerm && filteredItems.length !== items.length && (
-                                <span> (Filtrados: {filteredItems.length})</span>
-                            )}
-                        </span>
-                    </div>
-
-                    <div className="d-flex gap-2">
-                        <Form.Control
-                            type="text"
-                            placeholder="Buscar en este inventario..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ width: '250px' }}
-                        />
-                        <Button
-                            variant="outline-danger"
-                            onClick={handleExportPDF}
-                            disabled={pdfGenerating}
-                            title="Descargar Reporte PDF"
-                            className="d-flex align-items-center"
-                        >
-                            <FileText size={18} className="me-2" />
-                            {pdfGenerating ? 'Generando...' : 'PDF'}
-                        </Button>
-                        <Button variant="outline-success" onClick={handleExportExcel} title="Descargar Excel">
-                            <FileText size={18} className="me-2" />
-                            Excel
-                        </Button>
-                        <Button onClick={() => openModal()} variant="success">
-                            <Plus size={18} className="me-2" />
-                            Agregar Nuevo
-                        </Button>
-                    </div>
+    return (
+        <div className="p-3">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 className="mb-0 text-primary">{config.titulo}</h4>
+                    <span className="text-muted small">
+                        Total Registros: <strong>{items.length}</strong>
+                        {searchTerm && filteredItems.length !== items.length && (
+                            <span> (Filtrados: {filteredItems.length})</span>
+                        )}
+                    </span>
                 </div>
 
-                {loading ? (
-                    <p>Cargando inventario...</p>
-                ) : filteredItems.length === 0 ? (
-                    <Alert variant="info">
-                        {items.length === 0 ? "No hay elementos registrados en este inventario." : "No se encontraron resultados para tu búsqueda."}
-                    </Alert>
-                ) : (
-                    <div className="table-responsive shadow-sm rounded">
-                        <Table hover striped bordered className="align-middle">
-                            <thead className="bg-light">
-                                <tr>
+                <div className="d-flex gap-2">
+                    <Form.Control
+                        type="text"
+                        placeholder="Buscar en este inventario..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ width: '250px' }}
+                    />
+                    <Button
+                        variant="outline-danger"
+                        onClick={handleExportPDF}
+                        disabled={pdfGenerating}
+                        title="Descargar Reporte PDF"
+                        className="d-flex align-items-center"
+                    >
+                        <FileText size={18} className="me-2" />
+                        {pdfGenerating ? 'Generando...' : 'PDF'}
+                    </Button>
+                    <Button variant="outline-success" onClick={handleExportExcel} title="Descargar Excel">
+                        <FileText size={18} className="me-2" />
+                        Excel
+                    </Button>
+                    <Button onClick={() => openModal()} variant="success">
+                        <Plus size={18} className="me-2" />
+                        Agregar Nuevo
+                    </Button>
+                </div>
+            </div>
+
+            {loading ? (
+                <p>Cargando inventario...</p>
+            ) : filteredItems.length === 0 ? (
+                <Alert variant="info">
+                    {items.length === 0 ? "No hay elementos registrados en este inventario." : "No se encontraron resultados para tu búsqueda."}
+                </Alert>
+            ) : (
+                <div className="table-responsive shadow-sm rounded">
+                    <Table hover striped bordered className="align-middle">
+                        <thead className="bg-light">
+                            <tr>
+                                {fieldsToRender.map((field, idx) => (
+                                    <th key={idx} className="text-center">{field.label}</th>
+                                ))}
+                                <th className="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredItems.map((item) => (
+                                <tr key={item.id}>
                                     {fieldsToRender.map((field, idx) => (
-                                        <th key={idx} className="text-center">{field.label}</th>
-                                    ))}
-                                    <th className="text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredItems.map((item) => (
-                                    <tr key={item.id}>
-                                        {fieldsToRender.map((field, idx) => (
-                                            <td key={idx} className="text-center">
-                                                {renderCell(item, field)}
-                                            </td>
-                                        ))}
-                                        <td className="text-center">
-                                            <Button
-                                                variant="outline-info"
-                                                size="sm"
-                                                className="me-2"
-                                                title="Ver Detalle"
-                                                onClick={() => openViewModal(item)}
-                                            >
-                                                <Eye size={16} />
-                                            </Button>
-                                            <Button
-                                                variant="outline-primary"
-                                                size="sm"
-                                                className="me-2"
-                                                onClick={() => openModal(item)}
-                                            >
-                                                <Edit size={16} />
-                                            </Button>
-                                            <Button
-                                                variant="outline-danger"
-                                                size="sm"
-                                                onClick={() => handleDelete(item.id)}
-                                            >
-                                                <Trash2 size={16} />
-                                            </Button>
+                                        <td key={idx} className="text-center">
+                                            {renderCell(item, field)}
                                         </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </div>
-                )}
+                                    ))}
+                                    <td className="text-center">
+                                        <Button
+                                            variant="outline-info"
+                                            size="sm"
+                                            className="me-2"
+                                            title="Ver Detalle"
+                                            onClick={() => openViewModal(item)}
+                                        >
+                                            <Eye size={16} />
+                                        </Button>
+                                        <Button
+                                            variant="outline-primary"
+                                            size="sm"
+                                            className="me-2"
+                                            onClick={() => openModal(item)}
+                                        >
+                                            <Edit size={16} />
+                                        </Button>
+                                        <Button
+                                            variant="outline-danger"
+                                            size="sm"
+                                            onClick={() => handleDelete(item.id)}
+                                        >
+                                            <Trash2 size={16} />
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </div>
+            )}
 
-                {/* Modal de Creación/Edición */}
-                <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
-                    <Modal.Header closeButton>
-                        <Modal.Title>{editingItem ? 'Editar Elemento' : 'Nuevo Elemento'}</Modal.Title>
-                    </Modal.Header>
-                    <Form onSubmit={handleSave}>
-                        <Modal.Body>
-                            <div className="row">
-                                {config.campos.map((field, idx) => (
-                                    <div key={idx} className="col-md-6 mb-3">
-                                        <Form.Group>
-                                            <Form.Label>{field.label}</Form.Label>
-                                            {renderInput(field)}
-                                        </Form.Group>
-                                    </div>
-                                ))}
-                            </div>
-                        </Modal.Body>
-                        <Modal.Footer>
-                            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-                            <Button variant="primary" type="submit">Guardar</Button>
-                        </Modal.Footer>
-                    </Form>
-                </Modal>
-
-                {/* Modal de Visualización (Solo Lectura) */}
-                <Modal show={viewModalOpen} onHide={() => setViewModalOpen(false)} size="lg">
-                    <Modal.Header closeButton>
-                        <Modal.Title>Detalle del Elemento</Modal.Title>
-                    </Modal.Header>
+            {/* Modal de Creación/Edición */}
+            <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
+                <Modal.Header closeButton>
+                    <Modal.Title>{editingItem ? 'Editar Elemento' : 'Nuevo Elemento'}</Modal.Title>
+                </Modal.Header>
+                <Form onSubmit={handleSave}>
                     <Modal.Body>
-                        {viewingItem && (
-                            <div className="row">
-                                {config.campos.map((field, idx) => {
-                                    const val = viewingItem[field.name];
-                                    return (
-                                        <div key={idx} className="col-md-6 mb-4">
-                                            <h6 className="text-muted small text-uppercase mb-1">{field.label}</h6>
-
-                                            {field.type === 'nfpa_diamond' ? (
-                                                // Renderizar Rombo ReadOnly
-                                                renderCell(viewingItem, field)
-                                            ) : field.type === 'checklist_with_quantity' ? (
-                                                // Renderizar Lista de Cantidades
-                                                <div className="border rounded p-2 bg-light">
-                                                    {val && Object.keys(val).length > 0 ? (
-                                                        <ul className="list-unstyled mb-0 small">
-                                                            {Object.entries(val).map(([k, v], i) => (
-                                                                <li key={i} className="d-flex justify-content-between border-bottom py-1">
-                                                                    <span>{k}</span>
-                                                                    <Badge bg="primary" pill>{v}</Badge>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    ) : <span className="text-muted fst-italic">Sin elementos registrados</span>}
-                                                </div>
-                                            ) : field.type === 'checklist' ? (
-                                                // Renderizar Lista Simple
-                                                <ul className="list-unstyled mb-0 small border rounded p-2 bg-light">
-                                                    {val && val.length > 0 ? val.map((opt, i) => (
-                                                        <li key={i}>✓ {opt}</li>
-                                                    )) : <span className="text-muted">Ninguno</span>}
-                                                </ul>
-                                            ) : field.type !== 'image' && (
-                                                // Texto plano (NO mostrar si es imagen, ya que la imagen se muestra abajo)
-                                                <p className="fw-bold mb-0">{val || '-'}</p>
-                                            )}
-
-                                            {/* Caso Especial: Si es Imagen renderizar abajo */}
-                                            {field.type === 'image' && val && (
-                                                <div className="mt-2 text-center">
-                                                    <img src={val} alt="Detalle" className="img-fluid rounded border shadow-sm" style={{ maxHeight: '300px' }} />
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+                        <div className="row">
+                            {config.campos.map((field, idx) => (
+                                <div key={idx} className="col-md-6 mb-3">
+                                    <Form.Group>
+                                        <Form.Label>{field.label}</Form.Label>
+                                        {renderInput(field)}
+                                    </Form.Group>
+                                </div>
+                            ))}
+                        </div>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setViewModalOpen(false)}>Cerrar</Button>
+                        <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
+                        <Button variant="primary" type="submit">Guardar</Button>
                     </Modal.Footer>
-                </Modal>
+                </Form>
+            </Modal>
+
+            {/* Modal de Visualización (Solo Lectura) */}
+            <Modal show={viewModalOpen} onHide={() => setViewModalOpen(false)} size="lg">
+                <Modal.Header closeButton>
+                    <Modal.Title>Detalle del Elemento</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {viewingItem && (
+                        <div className="row">
+                            {config.campos.map((field, idx) => {
+                                const val = viewingItem[field.name];
+                                return (
+                                    <div key={idx} className="col-md-6 mb-4">
+                                        <h6 className="text-muted small text-uppercase mb-1">{field.label}</h6>
+
+                                        {field.type === 'nfpa_diamond' ? (
+                                            // Renderizar Rombo ReadOnly
+                                            renderCell(viewingItem, field)
+                                        ) : field.type === 'checklist_with_quantity' ? (
+                                            // Renderizar Lista de Cantidades
+                                            <div className="border rounded p-2 bg-light">
+                                                {val && Object.keys(val).length > 0 ? (
+                                                    <ul className="list-unstyled mb-0 small">
+                                                        {Object.entries(val).map(([k, v], i) => (
+                                                            <li key={i} className="d-flex justify-content-between border-bottom py-1">
+                                                                <span>{k}</span>
+                                                                <Badge bg="primary" pill>{v}</Badge>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : <span className="text-muted fst-italic">Sin elementos registrados</span>}
+                                            </div>
+                                        ) : field.type === 'checklist' ? (
+                                            // Renderizar Lista Simple
+                                            <ul className="list-unstyled mb-0 small border rounded p-2 bg-light">
+                                                {val && val.length > 0 ? val.map((opt, i) => (
+                                                    <li key={i}>✓ {opt}</li>
+                                                )) : <span className="text-muted">Ninguno</span>}
+                                            </ul>
+                                        ) : field.type !== 'image' && (
+                                            // Texto plano (NO mostrar si es imagen, ya que la imagen se muestra abajo)
+                                            <p className="fw-bold mb-0">{val || '-'}</p>
+                                        )}
+
+                                        {/* Caso Especial: Si es Imagen renderizar abajo */}
+                                        {field.type === 'image' && val && (
+                                            <div className="mt-2 text-center">
+                                                <img src={val} alt="Detalle" className="img-fluid rounded border shadow-sm" style={{ maxHeight: '300px' }} />
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setViewModalOpen(false)}>Cerrar</Button>
+                </Modal.Footer>
+            </Modal>
+            {pdfGenerating && (
                 <div
                     id="inventory-pdf-container"
                     style={{
-                        // ESTRATEGIA: "Flash Preview"
-                        // Mostramos el reporte EN PRIMER PLANO (Overlay) mientras se genera.
-                        // Esto garantiza que html2canvas pueda capturarlo correctamente sin cortes ni espacios en blanco.
-                        display: pdfGenerating ? 'block' : 'none',
                         position: 'fixed',
                         top: '0',
                         left: '0',
                         width: '100%',
                         height: '100%',
-                        zIndex: 99999, // Encima de todo
+                        zIndex: 99999,
                         background: 'white',
-                        overflow: 'auto', // Permitir scroll si es necesario (html2canvas lo capturará todo)
+                        overflow: 'auto',
                         padding: '20px'
                     }}
                 >
-                    {/* Mensaje flotante para el usuario */}
                     <div style={{ position: 'fixed', top: '20px', right: '20px', background: 'rgba(0,0,0,0.8)', color: 'white', padding: '10px 20px', borderRadius: '5px', zIndex: 100000 }}>
                         Generando PDF... Por favor espere.
                     </div>
@@ -1050,74 +1062,70 @@ const GestorInventario = ({ config }) => {
                                 <span><strong>Total Ítems:</strong> {filteredItems.length}</span>
                             </div>
                         </div>
-
-                        <div className="d-flex flex-column gap-3">
-                            {filteredItems.map((item, index) => (
-                                <div key={item.id} className="border rounded p-3 mb-2 keep-together" style={{ pageBreakInside: 'avoid', backgroundColor: '#f8f9fa' }}>
-                                    <div className="row align-items-center">
-                                        {/* Información del Ítem */}
-                                        <div className="col-8">
-                                            <div className="d-flex align-items-center mb-3">
-                                                <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '30px', height: '30px', fontSize: '14px', fontWeight: 'bold' }}>
-                                                    {index + 1}
-                                                </div>
-                                                <h5 className="mb-0 fw-bold">ID: {item.codigo || item.id}</h5>
+                        {filteredItems.map((item, index) => (
+                            <div key={item.id} className="border rounded p-3 mb-2 keep-together" style={{ pageBreakInside: 'avoid', backgroundColor: '#f8f9fa' }}>
+                                <div className="row align-items-center">
+                                    {/* Información del Ítem */}
+                                    <div className="col-8">
+                                        <div className="d-flex align-items-center mb-3">
+                                            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '30px', height: '30px', fontSize: '14px', fontWeight: 'bold' }}>
+                                                {index + 1}
                                             </div>
-
-                                            <div className="row g-2">
-                                                {config.campos.filter(f => f.type !== 'image' && f.type !== 'ghs_pictograms' && f.type !== 'nfpa_diamond').map((field, idx) => {
-                                                    const val = item[field.name];
-                                                    if (!val) return null;
-                                                    return (
-                                                        <div key={idx} className="col-6" style={{ fontSize: '11px', lineHeight: '1.4' }}>
-                                                            <strong className="text-secondary d-block" style={{ fontSize: '10px' }}>{field.label}:</strong>
-                                                            {field.type === 'checklist' || field.type === 'checklist_with_quantity' ? (
-                                                                <span>{renderCell(item, field)}</span>
-                                                            ) : (
-                                                                <span>{val}</span>
-                                                            )}
-                                                        </div>
-                                                    )
-                                                })}
-                                            </div>
+                                            <h5 className="mb-0 fw-bold">ID: {item.codigo || item.id}</h5>
                                         </div>
 
-                                        {/* Visuales (Foto y Rombos) */}
-                                        <div className="col-4 d-flex flex-column align-items-center justify-content-center border-start ps-3">
-                                            {/* Imagen Principal */}
-                                            {config.campos.find(f => f.type === 'image') && item[config.campos.find(f => f.type === 'image').name] ? (
-                                                <img
-                                                    src={item[config.campos.find(f => f.type === 'image').name]}
-                                                    alt="Item"
-                                                    crossOrigin="anonymous"
-                                                    className="img-fluid rounded border mb-2 shadow-sm"
-                                                    style={{ maxHeight: '120px', objectFit: 'contain', backgroundColor: 'white' }}
-                                                />
-                                            ) : (
-                                                <div className="text-center text-muted border rounded d-flex align-items-center justify-content-center p-2 mb-2" style={{ width: '80px', height: '80px', backgroundColor: '#e9ecef', fontSize: '10px' }}>
-                                                    Sin Foto
+                                        <div className="row g-2">
+                                            {config.campos.filter(f => f.type !== 'image' && f.type !== 'ghs_pictograms' && f.type !== 'nfpa_diamond').map((field, idx) => {
+                                                const val = item[field.name];
+                                                if (!val) return null;
+                                                return (
+                                                    <div key={idx} className="col-6" style={{ fontSize: '11px', lineHeight: '1.4' }}>
+                                                        <strong className="text-secondary d-block" style={{ fontSize: '10px' }}>{field.label}:</strong>
+                                                        {field.type === 'checklist' || field.type === 'checklist_with_quantity' ? (
+                                                            <span>{renderCell(item, field)}</span>
+                                                        ) : (
+                                                            <span>{val}</span>
+                                                        )}
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Visuales (Foto y Rombos) */}
+                                    <div className="col-4 d-flex flex-column align-items-center justify-content-center border-start ps-3">
+                                        {/* Imagen Principal */}
+                                        {config.campos.find(f => f.type === 'image') && item[config.campos.find(f => f.type === 'image').name] ? (
+                                            <img
+                                                src={item[config.campos.find(f => f.type === 'image').name]}
+                                                alt="Item"
+                                                crossOrigin="anonymous"
+                                                className="img-fluid rounded border mb-2 shadow-sm"
+                                                style={{ maxHeight: '120px', objectFit: 'contain', backgroundColor: 'white' }}
+                                            />
+                                        ) : (
+                                            <div className="text-center text-muted border rounded d-flex align-items-center justify-content-center p-2 mb-2" style={{ width: '80px', height: '80px', backgroundColor: '#e9ecef', fontSize: '10px' }}>
+                                                Sin Foto
+                                            </div>
+                                        )}
+
+                                        {/* Rombos y Pictogramas */}
+                                        <div className="d-flex gap-2 justify-content-center flex-wrap">
+                                            {config.campos.find(f => f.type === 'nfpa_diamond') && (
+                                                <div style={{ transform: 'scale(0.8)' }}>
+                                                    {renderCell(item, config.campos.find(f => f.type === 'nfpa_diamond'))}
                                                 </div>
                                             )}
-
-                                            {/* Rombos y Pictogramas */}
-                                            <div className="d-flex gap-2 justify-content-center flex-wrap">
-                                                {config.campos.find(f => f.type === 'nfpa_diamond') && (
-                                                    <div style={{ transform: 'scale(0.8)' }}>
-                                                        {renderCell(item, config.campos.find(f => f.type === 'nfpa_diamond'))}
-                                                    </div>
-                                                )}
-                                                {config.campos.find(f => f.type === 'ghs_pictograms') && (
-                                                    <div style={{ transform: 'scale(0.8)' }}>
-                                                        {renderCell(item, config.campos.find(f => f.type === 'ghs_pictograms'))}
-                                                    </div>
-                                                )}
-                                            </div>
+                                            {config.campos.find(f => f.type === 'ghs_pictograms') && (
+                                                <div style={{ transform: 'scale(0.8)' }}>
+                                                    {renderCell(item, config.campos.find(f => f.type === 'ghs_pictograms'))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-
+                            </div>
+                        ))}
                         {/* Pie de Página / Firmas */}
                         <div className="mt-5 pt-5 border-top">
                             <div className="row text-center mt-3">
@@ -1137,9 +1145,10 @@ const GestorInventario = ({ config }) => {
                         </div>
                     </div>
                 </div>
-            </div>
-        );
-    };
+            )}
+        </div>
+    );
 };
+
 
 export default GestorInventario;
