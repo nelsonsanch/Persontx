@@ -10,6 +10,7 @@ import { botiquinConfig } from './configs/botiquinConfig';
 import { camillasConfig } from './configs/camillasConfig';
 import { activosConfig } from './configs/activosConfig';
 import { gabinetesConfig } from './configs/gabinetesConfig';
+import { alturasConfig } from './configs/alturasConfig';
 import { otrosConfig } from './configs/otrosConfig';
 
 // Importar Motor
@@ -28,6 +29,7 @@ const InventariosMain = () => {
         camillas: <span className="me-2">🛏️</span>,
         activos: <span className="me-2">🛠️</span>,
         gabinetes: <span className="me-2">🚒</span>,
+        alturas: <span className="me-2">🧗</span>,
         otros: <span className="me-2">📦</span>
     };
 
@@ -69,6 +71,11 @@ const InventariosMain = () => {
                                     <Nav.Item>
                                         <Nav.Link eventKey="activos" className="d-flex align-items-center mb-1">
                                             {icons.activos} Herramientas y Equipos
+                                        </Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="alturas" className="d-flex align-items-center mb-1">
+                                            {icons.alturas} Equipos de Alturas
                                         </Nav.Link>
                                     </Nav.Item>
                                     <Nav.Item>
@@ -117,6 +124,9 @@ const InventariosMain = () => {
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="activos">
                                         <GestorInventario config={activosConfig} />
+                                    </Tab.Pane>
+                                    <Tab.Pane eventKey="alturas">
+                                        <GestorInventario config={alturasConfig} />
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="otros">
                                         <GestorInventario config={otrosConfig} />
