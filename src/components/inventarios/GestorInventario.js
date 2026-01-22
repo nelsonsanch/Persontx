@@ -1152,3 +1152,7 @@ const GestorInventario = ({ config }) => {
 
 
 export default GestorInventario;
+/ /  
+ F o r c e d  
+ u p d a t e  
+ 
