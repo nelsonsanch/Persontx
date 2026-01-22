@@ -25,7 +25,6 @@ export const gabinetesConfig = {
         },
         { name: 'fechaUltimaInspeccion', label: 'Fecha de Registro', type: 'date', required: true },
         {
-            name: 'componentes',
             label: 'Lista de Chequeo de Componentes (Marcar si cumple/presente)',
             type: 'checklist',
             options: [

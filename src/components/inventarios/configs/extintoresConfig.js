@@ -24,6 +24,7 @@ export const extintoresConfig = {
             showInTable: true
         },
         { name: 'fechaCompra', label: 'Fecha de Compra', type: 'date', required: true, showInTable: true },
+        { name: 'fechaProximaRecarga', label: 'Próxima Recarga', type: 'date', showInTable: true },
         { name: 'valor', label: 'Valor Comercial ($)', type: 'number', required: true },
         {
             name: 'componentes',

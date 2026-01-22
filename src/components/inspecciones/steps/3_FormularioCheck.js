@@ -134,6 +134,30 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                 />
             </Form.Group>
 
+            {/* CAMPO DE PRÓXIMA RECARGA (SOLO EXTINTORES) */}
+            {data.categoria === 'extintores' && (
+                <Card className="mb-4 border-warning">
+                    <Card.Header className="bg-warning text-dark fw-bold">
+                        <AlertTriangle size={18} className="me-2" />
+                        Vencimiento de Recarga
+                    </Card.Header>
+                    <Card.Body>
+                        <Form.Group>
+                            <Form.Label className="fw-bold">Fecha de la Próxima Recarga</Form.Label>
+                            <Form.Control
+                                type="date"
+                                value={data.fechaProximaRecarga || ''}
+                                onChange={(e) => setData(prev => ({ ...prev, fechaProximaRecarga: e.target.value }))}
+                                required
+                            />
+                            <Form.Text className="text-muted">
+                                Indique la fecha exacta en la que se vence la recarga actual.
+                            </Form.Text>
+                        </Form.Group>
+                    </Card.Body>
+                </Card>
+            )}
+
             <div className="d-flex justify-content-between">
                 <Button variant="secondary" onClick={onBack}>Atrás</Button>
                 <Button

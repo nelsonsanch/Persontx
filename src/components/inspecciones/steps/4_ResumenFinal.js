@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Card, Button, ListGroup, Alert, Spinner } from 'react-bootstrap';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { useAuth } from '../../../hooks/useAuth';
 
 const ResumenFinal = ({ data, onBack, onReset }) => {
     const { user } = useAuth();
-    const { activoSeleccionado, checklist, observaciones, categoria } = data;
+    const { activoSeleccionado, checklist, observaciones, categoria, fechaProximaRecarga } = data;
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
@@ -50,6 +50,21 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
                 estadoGeneral: estadoGeneral,
                 estado: 'Cerrada'
             });
+
+            // Si es EXTINTOR y hay fecha de próxima recarga, ACTUALIZAR EL ACTIVO EN INVENTARIO
+            if (categoria === 'extintores' && fechaProximaRecarga && activoSeleccionado?.id) {
+                try {
+                    const itemRef = doc(db, 'inventarios', activoSeleccionado.id);
+                    await updateDoc(itemRef, {
+                        fechaProximaRecarga: fechaProximaRecarga,
+                        fechaUltimaRecarga: new Date().toISOString().split('T')[0] // Asumimos recarga hoy o reciente
+                    });
+                    console.log("Inventario actualizado con nueva fecha de recarga");
+                } catch (updateErr) {
+                    console.error("Error actualizando inventario:", updateErr);
+                }
+            }
+
             setSaved(true);
         } catch (error) {
             console.error("Error guardando inspección:", error);
