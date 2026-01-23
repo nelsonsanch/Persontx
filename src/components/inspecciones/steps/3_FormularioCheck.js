@@ -1,57 +1,267 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Form, Row, Col, Badge } from 'react-bootstrap';
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Card, Button, Form, Row, Col, Badge, Collapse } from 'react-bootstrap';
+import { CheckCircle, XCircle, AlertTriangle, Camera, MessageSquare, Info } from 'lucide-react';
+
+// Importar semillas para Alturas
+import { PLANTILLAS, ITEMS_PLANTILLA } from '../data/inspectionSeeds';
 
 const FormularioCheck = ({ data, setData, onNext, onBack }) => {
-    const { activoSeleccionado, configRef } = data;
+    const { categoria, activoSeleccionado, configRef } = data;
     const [checklistItems, setChecklistItems] = useState([]);
+
+    // Estado de respuestas: Soporta simple {'Item': 'Bueno'} y complejo {'ID': { valor: 'SI', obs: '', foto: '' }}
     const [respuestas, setRespuestas] = useState(data.checklist || {});
-    const [observacion, setObservacion] = useState(data.observaciones || '');
+    const [observacionGeneral, setObservacionGeneral] = useState(data.observaciones || '');
 
-    // 1. Extraer items inspeccionables de la configuración
+    // Estado para controlar qué acordión de item está abierto (para obs/foto)
+    const [openItem, setOpenItem] = useState(null);
+
+    // 1. Cargar Ítems (Legacy vs Dynamic)
     useEffect(() => {
-        if (!configRef) return;
-
         let items = [];
 
-        // Buscar campos tipo 'checklist' o 'checklist_with_quantity' en la config
-        configRef.campos.forEach(campo => {
-            if ((campo.type === 'checklist' || campo.type === 'checklist_with_quantity') && campo.options) {
-                // Agregar cada opción como un item a inspeccionar
-                items = [...items, ...campo.options];
-            }
-        });
+        if (categoria === 'alturas' && activoSeleccionado) {
+            // Lógica Dinámica para Alturas
+            // 1. Buscar plantilla por Familia (Requerimiento Usuario: Plantilla por Familia)
+            const plantilla = PLANTILLAS.find(p => p.familia === activoSeleccionado.familia);
 
-        // Si no hay checklist definido en config, usar genéricos
-        if (items.length === 0) {
-            items = ['Estado General', 'Limpieza', 'Señalización', 'Acceso Libre', 'Funcionamiento'];
+            if (plantilla) {
+                // 2. Filtrar items por Plantilla ID
+                items = ITEMS_PLANTILLA.filter(i => i.plantillaId === plantilla.id).sort((a, b) => a.orden - b.orden);
+            } else {
+                console.warn("No se encontró plantilla para familia:", activoSeleccionado.familia);
+                // Fallback: Mostrar mensaje amigable en UI
+                items = [];
+            }
+
+        } else if (configRef) {
+            // Lógica Legacy (Extintores, Botiquines, etc.)
+            configRef.campos.forEach(campo => {
+                if ((campo.type === 'checklist' || campo.type === 'checklist_with_quantity') && campo.options) {
+                    items = [...items, ...campo.options];
+                }
+            });
+            if (items.length === 0) {
+                items = ['Estado General', 'Limpieza', 'Señalización', 'Acceso Libre', 'Funcionamiento'];
+            }
         }
 
         setChecklistItems(items);
-    }, [configRef]);
+    }, [categoria, activoSeleccionado, configRef]);
 
-    // Manejar respuesta (Bueno / Malo / N/A)
-    const handleCheck = (item, estado) => {
+    // Manejador Genérico
+    const handleCheck = (item, valor) => {
+        const isObjectItem = typeof item === 'object';
+        const key = isObjectItem ? item.id : item;
+
+        if (isObjectItem) {
+            // Modo Complejo (Alturas)
+            setRespuestas(prev => ({
+                ...prev,
+                [key]: {
+                    ...prev[key],
+                    valor: valor // SI, NO, NA
+                }
+            }));
+        } else {
+            // Modo Legacy
+            setRespuestas(prev => ({
+                ...prev,
+                [key]: valor // Bueno, Malo, N/A
+            }));
+        }
+    };
+
+    // Manejadores específicos para detalles (solo Alturas)
+    const handleObservationChange = (itemId, text) => {
         setRespuestas(prev => ({
             ...prev,
-            [item]: estado
+            [itemId]: { ...prev[itemId], observacion: text }
         }));
     };
 
+    const handlePhotoMock = (itemId) => {
+        // Simulación de carga de foto
+        const mockUrl = "https://via.placeholder.com/150";
+        if (window.confirm("¿Simular carga de foto?")) {
+            setRespuestas(prev => ({
+                ...prev,
+                [itemId]: { ...prev[itemId], foto: mockUrl }
+            }));
+        }
+    };
+
     const handleContinue = () => {
-        // Guardar en estado global
+        // Calcular resultado preliminar para Alturas
+        let resultadoCalculado = "Apto";
+        if (categoria === 'alturas') {
+            const criticosFallidos = checklistItems.some(item => {
+                const resp = respuestas[item.id];
+                return item.esCritico && resp?.valor === 'NO';
+            });
+
+            const algunFallo = checklistItems.some(item => {
+                const resp = respuestas[item.id];
+                return resp?.valor === 'NO';
+            });
+
+            if (criticosFallidos) resultadoCalculado = "No Apto";
+            else if (algunFallo) resultadoCalculado = "Apto con Observación";
+        }
+
         setData(prev => ({
             ...prev,
             checklist: respuestas,
-            observaciones: observacion
+            observaciones: observacionGeneral,
+            resultadoPreliminar: resultadoCalculado // Guardamos esto para el resumen
         }));
         onNext();
+    };
+
+
+    // Renderizado de Item
+    const renderItem = (item, idx) => {
+        const isObjectItem = typeof item === 'object';
+
+        if (isObjectItem) {
+            // --- RENDER ALTURAS (Complejo) ---
+            const key = item.id;
+            const resp = respuestas[key] || {};
+            const estado = resp.valor;
+            const tieneFoto = !!resp.foto;
+            const tieneObs = !!resp.observacion;
+
+            return (
+                <Card key={key} className={`mb-3 border-${estado === 'NO' ? 'danger' : estado === 'SI' ? 'success' : 'light'} shadow-sm`}>
+                    <Card.Body className="p-3">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <Badge bg="secondary" className="me-2 mb-1">{item.seccion}</Badge>
+                                {item.esCritico && <Badge bg="danger" className="mb-1">CRÍTICO</Badge>}
+                                <p className="mb-1 fw-bold" style={{ fontSize: '1rem' }}>{item.pregunta}</p>
+                                {item.ayuda && <small className="text-muted d-block mb-2"><Info size={14} className="me-1" />{item.ayuda}</small>}
+                            </div>
+                        </div>
+
+                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            {/* Botones SI / NO / NA */}
+                            <div className="btn-group" role="group">
+                                <Button
+                                    variant={estado === 'SI' ? 'success' : 'outline-success'}
+                                    onClick={() => handleCheck(item, 'SI')}
+                                    className={estado === 'SI' ? 'fw-bold' : ''}
+                                >
+                                    CUMPLE
+                                </Button>
+                                <Button
+                                    variant={estado === 'NO' ? 'danger' : 'outline-danger'}
+                                    onClick={() => handleCheck(item, 'NO')}
+                                    className={estado === 'NO' ? 'fw-bold' : ''}
+                                >
+                                    NO CUMPLE
+                                </Button>
+                                <Button
+                                    variant={estado === 'NA' ? 'secondary' : 'outline-secondary'}
+                                    onClick={() => handleCheck(item, 'NA')}
+                                >
+                                    N/A
+                                </Button>
+                            </div>
+
+                            {/* Acciones Extra */}
+                            <div className="d-flex gap-2">
+                                <Button
+                                    variant={tieneObs ? "warning" : "light"}
+                                    size="sm"
+                                    onClick={() => setOpenItem(openItem === key ? null : key)}
+                                    title="Agregar Observación"
+                                >
+                                    <MessageSquare size={18} />
+                                </Button>
+                                {(item.requiereFoto || tieneFoto) && (
+                                    <Button
+                                        variant={tieneFoto ? "primary" : "light"}
+                                        size="sm"
+                                        onClick={() => handlePhotoMock(key)}
+                                        title="Evidencia Fotográfica"
+                                    >
+                                        <Camera size={18} />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Área Colapsable para Detalles */}
+                        <Collapse in={openItem === key || tieneObs || (estado === 'NO')}>
+                            <div className="mt-3 ps-3 border-start border-3 border-warning">
+                                <Form.Control
+                                    as="textarea"
+                                    rows={2}
+                                    placeholder="Detalle la inconformidad o hallazgo..."
+                                    value={resp.observacion || ''}
+                                    onChange={(e) => handleObservationChange(key, e.target.value)}
+                                    className="mb-2"
+                                    style={{ fontSize: '0.9rem' }}
+                                />
+                                {tieneFoto && (
+                                    <div className="position-relative d-inline-block">
+                                        <img src={resp.foto} alt="Evidencia" className="rounded border" style={{ height: '60px' }} />
+                                        <Button
+                                            size="sm" variant="danger"
+                                            className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                                            onClick={() => setRespuestas(p => ({ ...p, [key]: { ...p[key], foto: null } }))}
+                                        >x</Button>
+                                    </div>
+                                )}
+                            </div>
+                        </Collapse>
+                    </Card.Body>
+                </Card>
+            );
+
+        } else {
+            // --- RENDER LEGACY (Simple) ---
+            const estado = respuestas[item];
+            return (
+                <Card key={idx} className={`mb-2 border-${estado === 'Malo' ? 'danger' : estado === 'Bueno' ? 'success' : 'light'}`}>
+                    <Card.Body className="p-2 d-flex align-items-center justify-content-between">
+                        <span className="fw-medium">{item}</span>
+                        <div className="btn-group" role="group">
+                            <Button
+                                variant={estado === 'Bueno' ? 'success' : 'outline-secondary'}
+                                size="sm"
+                                onClick={() => handleCheck(item, 'Bueno')}
+                                title="Cumple / Bueno"
+                            >
+                                <CheckCircle size={18} />
+                            </Button>
+                            <Button
+                                variant={estado === 'Malo' ? 'danger' : 'outline-secondary'}
+                                size="sm"
+                                onClick={() => handleCheck(item, 'Malo')}
+                                title="No Cumple / Malo"
+                            >
+                                <XCircle size={18} />
+                            </Button>
+                            <Button
+                                variant={estado === 'N/A' ? 'warning' : 'outline-secondary'}
+                                size="sm"
+                                onClick={() => handleCheck(item, 'N/A')}
+                                title="No Aplica"
+                            >
+                                <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>N/A</span>
+                            </Button>
+                        </div>
+                    </Card.Body>
+                </Card>
+            );
+        }
     };
 
     // Calcular progreso
     const answeredCount = Object.keys(respuestas).length;
     const totalCount = checklistItems.length;
-    const progress = Math.round((answeredCount / totalCount) * 100) || 0;
+    const progress = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0;
 
     return (
         <div>
@@ -76,61 +286,33 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                         </small>
                     </div>
                     <div className="ms-auto">
-                        <Badge bg="info">{progress}% Completado</Badge>
+                        <Badge bg={progress === 100 ? "success" : "info"}>{progress}% Completado</Badge>
                     </div>
                 </Card.Body>
             </Card>
 
-            <h5 className="mb-3">Lista de Chequeo</h5>
+            <h5 className="mb-3">
+                {categoria === 'alturas' ? 'Inspección Detallada según Norma' : 'Lista de Chequeo Rápida'}
+            </h5>
+
+            {checklistItems.length === 0 && (
+                <div className="alert alert-warning">
+                    No se encontró una plantilla de inspección configurada para este tipo de equipo.
+                </div>
+            )}
 
             <div className="checklist-container mb-4">
-                {checklistItems.map((item, idx) => {
-                    const estado = respuestas[item];
-                    return (
-                        <Card key={idx} className={`mb-2 border-${estado === 'Malo' ? 'danger' : estado === 'Bueno' ? 'success' : 'light'}`}>
-                            <Card.Body className="p-2 d-flex align-items-center justify-content-between">
-                                <span className="fw-medium">{item}</span>
-
-                                <div className="btn-group" role="group">
-                                    <Button
-                                        variant={estado === 'Bueno' ? 'success' : 'outline-secondary'}
-                                        size="sm"
-                                        onClick={() => handleCheck(item, 'Bueno')}
-                                        title="Cumple / Bueno"
-                                    >
-                                        <CheckCircle size={18} />
-                                    </Button>
-                                    <Button
-                                        variant={estado === 'Malo' ? 'danger' : 'outline-secondary'}
-                                        size="sm"
-                                        onClick={() => handleCheck(item, 'Malo')}
-                                        title="No Cumple / Malo"
-                                    >
-                                        <XCircle size={18} />
-                                    </Button>
-                                    <Button
-                                        variant={estado === 'N/A' ? 'warning' : 'outline-secondary'}
-                                        size="sm"
-                                        onClick={() => handleCheck(item, 'N/A')}
-                                        title="No Aplica"
-                                    >
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>N/A</span>
-                                    </Button>
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    );
-                })}
+                {checklistItems.map((item, idx) => renderItem(item, idx))}
             </div>
 
             <Form.Group className="mb-4">
-                <Form.Label className="fw-bold">Observaciones / Hallazgos Adicionales</Form.Label>
+                <Form.Label className="fw-bold">Observaciones Generales</Form.Label>
                 <Form.Control
                     as="textarea"
                     rows={3}
-                    placeholder="Describe aquí cualquier novedad, daño o hallazgo importante..."
-                    value={observacion}
-                    onChange={(e) => setObservacion(e.target.value)}
+                    placeholder="Comentarios globales de la inspección..."
+                    value={observacionGeneral}
+                    onChange={(e) => setObservacionGeneral(e.target.value)}
                 />
             </Form.Group>
 
@@ -150,9 +332,6 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                                 onChange={(e) => setData(prev => ({ ...prev, fechaProximaRecarga: e.target.value }))}
                                 required
                             />
-                            <Form.Text className="text-muted">
-                                Indique la fecha exacta en la que se vence la recarga actual.
-                            </Form.Text>
                         </Form.Group>
                     </Card.Body>
                 </Card>
@@ -163,7 +342,7 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                 <Button
                     variant="primary"
                     onClick={handleContinue}
-                    disabled={progress < 100} // Obligar a contestar todo? Opcional
+                    disabled={progress < 100}
                 >
                     Revisar y Guardar
                 </Button>

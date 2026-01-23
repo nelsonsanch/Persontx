@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { db, storage } from '../../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
@@ -23,18 +23,18 @@ const GHS_DEFINITIONS = [
     { key: 'Clase 1', label: 'Explosivo', bg: '#ff6600', text: '1', color: 'black', renderIcon: (s) => <Bomb size={s} /> },
     { key: 'Clase 2.1', label: 'Gas Inflamable', bg: '#dc3545', text: '2', color: 'white', renderIcon: (s) => <Flame size={s} /> },
     { key: 'Clase 2.2', label: 'Gas No Inflamable', bg: '#28a745', text: '2', color: 'white', renderIcon: (s) => <span style={{ fontSize: `${s}px`, fontWeight: 'bold' }}>Gas</span> },
-    { key: 'Clase 2.3', label: 'Gas Tóxico', bg: 'white', text: '2', color: 'black', renderIcon: (s) => <Skull size={s} /> },
-    { key: 'Clase 3', label: 'Líquido Inflamable', bg: '#dc3545', text: '3', color: 'white', renderIcon: (s) => <Flame size={s} /> },
-    { key: 'Clase 4.1', label: 'Sólido Inflamable', bg: 'repeating-linear-gradient(90deg, #dc3545, #dc3545 10px, white 10px, white 20px)', text: '4', color: 'black', renderIcon: (s) => <Flame size={s} color="black" /> },
-    { key: 'Clase 4.2', label: 'Combustión Espont.', bg: 'linear-gradient(to bottom, white 50%, #dc3545 50%)', text: '4', color: 'black', renderIcon: (s) => <Flame size={s} color="black" /> },
+    { key: 'Clase 2.3', label: 'Gas TÃ³xico', bg: 'white', text: '2', color: 'black', renderIcon: (s) => <Skull size={s} /> },
+    { key: 'Clase 3', label: 'LÃ­quido Inflamable', bg: '#dc3545', text: '3', color: 'white', renderIcon: (s) => <Flame size={s} /> },
+    { key: 'Clase 4.1', label: 'SÃ³lido Inflamable', bg: 'repeating-linear-gradient(90deg, #dc3545, #dc3545 10px, white 10px, white 20px)', text: '4', color: 'black', renderIcon: (s) => <Flame size={s} color="black" /> },
+    { key: 'Clase 4.2', label: 'CombustiÃ³n Espont.', bg: 'linear-gradient(to bottom, white 50%, #dc3545 50%)', text: '4', color: 'black', renderIcon: (s) => <Flame size={s} color="black" /> },
     { key: 'Clase 4.3', label: 'Peligroso con Agua', bg: '#007bff', text: '4', color: 'white', renderIcon: (s) => <Flame size={s} /> },
     { key: 'Clase 5.1', label: 'Comburente', bg: '#ffc107', text: '5.1', color: 'black', renderIcon: (s) => <Flame size={s} color="black" strokeWidth={3} /> },
-    { key: 'Clase 5.2', label: 'Peróxido Orgánico', bg: 'linear-gradient(to bottom, #dc3545 50%, #ffc107 50%)', text: '5.2', color: 'black', renderIcon: (s) => <Flame size={s} /> },
-    { key: 'Clase 6.1', label: 'Tóxico', bg: 'white', text: '6', color: 'black', renderIcon: (s) => <Skull size={s} /> },
+    { key: 'Clase 5.2', label: 'PerÃ³xido OrgÃ¡nico', bg: 'linear-gradient(to bottom, #dc3545 50%, #ffc107 50%)', text: '5.2', color: 'black', renderIcon: (s) => <Flame size={s} /> },
+    { key: 'Clase 6.1', label: 'TÃ³xico', bg: 'white', text: '6', color: 'black', renderIcon: (s) => <Skull size={s} /> },
     { key: 'Clase 6.2', label: 'Infeccioso', bg: 'white', text: '6', color: 'black', renderIcon: (s) => <Biohazard size={s} /> },
     { key: 'Clase 7', label: 'Radiactivo', bg: 'linear-gradient(to bottom, #ffc107 50%, white 50%)', text: '7', color: 'black', renderIcon: (s) => <Radio size={s} color="black" /> },
     { key: 'Clase 8', label: 'Corrosivo', bg: 'linear-gradient(to bottom, white 50%, black 50%)', text: '8', color: 'white', renderIcon: (s) => <Droplet size={s} color="black" /> },
-    { key: 'Clase 9', label: 'Misceláneos', bg: 'repeating-linear-gradient(180deg, white, white 10px, black 10px, black 11px) top/100% 50% no-repeat, white bottom/100% 50% no-repeat', text: '9', color: 'black', renderIcon: (s) => <span style={{ fontSize: `${s}px`, fontWeight: 'bold' }}>9</span> },
+    { key: 'Clase 9', label: 'MiscelÃ¡neos', bg: 'repeating-linear-gradient(180deg, white, white 10px, black 10px, black 11px) top/100% 50% no-repeat, white bottom/100% 50% no-repeat', text: '9', color: 'black', renderIcon: (s) => <span style={{ fontSize: `${s}px`, fontWeight: 'bold' }}>9</span> },
 ];
 
 const GHSDiamond = ({ ghs, size = 60, style = {}, className = '', onClick }) => {
@@ -89,7 +89,7 @@ const GestorInventario = ({ config }) => {
     const [viewingItem, setViewingItem] = useState(null);
     const [formData, setFormData] = useState({});
     const [loading, setLoading] = useState(true);
-    const [catalogSuggestions, setCatalogSuggestions] = useState([]); // Sugerencias del catálogo global
+    const [catalogSuggestions, setCatalogSuggestions] = useState([]); // Sugerencias del catÃ¡logo global
     const [catalogQuery, setCatalogQuery] = useState(''); // Lo que escribe el usuario para buscar
     const [uploading, setUploading] = useState(false); // Estado de carga de imagen
 
@@ -132,7 +132,7 @@ const GestorInventario = ({ config }) => {
         setShowModal(true);
     };
 
-    // Abrir modal de visualización
+    // Abrir modal de visualizaciÃ³n
     const openViewModal = (item) => {
         setViewingItem(item);
         setViewModalOpen(true);
@@ -149,11 +149,11 @@ const GestorInventario = ({ config }) => {
             const dataToSave = {
                 ...formData,
                 clienteId: user.uid,
-                categoria: config.filtroCategoria, // Asegurar que se guarde con la categoría correcta
+                categoria: config.filtroCategoria, // Asegurar que se guarde con la categorÃ­a correcta
                 fechaActualizacion: new Date().toISOString()
             };
 
-            // Lógica Específica para Alturas: Template Key
+            // LÃ³gica EspecÃ­fica para Alturas: Template Key
             if (config.id === 'alturas' && dataToSave.tipo_equipo) {
                 // Generar una key segura para templates: 'arnes-cuerpo-completo'
                 dataToSave.inspection_template_key = dataToSave.tipo_equipo
@@ -171,13 +171,13 @@ const GestorInventario = ({ config }) => {
             setShowModal(false);
         } catch (error) {
             console.error("Error al guardar:", error);
-            alert("Error al guardar el ítem");
+            alert("Error al guardar el Ã­tem");
         }
     };
 
     // Eliminar
     const handleDelete = async (id) => {
-        if (window.confirm('¿Estás seguro de eliminar este elemento?')) {
+        if (window.confirm('Â¿EstÃ¡s seguro de eliminar este elemento?')) {
             await deleteDoc(doc(db, config.coleccion, id));
         }
     };
@@ -195,7 +195,7 @@ const GestorInventario = ({ config }) => {
     // Manejar cambios en inputs de Cantidad (Checklist con Valor)
     const handleQuantityChange = (fieldName, item, value) => {
         const currentData = formData[fieldName] || {};
-        // Si el valor está vacío, lo eliminamos del objeto para no guardar basura
+        // Si el valor estÃ¡ vacÃ­o, lo eliminamos del objeto para no guardar basura
         if (value === '' || value === '0') {
             const newData = { ...currentData };
             delete newData[item];
@@ -205,7 +205,7 @@ const GestorInventario = ({ config }) => {
         }
     };
 
-    // Buscar en Catálogo Global
+    // Buscar en CatÃ¡logo Global
     const handleCatalogSearch = async (text) => {
         setCatalogQuery(text);
         if (text.length < 3) {
@@ -224,14 +224,14 @@ const GestorInventario = ({ config }) => {
             const snapshot = await getDocs(q);
             setCatalogSuggestions(snapshot.docs.map(d => d.data().nombre));
         } catch (error) {
-            console.error("Error buscando en catálogo:", error);
+            console.error("Error buscando en catÃ¡logo:", error);
         }
     };
 
-    // Agregar al Catálogo Global
+    // Agregar al CatÃ¡logo Global
     const addToGlobalCatalog = async (fieldName) => {
         if (!catalogQuery) return;
-        const nombre = catalogQuery.trim(); // Guardar como está escrito (respetando mayúsculas del usuario)
+        const nombre = catalogQuery.trim(); // Guardar como estÃ¡ escrito (respetando mayÃºsculas del usuario)
 
         try {
             // Verificar si ya existe (para no duplicar exactos)
@@ -239,21 +239,21 @@ const GestorInventario = ({ config }) => {
             const snapshot = await getDocs(q);
 
             if (!snapshot.empty) {
-                alert("Este ítem ya existe en el catálogo global.");
+                alert("Este Ã­tem ya existe en el catÃ¡logo global.");
             } else {
                 await addDoc(collection(db, 'catalogo_global_activos'), {
                     nombre,
                     creadoPor: user.email,
                     fechaCreacion: new Date().toISOString()
                 });
-                alert("¡Agregado al Catálogo Global! Ahora todos pueden verlo.");
+                alert("Â¡Agregado al CatÃ¡logo Global! Ahora todos pueden verlo.");
             }
-            // Seleccionar el ítem
+            // Seleccionar el Ã­tem
             setFormData({ ...formData, [fieldName]: nombre });
             setCatalogSuggestions([]);
         } catch (error) {
-            console.error("Error creando catálogo:", error);
-            alert("Error al conectar con el catálogo global.");
+            console.error("Error creando catÃ¡logo:", error);
+            alert("Error al conectar con el catÃ¡logo global.");
         }
     };
 
@@ -282,7 +282,7 @@ const GestorInventario = ({ config }) => {
         setUploading(false);
     };
 
-    // Renderizar Input Dinámico
+    // Renderizar Input DinÃ¡mico
     const renderInput = (field) => {
         switch (field.type) {
             case 'select':
@@ -299,7 +299,7 @@ const GestorInventario = ({ config }) => {
                     </Form.Select>
                 );
             case 'select_with_description':
-                // Buscar la descripción de la opción seleccionada
+                // Buscar la descripciÃ³n de la opciÃ³n seleccionada
                 const selectedOpt = field.options.find(o => o.value === formData[field.name]);
                 return (
                     <div>
@@ -327,7 +327,7 @@ const GestorInventario = ({ config }) => {
                         <div className="input-group mb-1">
                             <Form.Control
                                 type="text"
-                                placeholder={field.placeholder || "Buscar en catálogo global..."}
+                                placeholder={field.placeholder || "Buscar en catÃ¡logo global..."}
                                 value={formData[field.name] || catalogQuery}
                                 onChange={(e) => {
                                     handleInputChange(e, field.name);
@@ -337,7 +337,7 @@ const GestorInventario = ({ config }) => {
                             <Button
                                 variant="outline-secondary"
                                 onClick={() => addToGlobalCatalog(field.name)}
-                                title="Crear en Catálogo Global si no existe"
+                                title="Crear en CatÃ¡logo Global si no existe"
                             >
                                 <Plus size={18} /> Crear Nuevo
                             </Button>
@@ -358,7 +358,7 @@ const GestorInventario = ({ config }) => {
                             </ul>
                         )}
                         <Form.Text className="text-muted">
-                            Si no aparece en la lista, escríbalo completo y haga clic en "Crear Nuevo" para compartirlo con la comunidad.
+                            Si no aparece en la lista, escrÃ­balo completo y haga clic en "Crear Nuevo" para compartirlo con la comunidad.
                         </Form.Text>
                     </div>
                 );
@@ -408,7 +408,7 @@ const GestorInventario = ({ config }) => {
                                         as="span"
                                         disabled={uploading}
                                     >
-                                        <span style={{ fontSize: '1.2rem' }}>📸</span>
+                                        <span style={{ fontSize: '1.2rem' }}>ðŸ“¸</span>
                                         {uploading ? 'Subiendo...' : 'Tomar Foto / Cargar'}
                                     </Button>
                                 </label>
@@ -417,7 +417,7 @@ const GestorInventario = ({ config }) => {
                     </div>
                 );
             case 'dependent_select':
-                // Lógica de Familia -> Tipo
+                // LÃ³gica de Familia -> Tipo
                 const catalog = field.catalog || {};
                 const familias = Object.keys(catalog);
 
@@ -484,11 +484,11 @@ const GestorInventario = ({ config }) => {
                                     type="text"
                                     value={currentSubtype}
                                     onChange={(e) => setFormData({ ...formData, subtipo: e.target.value })}
-                                    placeholder="Ej: Trípode Especial de Rescate X200"
+                                    placeholder="Ej: TrÃ­pode Especial de Rescate X200"
                                     required
                                 />
                                 <Form.Text className="text-muted">
-                                    Este nombre se guardará como el subtipo del equipo.
+                                    Este nombre se guardarÃ¡ como el subtipo del equipo.
                                 </Form.Text>
                             </Form.Group>
                         )}
@@ -670,7 +670,7 @@ const GestorInventario = ({ config }) => {
             }
 
             if (field.type === 'checklist') {
-                return (value || []).length + ' ítems';
+                return (value || []).length + ' Ã­tems';
             }
 
             if (field.type === 'checklist_with_quantity') {
@@ -719,10 +719,10 @@ const GestorInventario = ({ config }) => {
 
                 if (diffDays < 0) {
                     variant = 'danger';
-                    msg = `Vencido hace ${Math.abs(diffDays)} días`;
+                    msg = `Vencido hace ${Math.abs(diffDays)} dÃ­as`;
                 } else if (diffDays <= 30) {
                     variant = 'warning';
-                    msg = `Vence en ${diffDays} días`;
+                    msg = `Vence en ${diffDays} dÃ­as`;
                     return (
                         <div className="d-flex flex-column align-items-center">
                             <span className="mb-1">{value}</span>
@@ -767,10 +767,10 @@ const GestorInventario = ({ config }) => {
     const tableFields = config.campos.filter(f => f.showInTable);
     const fieldsToRender = tableFields.length > 0 ? tableFields : config.campos.slice(0, 5);
 
-    // Estado para búsqueda local y conteo
+    // Estado para bÃºsqueda local y conteo
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Filtrar items basado en la búsqueda
+    // Filtrar items basado en la bÃºsqueda
     const filteredItems = items.filter(item => {
         if (!searchTerm) return true;
         const searchLower = searchTerm.toLowerCase();
@@ -788,9 +788,9 @@ const GestorInventario = ({ config }) => {
 
         const dataToExport = filteredItems.map(item => {
             const row = {};
-            // Mapear cada campo según la configuración
+            // Mapear cada campo segÃºn la configuraciÃ³n
             config.campos.forEach(field => {
-                // OMITIR IMÁGENES: No exportar columnas de tipo imagen
+                // OMITIR IMÃGENES: No exportar columnas de tipo imagen
                 if (field.type === 'image') return;
 
                 const val = item[field.name];
@@ -896,7 +896,7 @@ const GestorInventario = ({ config }) => {
                 <p>Cargando inventario...</p>
             ) : filteredItems.length === 0 ? (
                 <Alert variant="info">
-                    {items.length === 0 ? "No hay elementos registrados en este inventario." : "No se encontraron resultados para tu búsqueda."}
+                    {items.length === 0 ? "No hay elementos registrados en este inventario." : "No se encontraron resultados para tu bÃºsqueda."}
                 </Alert>
             ) : (
                 <div className="table-responsive shadow-sm rounded">
@@ -950,7 +950,7 @@ const GestorInventario = ({ config }) => {
                 </div>
             )}
 
-            {/* Modal de Creación/Edición */}
+            {/* Modal de CreaciÃ³n/EdiciÃ³n */}
             <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
                 <Modal.Header closeButton>
                     <Modal.Title>{editingItem ? 'Editar Elemento' : 'Nuevo Elemento'}</Modal.Title>
@@ -975,7 +975,7 @@ const GestorInventario = ({ config }) => {
                 </Form>
             </Modal>
 
-            {/* Modal de Visualización (Solo Lectura) */}
+            {/* Modal de VisualizaciÃ³n (Solo Lectura) */}
             <Modal show={viewModalOpen} onHide={() => setViewModalOpen(false)} size="lg">
                 <Modal.Header closeButton>
                     <Modal.Title>Detalle del Elemento</Modal.Title>
@@ -1010,7 +1010,7 @@ const GestorInventario = ({ config }) => {
                                             // Renderizar Lista Simple
                                             <ul className="list-unstyled mb-0 small border rounded p-2 bg-light">
                                                 {val && val.length > 0 ? val.map((opt, i) => (
-                                                    <li key={i}>✓ {opt}</li>
+                                                    <li key={i}>âœ“ {opt}</li>
                                                 )) : <span className="text-muted">Ninguno</span>}
                                             </ul>
                                         ) : field.type !== 'image' && (
@@ -1058,14 +1058,14 @@ const GestorInventario = ({ config }) => {
                             <h2 className="mb-1 text-uppercase fw-bold" style={{ color: '#0d6efd' }}>{config.titulo}</h2>
                             <h5 className="text-muted">Reporte de Inventario / Acta de Entrega</h5>
                             <div className="d-flex justify-content-between mt-3 small text-muted">
-                                <span><strong>Fecha de Generación:</strong> {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</span>
-                                <span><strong>Total Ítems:</strong> {filteredItems.length}</span>
+                                <span><strong>Fecha de GeneraciÃ³n:</strong> {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</span>
+                                <span><strong>Total Ãtems:</strong> {filteredItems.length}</span>
                             </div>
                         </div>
                         {filteredItems.map((item, index) => (
                             <div key={item.id} className="border rounded p-3 mb-2 keep-together" style={{ pageBreakInside: 'avoid', backgroundColor: '#f8f9fa' }}>
                                 <div className="row align-items-center">
-                                    {/* Información del Ítem */}
+                                    {/* InformaciÃ³n del Ãtem */}
                                     <div className="col-8">
                                         <div className="d-flex align-items-center mb-3">
                                             <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '30px', height: '30px', fontSize: '14px', fontWeight: 'bold' }}>
@@ -1126,7 +1126,7 @@ const GestorInventario = ({ config }) => {
                                 </div>
                             </div>
                         ))}
-                        {/* Pie de Página / Firmas */}
+                        {/* Pie de PÃ¡gina / Firmas */}
                         <div className="mt-5 pt-5 border-top">
                             <div className="row text-center mt-3">
                                 <div className="col-6">
@@ -1152,7 +1152,3 @@ const GestorInventario = ({ config }) => {
 
 
 export default GestorInventario;
-/ /  
- F o r c e d  
- u p d a t e  
- 

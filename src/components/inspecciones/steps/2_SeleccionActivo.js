@@ -101,9 +101,10 @@ const SeleccionActivo = ({ categoria, config, onSelect, onBack }) => {
                                     {/* Info */}
                                     <Card.Body className="p-2">
                                         <h6 className="mb-1 text-truncate" title={item.nombre || item.tipo || item.tipoAgente || 'Sin Nombre'}>
-                                            {item.tipoAgente ? `${item.tipoAgente} - ${item.capacidad || ''}` :
-                                                item.tipo ? item.tipo :
-                                                    item.nombre || 'Ítem Sin Nombre'}
+                                            {item.tipo_equipo ? item.tipo_equipo :
+                                                item.tipoAgente ? `${item.tipoAgente} - ${item.capacidad || ''}` :
+                                                    item.tipo ? item.tipo :
+                                                        item.nombre || 'Ítem Sin Nombre'}
                                         </h6>
 
                                         <div className="small text-muted mb-1">

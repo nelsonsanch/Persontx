@@ -32,6 +32,7 @@ export const ALTURAS_CATALOG = {
     "Conexión y absorción de energía": [
         "Eslinga Sencilla con Absorbedor de Energía",
         "Eslinga Doble (En Y) con Absorbedor de Energía",
+        "Eslinga en Y sin Absorbedor de Energía",
         "Eslinga de Posicionamiento (Regulable)",
         "Eslinga de Restricción (Sin Absorbedor)",
         "Cabo de Vida / Línea de Conexión (Lanyard)",

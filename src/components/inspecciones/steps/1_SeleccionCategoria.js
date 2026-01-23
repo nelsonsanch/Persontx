@@ -8,7 +8,8 @@ import { camillasConfig } from '../../inventarios/configs/camillasConfig';
 import { gabinetesConfig } from '../../inventarios/configs/gabinetesConfig';
 import { otrosConfig } from '../../inventarios/configs/otrosConfig';
 import { sustanciasQuimicasConfig } from '../../inventarios/configs/sustanciasQuimicasConfig';
-import { activosConfig } from '../../inventarios/configs/activosConfig';
+import { alturasConfig } from '../../inventarios/configs/alturasConfig';
+import { activosConfig } from '../../inventarios/configs/activosConfig'; // Importamos activosConfig
 
 const SeleccionCategoria = ({ onSelect }) => {
 
@@ -17,6 +18,7 @@ const SeleccionCategoria = ({ onSelect }) => {
         { key: 'gabinetes', label: 'Gabinetes Incendio', icon: '🚒', config: gabinetesConfig, color: 'danger' },
         { key: 'botiquin', label: 'Botiquines', icon: '🩺', config: botiquinConfig, color: 'primary' },
         { key: 'camillas', label: 'Camillas', icon: '🛏️', config: camillasConfig, color: 'info' },
+        { key: 'alturas', label: 'Equipos de Alturas', icon: '🧗', config: alturasConfig, color: 'primary' }, // NUEVO
         { key: 'quimicos', label: 'Sustancias Químicas', icon: '🧪', config: sustanciasQuimicasConfig, color: 'warning' },
         { key: 'activos', label: 'Herramientas', icon: '🛠️', config: activosConfig, color: 'secondary' },
         { key: 'otros', label: 'Otros Equipos', icon: '📦', config: otrosConfig, color: 'dark' },
