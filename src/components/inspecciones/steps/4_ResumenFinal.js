@@ -10,7 +10,7 @@ import { PLANTILLAS } from '../data/inspectionSeeds';
 
 const ResumenFinal = ({ data, onBack, onReset }) => {
     const { user } = useAuth();
-    const { activoSeleccionado, checklist, observaciones, categoria, fechaProximaRecarga, configRef, resultadoPreliminar } = data;
+    const { activoSeleccionado, checklist, observaciones, categoria, fechaProximaRecarga, configRef, resultadoPreliminar, fechaProxima } = data;
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
@@ -73,6 +73,7 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
                     plantillaId: plantillaId, // Info extra para Alturas
                     resultadoPreliminar: resultadoPreliminar // Apto/No Apto
                 },
+                fechaProximaInspeccion: fechaProxima || null, // Nuevo Campo
                 estadoGeneral: estadoGeneralVisual,
                 estado: 'Cerrada',
                 created_at: new Date() // Timestamp
@@ -92,7 +93,8 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
                 if (categoria === 'alturas') {
                     updateData = {
                         fecha_ultima_inspeccion: new Date().toISOString().split('T')[0],
-                        estado: resultadoPreliminar
+                        estado: resultadoPreliminar,
+                        fecha_proxima_inspeccion: fechaProxima || null // Guardar para alertas
                     };
                 } else if (categoria === 'extintores') {
                     if (fechaProximaRecarga) {
@@ -101,6 +103,11 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
                             fechaUltimaRecarga: new Date().toISOString().split('T')[0]
                         };
                     }
+                }
+
+                // Generico: Si hay fechaProxima y no es alturas (por redundancia o futuro uso en otros)
+                if (fechaProxima && categoria !== 'alturas') {
+                    updateData.fecha_proxima_inspeccion = fechaProxima;
                 }
 
                 if (Object.keys(updateData).length > 0) {
