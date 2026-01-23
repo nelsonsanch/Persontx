@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Form, Row, Col, Badge, Collapse } from 'react-bootstrap';
-import { CheckCircle, XCircle, AlertTriangle, Camera, MessageSquare, Info } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Camera, MessageSquare, Info, Calendar } from 'lucide-react';
 
 // Importar semillas para Alturas
 import { PLANTILLAS, ITEMS_PLANTILLA } from '../data/inspectionSeeds';
@@ -318,8 +318,30 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                 />
             </Form.Group>
 
-            {/* CAMPO DE PRÓXIMA RECARGA (SOLO EXTINTORES) */}
-            {data.categoria === 'extintores' && (
+            {/* PROGRAMACIÓN PRÓXIMA INSPECCIÓN */}
+            <Card className="mb-4 border-info">
+                <Card.Header className="bg-info text-white fw-bold">
+                    <Calendar size={18} className="me-2" />
+                    Programación de Próxima Inspección
+                </Card.Header>
+                <Card.Body>
+                    <Form.Group>
+                        <Form.Label className="fw-bold">Próxima Fecha Sugerida (Mes/Año)</Form.Label>
+                        <Form.Control
+                            type="month"
+                            value={data.fechaProxima || ''}
+                            onChange={(e) => setData(prev => ({ ...prev, fechaProxima: e.target.value }))}
+                            required
+                        />
+                        <Form.Text className="text-muted">
+                            Esta fecha servirá para generar alertas de vencimiento en el sistema.
+                        </Form.Text>
+                    </Form.Group>
+                </Card.Body>
+            </Card>
+
+            {/* CAMPO DE PRÓXIMA RECARGA (SOLO EXTINTORES - legacy, mantenemos por si acaso pero la nueva arriba es universal) */}
+            {data.categoria === 'extintores' && !data.fechaProxima && (
                 <Card className="mb-4 border-warning">
                     <Card.Header className="bg-warning text-dark fw-bold">
                         <AlertTriangle size={18} className="me-2" />
