@@ -340,8 +340,8 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                 </Card.Body>
             </Card>
 
-            {/* CAMPO DE PRÓXIMA RECARGA (SOLO EXTINTORES - legacy, mantenemos por si acaso pero la nueva arriba es universal) */}
-            {data.categoria === 'extintores' && !data.fechaProxima && (
+            {/* CAMPO DE PRÓXIMA RECARGA (SOLO EXTINTORES) */}
+            {data.categoria === 'extintores' && (
                 <Card className="mb-4 border-warning">
                     <Card.Header className="bg-warning text-dark fw-bold">
                         <AlertTriangle size={18} className="me-2" />
