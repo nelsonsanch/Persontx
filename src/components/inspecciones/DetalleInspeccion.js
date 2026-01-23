@@ -3,6 +3,7 @@ import { Modal, Button, Table, Badge, Card, Row, Col } from 'react-bootstrap';
 import { Download, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { ITEMS_PLANTILLA } from './data/inspectionSeeds';
 
 const DetalleInspeccion = ({ show, handleClose, inspeccion }) => {
     const reportRef = useRef();
@@ -10,6 +11,14 @@ const DetalleInspeccion = ({ show, handleClose, inspeccion }) => {
     if (!inspeccion) return null;
 
     const { activo, resultados, fecha, inspectorEmail, categoria, estadoGeneral, id } = inspeccion;
+
+    // Helper para buscar texto de pregunta
+    const getQuestionText = (key) => {
+        // En legacy, la key es la pregunta misma
+        // En nueva arquitectura (Alturas), la key es un ID (ej: item-tpl-arnes-01)
+        const found = ITEMS_PLANTILLA.find(i => i.id === key);
+        return found ? found.pregunta : key;
+    };
 
     const downloadPDF = async () => {
         const input = reportRef.current;
@@ -44,7 +53,7 @@ const DetalleInspeccion = ({ show, handleClose, inspeccion }) => {
                             <small className="text-muted">ID Auditoría: {id}</small>
                         </div>
                         <div className="text-end">
-                            <Badge bg={estadoGeneral === 'Conforme' ? 'success' : 'danger'} style={{ fontSize: '1rem' }}>
+                            <Badge bg={estadoGeneral === 'Conforme' || estadoGeneral === 'Apto' ? 'success' : 'danger'} style={{ fontSize: '1rem' }}>
                                 {estadoGeneral}
                             </Badge>
                             <div className="mt-1 text-muted small">{fecha ? fecha.toLocaleString() : ''}</div>
@@ -61,6 +70,12 @@ const DetalleInspeccion = ({ show, handleClose, inspeccion }) => {
                                     <p className="mb-1"><strong>Código ID:</strong> {activo?.codigo}</p>
                                     <p className="mb-1"><strong>Ubicación:</strong> {activo?.ubicacion}</p>
                                     <p className="mb-0"><strong>Categoría:</strong> {categoria}</p>
+                                    {(activo?.familia || activo?.tipo) && (
+                                        <div className="mt-2 text-muted small">
+                                            {activo.familia && <span>Fam: {activo.familia} | </span>}
+                                            {activo.tipo && <span>Tipo: {activo.tipo}</span>}
+                                        </div>
+                                    )}
                                 </Col>
                                 <Col xs={4} className="text-center">
                                     {activo?.foto ? (
@@ -79,20 +94,30 @@ const DetalleInspeccion = ({ show, handleClose, inspeccion }) => {
                         <thead className="table-dark">
                             <tr>
                                 <th>Item Inspeccionado</th>
-                                <th style={{ width: '100px' }} className="text-center">Estado</th>
+                                <th style={{ width: '120px' }} className="text-center">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {resultados?.checklist && Object.entries(resultados.checklist).map(([key, value]) => (
-                                <tr key={key}>
-                                    <td>{key}</td>
-                                    <td className="text-center">
-                                        {value === 'Bueno' && <Badge bg="success">Bueno</Badge>}
-                                        {value === 'Malo' && <Badge bg="danger">MALO</Badge>}
-                                        {value === 'N/A' && <Badge bg="secondary">na</Badge>}
-                                    </td>
-                                </tr>
-                            ))}
+                            {resultados?.checklist && Object.entries(resultados.checklist).map(([key, value]) => {
+                                const isObject = typeof value === 'object';
+                                const estado = isObject ? value.valor : value;
+                                const questionText = getQuestionText(key);
+                                const observacion = isObject ? value.observacion : null;
+
+                                return (
+                                    <tr key={key}>
+                                        <td>
+                                            <div>{questionText}</div>
+                                            {observacion && <small className="text-muted d-block mt-1">Obs: {observacion}</small>}
+                                        </td>
+                                        <td className="text-center align-middle">
+                                            {(estado === 'Bueno' || estado === 'SI') && <Badge bg="success">CUMPLE</Badge>}
+                                            {(estado === 'Malo' || estado === 'NO') && <Badge bg="danger">NO CUMPLE</Badge>}
+                                            {(estado === 'N/A' || estado === 'NA') && <Badge bg="secondary">N/A</Badge>}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </Table>
 
