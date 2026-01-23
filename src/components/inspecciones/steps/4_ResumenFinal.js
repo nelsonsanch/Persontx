@@ -17,6 +17,8 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
     // Lógica para determinar el nombre correcto del activo
     const getNombreActivo = (item) => {
         if (!item) return 'Desconocido';
+        // Prioridad: 1. Tipo de Equipo (Alturas), 2. Tipo Agente, 3. Tipo, 4. Nombre
+        if (item.tipo_equipo) return item.tipo_equipo;
         if (item.tipoAgente) return `${item.tipoAgente} - ${item.capacidad || ''}`;
         if (item.tipoCamilla) return item.tipoCamilla;
         if (item.claseBotiquin) return `${item.claseBotiquin} - ${item.tipo || ''}`;
@@ -38,95 +40,82 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
     const handleSave = async () => {
         setSaving(true);
         try {
+            // Unificada la lógica de guardado en 'inspecciones_sst' para evitar problemas de permisos
+            // y mantener consistencia con los reportes existentes.
+
+            // 1. Identificar Plantilla (Solo para Alturas)
+            let plantillaId = null;
             if (categoria === 'alturas') {
-                // --- NUEVA ARQUITECTURA (Alturas) ---
-
-                // 1. Identificar Plantilla
                 const plantilla = PLANTILLAS.find(p => p.familia === activoSeleccionado.familia);
-                const plantillaId = plantilla ? plantilla.id : 'tpl-unknown';
+                plantillaId = plantilla ? plantilla.id : 'tpl-unknown';
+            }
 
-                // 2. Crear Cabecera (Inspecciones)
-                const inspeccionRef = await addDoc(collection(db, 'inspecciones'), {
-                    equipoId: activoSeleccionado.id,
-                    fecha: new Date(),
-                    inspector: user.email,
-                    inspectorId: user.uid,
-                    plantillaId: plantillaId,
-                    resultado: resultadoPreliminar, // Apto, No Apto, etc.
-                    observacionesGenerales: observaciones,
-                    created_at: new Date(),
-                    updated_at: new Date()
-                });
+            // 2. Guardar Inspección Centralizada
+            const inspeccionData = {
+                empresaId: user.uid,
+                fechaInspeccion: new Date(),
+                categoria: categoria,
+                inspectorEmail: user.email,
+                inspectorId: user.uid,
+                activo: {
+                    id: activoSeleccionado.id,
+                    nombre: nombreActivo,
+                    codigo: activoSeleccionado.codigo || 'S/C',
+                    ubicacion: activoSeleccionado.ubicacion || 'Sin Ubicación',
+                    foto: activoSeleccionado.foto || null,
+                    familia: activoSeleccionado.familia || null,
+                    tipo: activoSeleccionado.tipo_equipo || activoSeleccionado.tipo || null
+                },
+                resultados: {
+                    checklist: checklist, // Se guarda el objeto completo con obs/fotos
+                    observaciones: observaciones,
+                    hallazgosCount: hallazgos.length,
+                    plantillaId: plantillaId, // Info extra para Alturas
+                    resultadoPreliminar: resultadoPreliminar // Apto/No Apto
+                },
+                estadoGeneral: estadoGeneralVisual,
+                estado: 'Cerrada',
+                created_at: new Date() // Timestamp
+            };
 
-                // 3. Crear Detalles (Respuestas - Batch)
-                const batch = writeBatch(db);
+            await addDoc(collection(db, 'inspecciones_sst'), inspeccionData);
 
-                Object.entries(checklist).forEach(([itemId, resp]) => {
-                    const respuestaRef = doc(collection(db, 'respuestas_inspeccion'));
-                    batch.set(respuestaRef, {
-                        inspeccionId: inspeccionRef.id,
-                        itemId: itemId,
-                        valor: resp.valor,
-                        observacion: resp.observacion || '',
-                        fotoUrl: resp.foto || null,
-                        created_at: new Date()
-                    });
-                });
+            // 3. Actualizar Inventario (Estado y Fechas)
+            try {
+                // Determinar colección destino (generalmente 'inventarios')
+                // Si heights usa 'inventarios', está bien.
+                const colName = configRef?.coleccion || 'inventarios';
+                const itemRef = doc(db, colName, activoSeleccionado.id);
 
-                await batch.commit();
+                let updateData = {};
 
-                // 4. Actualizar Inventario (Estado y Fecha)
-                // Colección 'inventarios'
-                const itemRef = doc(db, 'inventarios', activoSeleccionado.id);
-                await updateDoc(itemRef, {
-                    fecha_ultima_inspeccion: new Date().toISOString().split('T')[0],
-                    estado: resultadoPreliminar // 'Apto', 'No Apto', etc.
-                });
-
-            } else {
-                // --- LEGACY FLOW (Extintores, etc.) ---
-                await addDoc(collection(db, 'inspecciones_sst'), {
-                    empresaId: user.uid,
-                    fechaInspeccion: new Date(),
-                    categoria: categoria,
-                    inspectorEmail: user.email,
-                    activo: {
-                        id: activoSeleccionado.id,
-                        nombre: nombreActivo,
-                        codigo: activoSeleccionado.codigo || 'S/C',
-                        ubicacion: activoSeleccionado.ubicacion || 'Sin Ubicación',
-                        foto: activoSeleccionado.foto || null
-                    },
-                    resultados: {
-                        checklist: checklist,
-                        observaciones: observaciones,
-                        hallazgosCount: hallazgos.length
-                    },
-                    estadoGeneral: estadoGeneralVisual,
-                    estado: 'Cerrada'
-                });
-
-                // Si es EXTINTOR y hay fecha de próxima recarga
-                if (categoria === 'extintores' && fechaProximaRecarga && activoSeleccionado?.id) {
-                    try {
-                        // Asumimos que extintores están en 'extintores' o 'inventarios' según config?
-                        // El código original asumía 'inventarios'. Verificamos configRef.coleccion si es posible, sino 'inventarios'.
-                        const colName = configRef?.coleccion || 'inventarios';
-                        const itemRef = doc(db, colName, activoSeleccionado.id);
-                        await updateDoc(itemRef, {
+                if (categoria === 'alturas') {
+                    updateData = {
+                        fecha_ultima_inspeccion: new Date().toISOString().split('T')[0],
+                        estado: resultadoPreliminar
+                    };
+                } else if (categoria === 'extintores') {
+                    if (fechaProximaRecarga) {
+                        updateData = {
                             fechaProximaRecarga: fechaProximaRecarga,
                             fechaUltimaRecarga: new Date().toISOString().split('T')[0]
-                        });
-                    } catch (updateErr) {
-                        console.error("Error actualizando inventario:", updateErr);
+                        };
                     }
                 }
+
+                if (Object.keys(updateData).length > 0) {
+                    await updateDoc(itemRef, updateData);
+                }
+
+            } catch (updateErr) {
+                console.error("Error actualizando inventario (puede ser permisos):", updateErr);
+                // No bloqueamos el flujo si falla el update del asset, pero lo logueamos
             }
 
             setSaved(true);
         } catch (error) {
             console.error("Error guardando inspección:", error);
-            alert(`Error al guardar: ${error.message}`);
+            alert(`Error al guardar: ${error.message} (Verifique permisos)`);
         }
         setSaving(false);
     };
