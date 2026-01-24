@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Card, Nav, Tab } from 'react-bootstrap';
 import InspectorWizard from './InspectorWizard';
 import HistorialInspecciones from './HistorialInspecciones';
+import ProgramacionInspecciones from './ProgramacionInspecciones';
 
 const InspeccionesMain = () => {
-    const [activeTab, setActiveTab] = useState('nueva');
+    const [activeTab, setActiveTab] = useState('programadas'); // Default to Programadas per user context or keep 'nueva'
 
     return (
         <div className="container-fluid fade-in">
@@ -23,6 +24,11 @@ const InspeccionesMain = () => {
                                 📜 Historial
                             </Nav.Link>
                         </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="programadas" className="fw-bold text-info">
+                                📅 Programadas
+                            </Nav.Link>
+                        </Nav.Item>
                     </Nav>
                 </Card.Header>
                 <Card.Body>
@@ -35,6 +41,11 @@ const InspeccionesMain = () => {
                         {activeTab === 'historial' && (
                             <div className="p-2">
                                 <HistorialInspecciones />
+                            </div>
+                        )}
+                        {activeTab === 'programadas' && (
+                            <div className="p-2">
+                                <ProgramacionInspecciones />
                             </div>
                         )}
                     </Tab.Content>

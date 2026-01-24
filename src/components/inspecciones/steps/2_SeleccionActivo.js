@@ -136,7 +136,7 @@ const SeleccionActivo = ({ categoria, config, onSelect, onBack }) => {
 
                                         <div className="small text-muted mb-1">
                                             <Hash size={12} className="me-1" />
-                                            <strong>ID:</strong> {item.codigo || 'S/C'}
+                                            <strong>ID:</strong> {item.codigo_interno || item.codigo || item.id || 'S/C'}
                                         </div>
 
                                         <div className="small text-muted">
