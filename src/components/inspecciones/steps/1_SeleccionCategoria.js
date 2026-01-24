@@ -1,34 +1,14 @@
 import React from 'react';
 import { Row, Col, Card } from 'react-bootstrap';
-
-// Importar configuraciones para saber qué existe
-import { extintoresConfig } from '../../inventarios/configs/extintoresConfig';
-import { botiquinConfig } from '../../inventarios/configs/botiquinConfig';
-import { camillasConfig } from '../../inventarios/configs/camillasConfig';
-import { gabinetesConfig } from '../../inventarios/configs/gabinetesConfig';
-import { otrosConfig } from '../../inventarios/configs/otrosConfig';
-import { sustanciasQuimicasConfig } from '../../inventarios/configs/sustanciasQuimicasConfig';
-import { alturasConfig } from '../../inventarios/configs/alturasConfig';
-import { activosConfig } from '../../inventarios/configs/activosConfig'; // Importamos activosConfig
+import { INSPECTION_CATEGORIES } from '../configMap';
 
 const SeleccionCategoria = ({ onSelect }) => {
-
-    const categories = [
-        { key: 'extintores', label: 'Extintores', icon: '🧯', config: extintoresConfig, color: 'danger' },
-        { key: 'gabinetes', label: 'Gabinetes Incendio', icon: '🚒', config: gabinetesConfig, color: 'danger' },
-        { key: 'botiquin', label: 'Botiquines', icon: '🩺', config: botiquinConfig, color: 'primary' },
-        { key: 'camillas', label: 'Camillas', icon: '🛏️', config: camillasConfig, color: 'info' },
-        { key: 'alturas', label: 'Equipos de Alturas', icon: '🧗', config: alturasConfig, color: 'primary' }, // NUEVO
-        { key: 'quimicos', label: 'Sustancias Químicas', icon: '🧪', config: sustanciasQuimicasConfig, color: 'warning' },
-        { key: 'activos', label: 'Herramientas', icon: '🛠️', config: activosConfig, color: 'secondary' },
-        { key: 'otros', label: 'Otros Equipos', icon: '📦', config: otrosConfig, color: 'dark' },
-    ];
 
     return (
         <div>
             <h4 className="text-center mb-4">¿Qué vamos a inspeccionar hoy?</h4>
             <Row className="justify-content-center">
-                {categories.map((cat) => (
+                {INSPECTION_CATEGORIES.map((cat) => (
                     <Col xs={6} md={3} lg={2} key={cat.key} className="mb-4">
                         <Card
                             className={`h-100 shadow-sm border-${cat.color} text-center category-card`}

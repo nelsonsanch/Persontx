@@ -4,7 +4,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../hooks/useAuth';
 
-const ProgramacionInspecciones = () => {
+const ProgramacionInspecciones = ({ onInspect }) => {
     const { user } = useAuth();
     const [futureMonth, setFutureMonth] = useState(new Date().getMonth());
     const [futureYear, setFutureYear] = useState(new Date().getFullYear());
@@ -41,22 +41,55 @@ const ProgramacionInspecciones = () => {
         fetchInventory();
     }, [user]);
 
+    // Helper: Calcular Semáforo
+    const calculateStatus = (dateStr) => {
+        if (!dateStr) return { label: 'NUNCA INSPECCIONADO', color: 'danger', days: -9999 };
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        const parts = dateStr.split('-');
+        let targetDate = new Date();
+        if (parts.length >= 2) {
+            targetDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parts.length === 3 ? parseInt(parts[2]) : 1);
+        }
+
+        const diffTime = targetDate - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) return { label: 'VENCIDA', color: 'danger', days: diffDays };
+        if (diffDays <= 30) return { label: 'PRÓXIMA A VENCER', color: 'warning', text: 'dark', days: diffDays };
+        return { label: 'VIGENTE', color: 'success', days: diffDays };
+    };
+
     // Filtrado de Programación
     const filteredProgram = inventario.filter(item => {
-        if (!item.fecha_proxima_inspeccion) return false;
+        // EXCLUDE CHEMICALS (Requested by user)
+        if (item.categoria === 'quimicos') return false;
 
-        // Code Filter
+        // 1. Filtro Texto (Código / Nombre / ID)
         if (filterCode) {
             const term = filterCode.toLowerCase();
             const code = item.codigo?.toLowerCase() || '';
             const internal = item.codigo_interno?.toLowerCase() || '';
             const id = item.id?.toLowerCase() || '';
+            const name = item.nombre?.toLowerCase() || '';
 
-            if (!code.includes(term) && !internal.includes(term) && !id.includes(term)) {
+            if (!code.includes(term) && !internal.includes(term) && !id.includes(term) && !name.includes(term)) {
                 return false;
             }
         }
 
+        // 2. Lógica de Fechas
+        const status = calculateStatus(item.fecha_proxima_inspeccion);
+
+        // REGLA CRÍTICA: SIEMPRE mostrar lo que está en ROJO (Vencido o Nunca Inspeccionado) para alertar al usuario
+        if (status.color === 'danger') return true;
+
+        // Si no tiene fecha y no retornó arriba, return true (safety)
+        if (!item.fecha_proxima_inspeccion) return true;
+
+        // 3. Filtro de Mes/Año (Solo aplica para lo VIGENTE o PROGRAMADO)
         const [yearStr, monthStr] = item.fecha_proxima_inspeccion.split('-');
         const itemYear = parseInt(yearStr);
         const itemMonth = parseInt(monthStr) - 1; // 0-based
@@ -67,17 +100,30 @@ const ProgramacionInspecciones = () => {
         return true;
     });
 
+    // Ordenamiento: Primero lo Crítico (Rojo), luego lo Próximo (Amarillo), luego lo Vigente (Verde)
+    filteredProgram.sort((a, b) => {
+        const statA = calculateStatus(a.fecha_proxima_inspeccion);
+        const statB = calculateStatus(b.fecha_proxima_inspeccion);
+
+        const getWeight = (s) => s.color === 'danger' ? 0 : s.color === 'warning' ? 1 : 2;
+
+        if (getWeight(statA) !== getWeight(statB)) {
+            return getWeight(statA) - getWeight(statB);
+        }
+        return (statA.days || 0) - (statB.days || 0);
+    });
+
     return (
         <div className="fade-in">
             <Card className="shadow-sm border-0 border-top border-5 border-info">
                 <Card.Header className="bg-white py-3">
                     <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <h5 className="mb-0 text-info fw-bold">📅 Programación Futura</h5>
+                        <h5 className="mb-0 text-info fw-bold">📅 Programación y Semáforo</h5>
 
                         <div className="d-flex gap-2 flex-wrap">
                             <Form.Control
                                 type="text"
-                                placeholder="Buscar Código..."
+                                placeholder="Buscar..."
                                 value={filterCode}
                                 onChange={(e) => setFilterCode(e.target.value)}
                                 style={{ width: '150px' }}
@@ -115,7 +161,7 @@ const ProgramacionInspecciones = () => {
                         </div>
                     ) : filteredProgram.length === 0 ? (
                         <div className="text-center py-5 text-muted">
-                            <p className="mb-0">No hay inspecciones programadas para este periodo.</p>
+                            <p className="mb-0">Todo al día. No hay inspecciones pendientes para este criterio.</p>
                         </div>
                     ) : (
                         <div className="table-responsive">
@@ -127,29 +173,41 @@ const ProgramacionInspecciones = () => {
                                         <th>Ubicación</th>
                                         <th>Vencimiento</th>
                                         <th>Estado</th>
+                                        <th className="text-end">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredProgram.map((item, idx) => (
-                                        <tr key={idx}>
-                                            <td className="fw-bold">
-                                                {item.nombre || item.tipo_equipo}
-                                                <div className="small text-muted font-monospace">{item.codigo_interno || item.codigo || item.id || 'S/C'}</div>
-                                            </td>
-                                            <td> {item.familia || item.categoria} </td>
-                                            <td className="small text-muted">{item.ubicacion || 'S/U'}</td>
-                                            <td>
-                                                <Badge bg="warning" text="dark" className="fs-6">
-                                                    {item.fecha_proxima_inspeccion}
-                                                </Badge>
-                                            </td>
-                                            <td>
-                                                <Badge bg="light" text="secondary" className="border">
-                                                    PENDIENTE
-                                                </Badge>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {filteredProgram.map((item, idx) => {
+                                        const status = calculateStatus(item.fecha_proxima_inspeccion);
+                                        return (
+                                            <tr key={idx} className={status.color === 'danger' ? 'bg-danger bg-opacity-10' : ''}>
+                                                <td className="fw-bold">
+                                                    {item.nombre || item.tipo_equipo}
+                                                    <div className="small text-muted font-monospace">{item.codigo_interno || item.codigo || item.id || 'S/C'}</div>
+                                                </td>
+                                                <td> {item.familia || item.categoria} </td>
+                                                <td className="small text-muted">{item.ubicacion || 'S/U'}</td>
+                                                <td>
+                                                    <Badge bg={status.color} text={status.text || 'white'} className="fs-6">
+                                                        {item.fecha_proxima_inspeccion || '---'}
+                                                    </Badge>
+                                                </td>
+                                                <td>
+                                                    <Badge bg="light" text={status.color} className={`border border-${status.color}`}>
+                                                        {status.label}
+                                                    </Badge>
+                                                </td>
+                                                <td className="text-end">
+                                                    <button
+                                                        className={`btn btn-sm btn-${status.color === 'danger' ? 'danger' : 'primary'} rounded-pill px-3 fw-bold`}
+                                                        onClick={() => onInspect && onInspect(item)}
+                                                    >
+                                                        ▶ Iniciar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </Table>
                         </div>

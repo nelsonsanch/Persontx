@@ -5,7 +5,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
     AreaChart, Area
 } from 'recharts';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { Activity, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
@@ -13,6 +13,7 @@ import { Activity, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
 const DashboardInspecciones = () => {
     const { user } = useAuth();
     const [inspecciones, setInspecciones] = useState([]);
+    const [inventario, setInventario] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Filters
@@ -26,22 +27,26 @@ const DashboardInspecciones = () => {
         const fetchData = async () => {
             if (!user) return;
             try {
-                const ref = collection(db, 'inspecciones_sst');
-                // Removed orderBy to avoid index issues. Sorting client-side.
-                const q = query(ref, where('empresaId', '==', user.uid));
-                const snapshot = await getDocs(q);
-                const data = snapshot.docs.map(doc => ({
+                // Fetch History
+                const refHist = collection(db, 'inspecciones_sst');
+                const qHist = query(refHist, where('empresaId', '==', user.uid));
+                const snapHist = await getDocs(qHist);
+                const dataHist = snapHist.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
                     fecha: doc.data().fechaInspeccion?.toDate()
                 }));
-                // Sort by date ascending for charts
-                data.sort((a, b) => (a.fecha || 0) - (b.fecha || 0));
+                // Sort client-side
+                dataHist.sort((a, b) => (a.fecha || 0) - (b.fecha || 0));
+                setInspecciones(dataHist);
 
-                setInspecciones(data);
+                // Fetch Inventory for Schedule
+                const refInv = collection(db, 'inventarios');
+                const qInv = query(refInv, where('clienteId', '==', user.uid));
+                const snapInv = await getDocs(qInv);
+                const dataInv = snapInv.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setInventario(dataInv);
 
-                // Set defaults for current month if empty
-                // Optional: Pre-select current year range? Let's leave empty for "All Time" default
             } catch (error) {
                 console.error("Error fetching data for dashboard:", error);
             } finally {
@@ -51,7 +56,7 @@ const DashboardInspecciones = () => {
         fetchData();
     }, [user]);
 
-    // Computed Data
+    // Computed Data: History
     const filteredData = useMemo(() => {
         return inspecciones.filter(item => {
             if (!item.fecha) return false;
@@ -63,7 +68,6 @@ const DashboardInspecciones = () => {
             }
             if (endDate) {
                 const end = new Date(endDate);
-                // Set end date to end of day
                 const endDay = new Date(end);
                 endDay.setHours(23, 59, 59, 999);
                 if (item.fecha > endDay) return false;
@@ -75,6 +79,41 @@ const DashboardInspecciones = () => {
             return true;
         });
     }, [inspecciones, startDate, endDate, filterCategory]);
+
+    // Computed Data: Programming
+    const programmingData = useMemo(() => {
+        let vencidas = 0;
+        let programadas = 0;
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); // 0-based
+
+        inventario.forEach(item => {
+            // Apply Filters if relevant? Usually Schedule is global, but let's apply Category filter if set
+            if (filterCategory) {
+                const cat = item.categoria || item.familia || '';
+                // Simple text match or exact? The select values are specific.
+                if (cat !== filterCategory) return;
+            }
+
+            if (!item.fecha_proxima_inspeccion) return;
+
+            const [yStr, mStr] = item.fecha_proxima_inspeccion.split('-');
+            const year = parseInt(yStr);
+            const month = parseInt(mStr) - 1;
+
+            if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                vencidas++;
+            } else {
+                programadas++;
+            }
+        });
+
+        return [
+            { name: 'Vencidas', value: vencidas, fill: '#ef4444' },
+            { name: 'Programadas', value: programadas, fill: '#10b981' }
+        ];
+    }, [inventario, filterCategory]);
 
     // Metrics Calculation
     const kpi = useMemo(() => {
@@ -110,7 +149,6 @@ const DashboardInspecciones = () => {
             groups[key] = (groups[key] || 0) + 1;
         });
 
-        // Sort keys
         return Object.keys(groups).sort().map(key => ({
             name: key, // Label for Axis
             inspecciones: groups[key]
@@ -126,7 +164,7 @@ const DashboardInspecciones = () => {
                 <Card.Body className="py-3">
                     <Row className="g-3 align-items-end">
                         <Col md={3}>
-                            <Form.Label className="small fw-bold text-muted">Fecha Inicio</Form.Label>
+                            <Form.Label className="small fw-bold text-muted">Fecha Inicio (Historial)</Form.Label>
                             <Form.Control
                                 type="date"
                                 value={startDate}
@@ -134,7 +172,7 @@ const DashboardInspecciones = () => {
                             />
                         </Col>
                         <Col md={3}>
-                            <Form.Label className="small fw-bold text-muted">Fecha Fin</Form.Label>
+                            <Form.Label className="small fw-bold text-muted">Fecha Fin (Historial)</Form.Label>
                             <Form.Control
                                 type="date"
                                 value={endDate}
@@ -160,7 +198,7 @@ const DashboardInspecciones = () => {
                         </Col>
                         <Col md={2} className="text-end">
                             <Badge bg="light" text="dark" className="border p-2">
-                                {filteredData.length} Registros
+                                {filteredData.length} Histórico
                             </Badge>
                         </Col>
                     </Row>
@@ -225,19 +263,18 @@ const DashboardInspecciones = () => {
 
             {/* Charts Row 1 */}
             <Row className="mb-4 g-3">
-                <Col md={6}>
+                <Col md={4}>
                     <Card className="border-0 shadow-sm h-100">
-                        <Card.Header className="bg-white fw-bold">Estado de Cumplimiento</Card.Header>
-                        <Card.Body style={{ height: '300px' }}>
+                        <Card.Header className="bg-white fw-bold">Cumplimiento (Histórico)</Card.Header>
+                        <Card.Body style={{ height: '250px' }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={complianceData}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        fill="#8884d8"
+                                        innerRadius={50}
+                                        outerRadius={70}
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
@@ -252,17 +289,40 @@ const DashboardInspecciones = () => {
                         </Card.Body>
                     </Card>
                 </Col>
-                <Col md={6}>
+
+                {/* --- NEW CHART: Program vs Realized --- */}
+                <Col md={4}>
                     <Card className="border-0 shadow-sm h-100">
-                        <Card.Header className="bg-white fw-bold">Por Tipo de Inventario</Card.Header>
-                        <Card.Body style={{ height: '300px' }}>
+                        <Card.Header className="bg-white fw-bold text-info">Estado de Programación</Card.Header>
+                        <Card.Body style={{ height: '250px' }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={categoryData}>
+                                <BarChart data={programmingData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="name" fontSize={10} interval={0} angle={-30} textAnchor="end" height={60} />
+                                    <XAxis dataKey="name" fontSize={10} interval={0} textAnchor="middle" />
                                     <YAxis allowDecimals={false} />
                                     <Tooltip />
-                                    <Bar dataKey="value" name="Inspecciones" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="value" name="Cantidad">
+                                        {programmingData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </Card.Body>
+                    </Card>
+                </Col>
+
+                <Col md={4}>
+                    <Card className="border-0 shadow-sm h-100">
+                        <Card.Header className="bg-white fw-bold">Por Tipo de Inventario</Card.Header>
+                        <Card.Body style={{ height: '250px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={categoryData} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                    <XAxis type="number" hide />
+                                    <YAxis type="category" dataKey="name" fontSize={10} width={100} />
+                                    <Tooltip />
+                                    <Bar dataKey="value" name="Inspecciones" fill="#3b82f6" radius={[0, 4, 4, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </Card.Body>

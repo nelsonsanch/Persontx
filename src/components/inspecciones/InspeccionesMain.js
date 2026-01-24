@@ -7,6 +7,12 @@ import DashboardInspecciones from './DashboardInspecciones';
 
 const InspeccionesMain = () => {
     const [activeTab, setActiveTab] = useState('programadas'); // Default per user context
+    const [preSelectedAsset, setPreSelectedAsset] = useState(null);
+
+    const handleInspect = (asset) => {
+        setPreSelectedAsset(asset);
+        setActiveTab('nueva');
+    };
 
     return (
         <div className="container-fluid fade-in">
@@ -46,7 +52,7 @@ const InspeccionesMain = () => {
                         )}
                         {activeTab === 'nueva' && (
                             <div className="p-2">
-                                <InspectorWizard />
+                                <InspectorWizard initialAsset={preSelectedAsset} />
                             </div>
                         )}
                         {activeTab === 'historial' && (
@@ -56,7 +62,7 @@ const InspeccionesMain = () => {
                         )}
                         {activeTab === 'programadas' && (
                             <div className="p-2">
-                                <ProgramacionInspecciones />
+                                <ProgramacionInspecciones onInspect={handleInspect} />
                             </div>
                         )}
                     </Tab.Content>

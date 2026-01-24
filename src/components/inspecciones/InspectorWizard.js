@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, ProgressBar } from 'react-bootstrap';
 import SeleccionCategoria from './steps/1_SeleccionCategoria';
 import SeleccionActivo from './steps/2_SeleccionActivo';
 import FormularioCheck from './steps/3_FormularioCheck';
 import ResumenFinal from './steps/4_ResumenFinal';
+import { getCategoryConfig } from './configMap';
 
-const InspectorWizard = () => {
+const InspectorWizard = ({ initialAsset }) => {
     const [step, setStep] = useState(1);
     const [inspectionData, setInspectionData] = useState({
         categoria: '',       // 'extintores', 'botiquin'
@@ -14,6 +15,25 @@ const InspectorWizard = () => {
         checklist: {},       // Respuestas { 'Manguera': 'Bueno' }
         observaciones: ''
     });
+
+    // Deep Link Effect
+    useEffect(() => {
+        if (initialAsset) {
+            const cat = initialAsset.categoria; // Ensure this matches config keys
+            const config = getCategoryConfig(cat);
+            if (cat && config) {
+                setInspectionData({
+                    categoria: cat,
+                    configRef: config,
+                    activoSeleccionado: initialAsset,
+                    checklist: {},
+                    observaciones: ''
+                });
+                setStep(3); // Jump to Checklist
+            }
+        }
+    }, [initialAsset]);
+
 
     const nextStep = () => setStep(s => s + 1);
     const prevStep = () => setStep(s => s - 1);
