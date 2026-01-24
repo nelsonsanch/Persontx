@@ -157,6 +157,7 @@ const HistorialInspecciones = () => {
                         <option value="botiquin">Botiquines</option>
                         <option value="camillas">Camillas</option>
                         <option value="activos">Herramientas</option>
+                        <option value="alturas">Alturas</option>
                         <option value="quimicos">Químicos</option>
                         <option value="otros">Otros</option>
                     </Form.Select>

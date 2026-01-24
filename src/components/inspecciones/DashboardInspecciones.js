@@ -96,7 +96,10 @@ const DashboardInspecciones = () => {
                 if (cat !== filterCategory) return;
             }
 
-            if (!item.fecha_proxima_inspeccion) return;
+            if (!item.fecha_proxima_inspeccion) {
+                vencidas++;
+                return;
+            }
 
             const [yStr, mStr] = item.fecha_proxima_inspeccion.split('-');
             const year = parseInt(yStr);
@@ -115,15 +118,69 @@ const DashboardInspecciones = () => {
         ];
     }, [inventario, filterCategory]);
 
+    // Computed Data: Inventory & Coverage
+    const inventoryMetrics = useMemo(() => {
+        // 1. Filter Inventory (Exclude chemicals & Apply Category Filter)
+        const relevantInventory = inventario.filter(item => {
+            if (item.categoria === 'quimicos') return false;
+            if (filterCategory && item.categoria !== filterCategory) return false;
+            return true;
+        });
+
+        // 2. Count Registered per Category
+        const totalRegistered = relevantInventory.length;
+        const registeredByCat = {};
+        relevantInventory.forEach(item => {
+            const cat = item.categoria || 'Otros';
+            registeredByCat[cat] = (registeredByCat[cat] || 0) + 1;
+        });
+
+        // 3. Count Unique Inspected Assets (from filtered inspections)
+        const inspectedIds = new Set();
+        const inspectedByCat = {};
+
+        filteredData.forEach(item => {
+            // Only count if item belongs to relevant inventory (e.g. not chemical if filtered out)
+            // But filteredData is already filtered by category if selected.
+            // We just need to ensure we don't count chemicals if they somehow appear? 
+            // filteredData inspection item usually has 'categoria'.
+            if (item.categoria === 'quimicos') return;
+
+            if (item.activo?.id) {
+                inspectedIds.add(item.activo.id);
+
+                // For chart distribution (count unique per cat? or total inspections per cat?
+                // Request implies comparing "Amount of equipment with inspection" vs "Amount of registered assets"
+                // So should be Unique Inspected Assets per Category.
+                const cat = item.categoria || 'Otros';
+                // We need a set per category to count unique
+                if (!inspectedByCat[cat]) inspectedByCat[cat] = new Set();
+                inspectedByCat[cat].add(item.activo.id);
+            }
+        });
+
+        const totalInspectedUnique = inspectedIds.size;
+        const coverage = totalRegistered > 0 ? ((totalInspectedUnique / totalRegistered) * 100).toFixed(1) : 0;
+
+        // 4. Prepare Chart Data (Merge keys from both)
+        const allCats = new Set([...Object.keys(registeredByCat), ...Object.keys(inspectedByCat)]);
+        const comparisonData = Array.from(allCats).map(cat => ({
+            name: cat.toUpperCase(),
+            Registrados: registeredByCat[cat] || 0,
+            Inspeccionados: inspectedByCat[cat] ? inspectedByCat[cat].size : 0
+        })).sort((a, b) => b.Registrados - a.Registrados);
+
+        return { totalRegistered, totalInspectedUnique, coverage, comparisonData };
+    }, [inventario, filteredData, filterCategory]);
+
     // Metrics Calculation
     const kpi = useMemo(() => {
-        const total = filteredData.length;
+        const total = filteredData.length; // Total Reports
         const conforme = filteredData.filter(i => i.estadoGeneral === 'Conforme').length;
         const noConforme = filteredData.filter(i => i.estadoGeneral === 'No Conforme').length;
-        const hallazgos = filteredData.reduce((acc, curr) => acc + (curr.resultados?.hallazgosCount || 0), 0);
         const complianceRate = total > 0 ? ((conforme / total) * 100).toFixed(1) : 0;
 
-        return { total, conforme, noConforme, hallazgos, complianceRate };
+        return { total, conforme, noConforme, complianceRate };
     }, [filteredData]);
 
     // Charts Data
@@ -131,15 +188,6 @@ const DashboardInspecciones = () => {
         { name: 'Conforme', value: kpi.conforme },
         { name: 'No Conforme', value: kpi.noConforme },
     ];
-
-    const categoryData = useMemo(() => {
-        const counts = {};
-        filteredData.forEach(item => {
-            const cat = item.categoria || 'Otros';
-            counts[cat] = (counts[cat] || 0) + 1;
-        });
-        return Object.keys(counts).map(key => ({ name: key.toUpperCase(), value: counts[key] }));
-    }, [filteredData]);
 
     const trendData = useMemo(() => {
         const groups = {};
@@ -191,14 +239,14 @@ const DashboardInspecciones = () => {
                                 <option value="botiquin">Botiquines</option>
                                 <option value="camillas">Camillas</option>
                                 <option value="activos">Herramientas</option>
-                                <option value="equipos de alturas">Equipos de Alturas</option>
+                                <option value="alturas">Equipos de Alturas</option>
                                 <option value="quimicos">Químicos</option>
                                 <option value="otros">Otros</option>
                             </Form.Select>
                         </Col>
                         <Col md={2} className="text-end">
                             <Badge bg="light" text="dark" className="border p-2">
-                                {filteredData.length} Histórico
+                                {filteredData.length} Registros
                             </Badge>
                         </Col>
                     </Row>
@@ -214,8 +262,25 @@ const DashboardInspecciones = () => {
                                 <FileText size={24} />
                             </div>
                             <div>
-                                <div className="small opacity-75">Total Inspecciones</div>
-                                <h3 className="mb-0 fw-bold">{kpi.total}</h3>
+                                <div className="small opacity-75">Activos Registrados</div>
+                                <h3 className="mb-0 fw-bold">{inventoryMetrics.totalRegistered}</h3>
+                                <small className="opacity-50" style={{ fontSize: '0.7em' }}>Sin Químicos</small>
+                            </div>
+                        </Card.Body>
+                    </Card>
+                </Col>
+                <Col md={3}>
+                    <Card className="border-0 shadow-sm h-100 bg-info text-white">
+                        <Card.Body className="d-flex align-items-center">
+                            <div className="p-3 bg-white bg-opacity-25 rounded-circle me-3">
+                                <Activity size={24} />
+                            </div>
+                            <div>
+                                <div className="small opacity-75">Cobertura de Inspección</div>
+                                <h3 className="mb-0 fw-bold">{inventoryMetrics.coverage}%</h3>
+                                <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                                    {inventoryMetrics.totalInspectedUnique} de {inventoryMetrics.totalRegistered} Activos
+                                </div>
                             </div>
                         </Card.Body>
                     </Card>
@@ -229,32 +294,23 @@ const DashboardInspecciones = () => {
                             <div>
                                 <div className="small opacity-75">Tasa Cumplimiento</div>
                                 <h3 className="mb-0 fw-bold">{kpi.complianceRate}%</h3>
+                                <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                                    {kpi.conforme} Conformes
+                                </div>
                             </div>
                         </Card.Body>
                     </Card>
                 </Col>
                 <Col md={3}>
-                    <Card className="border-0 shadow-sm h-100 bg-danger text-white">
+                    <Card className="border-0 shadow-sm h-100 bg-secondary text-white">
                         <Card.Body className="d-flex align-items-center">
                             <div className="p-3 bg-white bg-opacity-25 rounded-circle me-3">
-                                <AlertTriangle size={24} />
+                                <FileText size={24} />
                             </div>
                             <div>
-                                <div className="small opacity-75">Hallazgos Detectados</div>
-                                <h3 className="mb-0 fw-bold">{kpi.hallazgos}</h3>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={3}>
-                    <Card className="border-0 shadow-sm h-100 bg-info text-dark">
-                        <Card.Body className="d-flex align-items-center">
-                            <div className="p-3 bg-white bg-opacity-50 rounded-circle me-3">
-                                <Activity size={24} />
-                            </div>
-                            <div>
-                                <div className="small opacity-75">Activos Inspeccionados</div>
-                                <h3 className="mb-0 fw-bold">{filteredData.length}</h3>
+                                <div className="small opacity-75">Total Reportes</div>
+                                <h3 className="mb-0 fw-bold">{kpi.total}</h3>
+                                <small className="opacity-50" style={{ fontSize: '0.7em' }}>Inspecciones Ejecutadas</small>
                             </div>
                         </Card.Body>
                     </Card>
@@ -290,7 +346,6 @@ const DashboardInspecciones = () => {
                     </Card>
                 </Col>
 
-                {/* --- NEW CHART: Program vs Realized --- */}
                 <Col md={4}>
                     <Card className="border-0 shadow-sm h-100">
                         <Card.Header className="bg-white fw-bold text-info">Estado de Programación</Card.Header>
@@ -314,15 +369,17 @@ const DashboardInspecciones = () => {
 
                 <Col md={4}>
                     <Card className="border-0 shadow-sm h-100">
-                        <Card.Header className="bg-white fw-bold">Por Tipo de Inventario</Card.Header>
+                        <Card.Header className="bg-white fw-bold">Cobertura por Categoría</Card.Header>
                         <Card.Body style={{ height: '250px' }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={categoryData} layout="vertical">
+                                <BarChart data={inventoryMetrics.comparisonData} layout="vertical">
                                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                                     <XAxis type="number" hide />
-                                    <YAxis type="category" dataKey="name" fontSize={10} width={100} />
+                                    <YAxis type="category" dataKey="name" fontSize={9} width={80} />
                                     <Tooltip />
-                                    <Bar dataKey="value" name="Inspecciones" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                                    <Legend />
+                                    <Bar dataKey="Registrados" name="Registrados" fill="#6c757d" radius={[0, 4, 4, 0]} stackId="a" />
+                                    <Bar dataKey="Inspeccionados" name="Con Inspección" fill="#3b82f6" radius={[0, 4, 4, 0]} stackId="a" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </Card.Body>

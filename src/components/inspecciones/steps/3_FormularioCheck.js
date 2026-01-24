@@ -282,7 +282,7 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                     <div>
                         <h5 className="mb-0">{activoSeleccionado.nombre || activoSeleccionado.tipo}</h5>
                         <small className="text-muted">
-                            {activoSeleccionado.codigo || 'S/C'} | {activoSeleccionado.ubicacion}
+                            {activoSeleccionado.codigo_interno || activoSeleccionado.codigo || activoSeleccionado.id || 'S/C'} | {activoSeleccionado.ubicacion}
                             <br />
                             <strong>Familia:</strong> {activoSeleccionado.familia || 'N/A'} | <strong>Tipo:</strong> {activoSeleccionado.tipo_equipo || activoSeleccionado.tipo || 'N/A'}
                         </small>

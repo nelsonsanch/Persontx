@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Badge, Form, Card } from 'react-bootstrap';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../hooks/useAuth';
+import DetalleInspeccion from './DetalleInspeccion';
 
 const ProgramacionInspecciones = ({ onInspect }) => {
     const { user } = useAuth();
@@ -11,6 +12,11 @@ const ProgramacionInspecciones = ({ onInspect }) => {
     const [inventario, setInventario] = useState([]);
     const [loading, setLoading] = useState(false);
     const [filterCode, setFilterCode] = useState('');
+    const [filterCategory, setFilterCategory] = useState('');
+
+    // Modal Details
+    const [selectedInspection, setSelectedInspection] = useState(null);
+    const [showDetail, setShowDetail] = useState(false);
 
     const months = [
         { val: -1, label: 'Todo el Año' },
@@ -62,10 +68,45 @@ const ProgramacionInspecciones = ({ onInspect }) => {
         return { label: 'VIGENTE', color: 'success', days: diffDays };
     };
 
+    const handleViewLastInspection = async (asset) => {
+        try {
+            // Find audits for this asset
+            const ref = collection(db, 'inspecciones_sst');
+            // Note: simple where avoids calling for index on complex sorts. We sort in memory.
+            const q = query(ref, where('activo.id', '==', asset.id));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                alert("No se encontró historial de inspecciones para este activo.");
+                return;
+            }
+
+            const docs = snapshot.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
+                fecha: d.data().fechaInspeccion?.toDate()
+            }));
+
+            // Sort desc by date
+            docs.sort((a, b) => b.fecha - a.fecha);
+            const latest = docs[0];
+
+            setSelectedInspection(latest);
+            setShowDetail(true);
+
+        } catch (error) {
+            console.error("Error fetching detail:", error);
+            alert("Error consultando el historial.");
+        }
+    };
+
     // Filtrado de Programación
     const filteredProgram = inventario.filter(item => {
         // EXCLUDE CHEMICALS (Requested by user)
         if (item.categoria === 'quimicos') return false;
+
+        // Category Filter
+        if (filterCategory && item.categoria !== filterCategory) return false;
 
         // 1. Filtro Texto (Código / Nombre / ID)
         if (filterCode) {
@@ -131,6 +172,22 @@ const ProgramacionInspecciones = ({ onInspect }) => {
                             />
 
                             <Form.Select
+                                style={{ width: '160px' }}
+                                value={filterCategory}
+                                onChange={(e) => setFilterCategory(e.target.value)}
+                                className="fw-bold text-secondary"
+                            >
+                                <option value="">Todas</option>
+                                <option value="extintores">Extintores</option>
+                                <option value="gabinetes">Gabinetes</option>
+                                <option value="botiquin">Botiquines</option>
+                                <option value="camillas">Camillas</option>
+                                <option value="activos">Herramientas</option>
+                                <option value="alturas">Alturas</option>
+                                <option value="otros">Otros</option>
+                            </Form.Select>
+
+                            <Form.Select
                                 style={{ width: '140px' }}
                                 value={futureMonth}
                                 onChange={(e) => setFutureMonth(parseInt(e.target.value))}
@@ -193,8 +250,19 @@ const ProgramacionInspecciones = ({ onInspect }) => {
                                                     </Badge>
                                                 </td>
                                                 <td>
-                                                    <Badge bg="light" text={status.color} className={`border border-${status.color}`}>
-                                                        {status.label}
+                                                    <Badge
+                                                        bg="light"
+                                                        text={status.color}
+                                                        className={`border border-${status.color} ${status.label !== 'NUNCA INSPECCIONADO' ? 'text-decoration-underline' : ''}`}
+                                                        style={{ cursor: status.label !== 'NUNCA INSPECCIONADO' ? 'pointer' : 'default' }}
+                                                        onClick={() => {
+                                                            if (status.label !== 'NUNCA INSPECCIONADO') {
+                                                                handleViewLastInspection(item);
+                                                            }
+                                                        }}
+                                                        title={status.label !== 'NUNCA INSPECCIONADO' ? "Ver Última Inspección" : ""}
+                                                    >
+                                                        {status.label} {status.label !== 'NUNCA INSPECCIONADO' && '👁️'}
                                                     </Badge>
                                                 </td>
                                                 <td className="text-end">
@@ -214,6 +282,13 @@ const ProgramacionInspecciones = ({ onInspect }) => {
                     )}
                 </Card.Body>
             </Card>
+
+            {/* Modal Detail */}
+            <DetalleInspeccion
+                show={showDetail}
+                handleClose={() => setShowDetail(false)}
+                inspeccion={selectedInspection}
+            />
         </div>
     );
 };
