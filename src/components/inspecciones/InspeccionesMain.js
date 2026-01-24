@@ -3,9 +3,10 @@ import { Card, Nav, Tab } from 'react-bootstrap';
 import InspectorWizard from './InspectorWizard';
 import HistorialInspecciones from './HistorialInspecciones';
 import ProgramacionInspecciones from './ProgramacionInspecciones';
+import DashboardInspecciones from './DashboardInspecciones';
 
 const InspeccionesMain = () => {
-    const [activeTab, setActiveTab] = useState('programadas'); // Default to Programadas per user context or keep 'nueva'
+    const [activeTab, setActiveTab] = useState('programadas'); // Default per user context
 
     return (
         <div className="container-fluid fade-in">
@@ -14,6 +15,11 @@ const InspeccionesMain = () => {
             <Card className="shadow-sm border-0">
                 <Card.Header className="bg-white">
                     <Nav variant="tabs" activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
+                        <Nav.Item>
+                            <Nav.Link eventKey="dashboard" className="fw-bold text-primary">
+                                📊 Dashboard
+                            </Nav.Link>
+                        </Nav.Item>
                         <Nav.Item>
                             <Nav.Link eventKey="nueva" className="fw-bold">
                                 ➕ Nueva Inspección
@@ -33,6 +39,11 @@ const InspeccionesMain = () => {
                 </Card.Header>
                 <Card.Body>
                     <Tab.Content>
+                        {activeTab === 'dashboard' && (
+                            <div className="p-2">
+                                <DashboardInspecciones />
+                            </div>
+                        )}
                         {activeTab === 'nueva' && (
                             <div className="p-2">
                                 <InspectorWizard />
