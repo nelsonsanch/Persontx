@@ -15,7 +15,7 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { Table, Button, Modal, Form, Badge, Alert } from 'react-bootstrap';
-import { Trash2, Edit, Plus, FileText, Eye, Bomb, Flame, Skull, Biohazard, Radio, Droplet, Zap, Triangle, Ban } from 'lucide-react';
+import { Trash2, Edit, Plus, FileText, Eye, Bomb, Flame, Skull, Biohazard, Radio, Droplet, Zap, Triangle, Ban, Camera } from 'lucide-react';
 import { read, utils, writeFile } from 'xlsx';
 import html2pdf from 'html2pdf.js';
 
@@ -282,8 +282,76 @@ const GestorInventario = ({ config }) => {
         setUploading(false);
     };
 
+    // Generar CÃ³digo AutomÃ¡tico
+    const generateNextCode = (fieldName) => {
+        let prefix = "INV";
+
+        // 1. Determinar Prefijo Inteligente
+        if (config.id === 'alturas' && formData.tipo_equipo) {
+            // Ejemplo: Eslinga -> ESL, ArnÃ©s -> ARN
+            prefix = formData.tipo_equipo.substring(0, 3).toUpperCase();
+        } else if (config.filtroCategoria === 'botiquin') {
+            prefix = "BOT";
+        } else if (config.filtroCategoria === 'extintores') {
+            prefix = "EXT";
+        } else if (config.filtroCategoria === 'gabinetes') {
+            prefix = "GAB";
+        } else if (formData.familia) {
+            prefix = formData.familia.substring(0, 3).toUpperCase();
+        } else if (config.titulo) {
+            // Fallback: Primeras 3 letras del tÃ­tulo (ej: Inventario -> INV)
+            // Pero mejor usar un default controlado
+        }
+
+        // 2. Buscar consecutivo mÃ¡ximo actual para ese prefijo
+        // Filtramos items que empiecen con ese prefijo y tengan formato PREFIJO-NUMERO
+        const relevantItems = items.filter(i => {
+            const val = i[fieldName]; // codigo_interno o codigo
+            return typeof val === 'string' && val.startsWith(prefix + '-');
+        });
+
+        let maxNum = 0;
+        relevantItems.forEach(item => {
+            const val = item[fieldName];
+            const parts = val.split('-');
+            if (parts.length === 2) {
+                const num = parseInt(parts[1]);
+                if (!isNaN(num) && num > maxNum) {
+                    maxNum = num;
+                }
+            }
+        });
+
+        const nextNum = maxNum + 1;
+        const newCode = `${prefix}-${String(nextNum).padStart(3, '0')}`;
+
+        setFormData({ ...formData, [fieldName]: newCode });
+    };
+
     // Renderizar Input DinÃ¡mico
     const renderInput = (field) => {
+        // LÃ³gica especial para campo de CÃ³digo con botÃ³n de Generar
+        if ((field.name === 'codigo' || field.name === 'codigo_interno') && field.type === 'text') {
+            return (
+                <div className="input-group">
+                    <Form.Control
+                        type="text"
+                        value={formData[field.name] || ''}
+                        onChange={(e) => handleInputChange(e, field.name)}
+                        required={field.required}
+                        placeholder={field.placeholder || "Ej: BOT-001"}
+                    />
+                    <Button
+                        variant="outline-secondary"
+                        onClick={() => generateNextCode(field.name)}
+                        title="Generar cÃ³digo consecutivo automÃ¡tico"
+                    >
+                        ⚡ Generar
+                    </Button>
+                </div>
+            );
+        }
+
         switch (field.type) {
             case 'select':
                 return (
@@ -408,7 +476,7 @@ const GestorInventario = ({ config }) => {
                                         as="span"
                                         disabled={uploading}
                                     >
-                                        <span style={{ fontSize: '1.2rem' }}>ðŸ“¸</span>
+                                        <Camera size={20} />
                                         {uploading ? 'Subiendo...' : 'Tomar Foto / Cargar'}
                                     </Button>
                                 </label>

@@ -4,6 +4,7 @@ export const botiquinConfig = {
     coleccion: 'inventarios',
     filtroCategoria: 'botiquin',
     campos: [
+        { name: 'codigo_interno', label: 'Código Interno', type: 'text', required: true, showInTable: true },
         { name: 'ubicacion', label: 'Ubicación', type: 'text', required: true, showInTable: true },
         { name: 'foto', label: 'Fotografía', type: 'image', showInTable: true },
         {
