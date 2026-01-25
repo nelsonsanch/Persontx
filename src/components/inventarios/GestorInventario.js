@@ -92,6 +92,46 @@ const GestorInventario = ({ config }) => {
     const [catalogSuggestions, setCatalogSuggestions] = useState([]); // Sugerencias del catÃ¡logo global
     const [catalogQuery, setCatalogQuery] = useState(''); // Lo que escribe el usuario para buscar
     const [uploading, setUploading] = useState(false); // Estado de carga de imagen
+    const [dynamicOptions, setDynamicOptions] = useState({}); // Opciones cargadas dinÃ¡micamente
+
+    // Cargar opciones dinÃ¡micas (Firestore Select)
+    useEffect(() => {
+        if (!user || !config) return;
+
+        const loadDynamicOptions = async () => {
+            const dynamicFields = config.campos.filter(c => c.type === 'firestore_select');
+            const newOptions = {};
+
+            for (const field of dynamicFields) {
+                try {
+                    const conditions = [
+                        where('clienteId', '==', user.uid), // Siempre filtrar por usuario actual
+                    ];
+
+                    if (field.filters) {
+                        Object.entries(field.filters).forEach(([key, val]) => {
+                            conditions.push(where(key, '==', val));
+                        });
+                    }
+
+                    const q = query(collection(db, field.collection), ...conditions);
+                    const snapshot = await getDocs(q);
+
+                    newOptions[field.name] = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        // Construir etiqueta legible (puede ser compuesta)
+                        const label = field.displayField.split('+').map(k => data[k.trim()] || '').join(' - ');
+                        return { value: data[field.valueField] || doc.id, label, original: data };
+                    });
+                } catch (error) {
+                    console.error(`Error cargando opciones para ${field.name}:`, error);
+                }
+            }
+            setDynamicOptions(newOptions);
+        };
+
+        loadDynamicOptions();
+    }, [user, config]);
 
     // Cargar datos en tiempo real
     useEffect(() => {
@@ -173,6 +213,122 @@ const GestorInventario = ({ config }) => {
             console.error("Error al guardar:", error);
             alert("Error al guardar el Ã­tem");
         }
+    };
+
+    // Generar PDF (Acta de Asignación)
+    const handleDownloadPdf = (item) => {
+        const element = document.createElement('div');
+        element.style.padding = '20px';
+        element.style.fontFamily = 'Arial, sans-serif';
+        element.style.fontSize = '12px';
+        element.style.color = '#333';
+
+        // 1. Encabezado
+        const header = `
+            <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                <h2 style="margin: 0; text-transform: uppercase;">ACTA DE ASIGNACIÓN DE ${config.titulo || 'ACTIVO'}</h2>
+                <p style="margin: 5px 0;">Fecha de Generación: ${new Date().toLocaleDateString()}</p>
+                <p style="margin: 0; font-style: italic;">Código de Control: ${item.id.substring(0, 8).toUpperCase()}</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <p>Por medio de la presente, se hace entrega formal del siguiente activo a <strong>${item.propietario || item.responsable || '_______________________'}</strong>, 
+                quien asume la responsabilidad de su uso adecuado, custodia y mantenimiento.</p>
+            </div>
+        `;
+
+        // 2. Detalles del Activo (Tabla)
+        let rows = '';
+        config.campos.forEach(field => {
+            if (field.showInTable === false && field.type !== 'image' && field.type !== 'tri_state_checklist') return; // Opcional: filtrar si se quiere menos info
+
+            const val = item[field.name];
+            let displayVal = val || '-';
+
+            // Formateo especial para PDF
+            if (field.type === 'firestore_select') {
+                const options = dynamicOptions[field.name] || [];
+                const selected = options.find(o => o.value === val);
+                displayVal = selected ? selected.label : (val || '-');
+            } else if (field.type === 'select_with_description') {
+                displayVal = val;
+            } else if (typeof val === 'object' && val !== null) {
+                // Checklist Triestado o normal
+                if (field.type === 'tri_state_checklist') {
+                    displayVal = Object.entries(val).map(([k, v]) => `${k}: ${v}`).join(' | ');
+                } else if (field.type === 'checklist' || Array.isArray(val)) {
+                    displayVal = (val || []).join(', ');
+                } else {
+                    displayVal = JSON.stringify(val);
+                }
+            }
+
+            // No mostrar imágenes grandes en la tabla, mejor al final
+            if (field.type !== 'image') {
+                rows += `
+                    <tr>
+                        <td style="padding: 5px; border: 1px solid #ccc; font-weight: bold; width: 40%; background: #f9f9f9;">${field.label}</td>
+                        <td style="padding: 5px; border: 1px solid #ccc;">${displayVal}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        const table = `
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+
+        // 3. Imágenes (Si las hay)
+        let imagesHtml = '';
+        const imageFields = config.campos.filter(c => c.type === 'image' && item[c.name]);
+        if (imageFields.length > 0) {
+            imagesHtml = '<div style="margin-top: 20px; page-break-inside: avoid;"><h4>Registro Fotográfico</h4><div style="display: flex; flex-wrap: wrap; gap: 10px;">';
+            imageFields.forEach(f => {
+                imagesHtml += `
+                    <div style="text-align: center; width: 45%;">
+                        <img src="${item[f.name]}" style="max-width: 100%; max-height: 150px; border: 1px solid #ccc;" />
+                        <p style="font-size: 10px;">${f.label}</p>
+                    </div>
+                `;
+            });
+            imagesHtml += '</div></div>';
+        }
+
+        // 4. Firmas
+        const signatures = `
+            <div style="margin-top: 50px; page-break-inside: avoid;">
+                <table style="width: 100%; margin-top: 50px;">
+                    <tr>
+                        <td style="width: 45%; text-align: center; border-top: 1px solid #333; padding-top: 10px;">
+                            <strong>ENTREGADO POR</strong><br/>
+                            Firma y Nombre
+                        </td>
+                        <td style="width: 10%;"></td>
+                        <td style="width: 45%; text-align: center; border-top: 1px solid #333; padding-top: 10px;">
+                            <strong>RECIBIDO POR</strong><br/>
+                            Firma y Cédula:<br/>
+                            ${item.identificacion_propietario || item.cedula_responsable || '_________________'}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div style="margin-top: 20px; font-size: 10px; color: #666; text-align: center; border-top: 1px solid #eee; padding-top: 5px;">
+                Generado automáticamente por Plataforma S.S.T.
+            </div>
+        `;
+
+        element.innerHTML = header + table + imagesHtml + signatures;
+
+        const opt = {
+            margin: 10,
+            filename: `Acta_${config.titulo}_${item.id.substring(0, 6)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
     };
 
     // Eliminar
@@ -428,7 +584,25 @@ const GestorInventario = ({ config }) => {
                         <Form.Text className="text-muted">
                             Si no aparece en la lista, escrÃ­balo completo y haga clic en "Crear Nuevo" para compartirlo con la comunidad.
                         </Form.Text>
+                        <Form.Text className="text-muted">
+                            Si no aparece en la lista, escrÃ­balo completo y haga clic en "Crear Nuevo" para compartirlo con la comunidad.
+                        </Form.Text>
                     </div>
+                );
+            case 'firestore_select':
+                return (
+                    <Form.Select
+                        value={formData[field.name] || ''}
+                        onChange={(e) => handleInputChange(e, field.name)}
+                        required={field.required}
+                    >
+                        <option value="">Seleccione...</option>
+                        {(dynamicOptions[field.name] || []).map((opt, idx) => (
+                            <option key={idx} value={opt.value}>
+                                {opt.label}
+                            </option>
+                        ))}
+                    </Form.Select>
                 );
             case 'textarea':
                 return (
@@ -698,6 +872,57 @@ const GestorInventario = ({ config }) => {
                         })}
                     </div>
                 );
+            case 'tri_state_checklist':
+                const checklistData = formData[field.name] || {};
+                const handleTriStateChange = (item, val) => {
+                    setFormData({ ...formData, [field.name]: { ...checklistData, [item]: val } });
+                };
+
+                return (
+                    <div className="border rounded bg-light p-2" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        <Table size="sm" borderless className="mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Ítem</th>
+                                    <th className="text-center" width="50">Si</th>
+                                    <th className="text-center" width="50">No</th>
+                                    <th className="text-center" width="60">N/A</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {field.options.map((opt, idx) => (
+                                    <tr key={idx} className="border-bottom">
+                                        <td className="small align-middle">{opt}</td>
+                                        <td className="text-center">
+                                            <Form.Check
+                                                type="radio"
+                                                name={`tri_state_${field.name}_${idx}`}
+                                                checked={checklistData[opt] === 'Si'}
+                                                onChange={() => handleTriStateChange(opt, 'Si')}
+                                            />
+                                        </td>
+                                        <td className="text-center">
+                                            <Form.Check
+                                                type="radio"
+                                                name={`tri_state_${field.name}_${idx}`}
+                                                checked={checklistData[opt] === 'No'}
+                                                onChange={() => handleTriStateChange(opt, 'No')}
+                                            />
+                                        </td>
+                                        <td className="text-center">
+                                            <Form.Check
+                                                type="radio"
+                                                name={`tri_state_${field.name}_${idx}`}
+                                                checked={checklistData[opt] === 'N/A'}
+                                                onChange={() => handleTriStateChange(opt, 'N/A')}
+                                            />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </div>
+                );
             default: // text, date, number
                 return (
                     <Form.Control
@@ -776,6 +1001,14 @@ const GestorInventario = ({ config }) => {
                 );
             }
 
+            if (field.type === 'tri_state_checklist') {
+                const data = value || {};
+                const countSi = Object.values(data).filter(v => v === 'Si').length;
+                return (
+                    <Badge bg="info">{countSi} / {field.options.length}</Badge>
+                );
+            }
+
             if (field.name === 'fechaProximaRecarga' && value) {
                 const dateVal = new Date(value);
                 const today = new Date();
@@ -800,7 +1033,12 @@ const GestorInventario = ({ config }) => {
                 }
 
                 return value;
-            };
+            }
+
+            // Fallback para objetos no manejados (evita crash)
+            if (typeof value === 'object' && value !== null) {
+                return <small className="text-muted" title={JSON.stringify(value)}>{Object.keys(value).length} datos</small>;
+            }
 
             // Renderizado especial para Alturas en la tabla
             if (field.type === 'dependent_select') {
@@ -1075,15 +1313,48 @@ const GestorInventario = ({ config }) => {
                                                 ) : <span className="text-muted fst-italic">Sin elementos registrados</span>}
                                             </div>
                                         ) : field.type === 'checklist' ? (
-                                            // Renderizar Lista Simple
                                             <ul className="list-unstyled mb-0 small border rounded p-2 bg-light">
                                                 {val && val.length > 0 ? val.map((opt, i) => (
-                                                    <li key={i}>âœ“ {opt}</li>
+                                                    <li key={i}>✓ {opt}</li>
                                                 )) : <span className="text-muted">Ninguno</span>}
                                             </ul>
+                                        ) : field.type === 'firestore_select' ? (
+                                            // Renderizar Select Firestore (Buscar Label en dynamicOptions)
+                                            <p className="fw-bold mb-0">
+                                                {(() => {
+                                                    const options = dynamicOptions[field.name] || [];
+                                                    const selected = options.find(o => o.value === val);
+                                                    return selected ? selected.label : (val || '-');
+                                                })()}
+                                            </p>
+                                        ) : field.type === 'tri_state_checklist' ? (
+                                            // Renderizar Checklist Triestado
+                                            <div className="border rounded p-2 bg-light small">
+                                                {val && Object.keys(val).length > 0 ? (
+                                                    <table className="table table-sm table-borderless mb-0">
+                                                        <tbody>
+                                                            {Object.entries(val).map(([k, v], i) => {
+                                                                let badgeBg = 'secondary';
+                                                                if (v === 'Si') badgeBg = 'success';
+                                                                if (v === 'No') badgeBg = 'danger';
+                                                                return (
+                                                                    <tr key={i} className="border-bottom">
+                                                                        <td width="70%">{k}</td>
+                                                                        <td width="30%" className="text-end">
+                                                                            <Badge bg={badgeBg}>{v}</Badge>
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                ) : <span className="text-muted">Sin datos</span>}
+                                            </div>
                                         ) : field.type !== 'image' && (
-                                            // Texto plano (NO mostrar si es imagen, ya que la imagen se muestra abajo)
-                                            <p className="fw-bold mb-0">{val || '-'}</p>
+                                            // Texto plano (Fallback seguro)
+                                            <p className="fw-bold mb-0">
+                                                {typeof val === 'object' && val !== null ? JSON.stringify(val) : (val || '-')}
+                                            </p>
                                         )}
 
                                         {/* Caso Especial: Si es Imagen renderizar abajo */}
@@ -1099,6 +1370,10 @@ const GestorInventario = ({ config }) => {
                     )}
                 </Modal.Body>
                 <Modal.Footer>
+                    <Button variant="outline-primary" onClick={() => handleDownloadPdf(viewingItem)}>
+                        <FileText size={18} className="me-2" />
+                        Descargar Acta PDF
+                    </Button>
                     <Button variant="secondary" onClick={() => setViewModalOpen(false)}>Cerrar</Button>
                 </Modal.Footer>
             </Modal>

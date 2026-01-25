@@ -15,6 +15,7 @@ import BaseDatosUnificada from '../components/cliente/base-datos/BaseDatosUnific
 import InventariosMain from '../components/inventarios/InventariosMain';
 import InspeccionesMain from '../components/inspecciones/InspeccionesMain';
 import GestorDocumentalMain from '../components/documental/GestorDocumentalMain';
+import GestionPESVMain from '../components/pesv/GestionPESVMain';
 // --- FIN DE CÓDIGO NUEVO ---
 
 
@@ -55,6 +56,8 @@ const ClienteDashboard = () => {
         return <InspeccionesMain />;
       case 'documental':
         return <GestorDocumentalMain />;
+      case 'pesv':
+        return <GestionPESVMain />;
       // --- FIN DE CÓDIGO NUEVO ---
 
       default:
@@ -284,6 +287,23 @@ const ClienteDashboard = () => {
           >
             <span style={{ marginRight: '8px' }}>📄</span>
             Gestor Documental
+          </button>
+
+          <button
+            className="btn me-2 mb-2"
+            onClick={() => setActiveTab('pesv')}
+            style={{
+              backgroundColor: activeTab === 'pesv' ? '#007bff' : '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderBottom: activeTab === 'pesv' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+              borderRadius: '8px 8px 0 0',
+              color: activeTab === 'pesv' ? 'white' : '#495057',
+              padding: '10px 20px',
+              fontWeight: '500'
+            }}
+          >
+            <span style={{ marginRight: '8px' }}>🚗</span>
+            Gestión PESV
           </button>
           {/* --- FIN DE CÓDIGO NUEVO --- */}
 
