@@ -370,18 +370,39 @@ const DashboardInspecciones = () => {
                 <Col md={4}>
                     <Card className="border-0 shadow-sm h-100">
                         <Card.Header className="bg-white fw-bold">Cobertura por Categoría</Card.Header>
-                        <Card.Body style={{ height: '250px' }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={inventoryMetrics.comparisonData} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                                    <XAxis type="number" hide />
-                                    <YAxis type="category" dataKey="name" fontSize={9} width={80} />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Bar dataKey="Registrados" name="Registrados" fill="#6c757d" radius={[0, 4, 4, 0]} stackId="a" />
-                                    <Bar dataKey="Inspeccionados" name="Con Inspección" fill="#3b82f6" radius={[0, 4, 4, 0]} stackId="a" />
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <Card.Body style={{ height: '250px', overflowY: 'auto' }}>
+                            <div className="d-flex flex-column gap-3">
+                                {inventoryMetrics.comparisonData.map((cat, idx) => {
+                                    const percentage = cat.Registrados > 0
+                                        ? Math.round((cat.Inspeccionados / cat.Registrados) * 100)
+                                        : 0;
+
+                                    let variant = 'danger';
+                                    if (percentage >= 80) variant = 'success';
+                                    else if (percentage >= 50) variant = 'warning';
+
+                                    return (
+                                        <div key={idx} className="w-100">
+                                            <div className="d-flex justify-content-between mb-1">
+                                                <span className="small fw-bold">{cat.name}</span>
+                                                <small className="text-muted">
+                                                    {percentage}% ({cat.Inspeccionados}/{cat.Registrados})
+                                                </small>
+                                            </div>
+                                            <div className="progress" style={{ height: '10px' }}>
+                                                <div
+                                                    className={`progress-bar bg-${variant}`}
+                                                    role="progressbar"
+                                                    style={{ width: `${percentage}%` }}
+                                                    aria-valuenow={percentage}
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="100"
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </Card.Body>
                     </Card>
                 </Col>
