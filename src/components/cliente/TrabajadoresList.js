@@ -631,7 +631,12 @@ const TrabajadoresList = () => {
     // Como el ID del doc en 'usuarios' es el UID, necesitamos buscar por el email o vincular el UID en el trabajador
     // Opción simplificada: Buscar en colección 'usuarios' donde 'trabajadorId' == trabajador.id
     try {
-      const q = query(collection(db, 'usuarios'), where('trabajadorId', '==', trabajador.id));
+      const user = auth.currentUser;
+      const q = query(
+        collection(db, 'usuarios'),
+        where('trabajadorId', '==', trabajador.id),
+        where('clienteId', '==', user.uid)
+      );
       const snapshot = await getDocs(q);
 
       if (!snapshot.empty) {
@@ -666,7 +671,11 @@ const TrabajadoresList = () => {
       let targetUid = null;
 
       // 1. Verificar si el usuario ya existe (por query anterior)
-      const q = query(collection(db, 'usuarios'), where('trabajadorId', '==', selectedWorker.id));
+      const q = query(
+        collection(db, 'usuarios'),
+        where('trabajadorId', '==', selectedWorker.id),
+        where('clienteId', '==', user.uid)
+      );
       const snapshot = await getDocs(q);
 
       if (!snapshot.empty) {
