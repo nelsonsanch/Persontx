@@ -16,6 +16,7 @@ import InventariosMain from '../components/inventarios/InventariosMain';
 import InspeccionesMain from '../components/inspecciones/InspeccionesMain';
 import GestorDocumentalMain from '../components/documental/GestorDocumentalMain';
 import GestionPESVMain from '../components/pesv/GestionPESVMain';
+import InspeccionesPreoperacionalesMain from '../components/pesv/InspeccionesPreoperacionalesMain';
 // --- FIN DE CÓDIGO NUEVO ---
 
 
@@ -57,7 +58,10 @@ const ClienteDashboard = () => {
       case 'documental':
         return <GestorDocumentalMain />;
       case 'pesv':
+      case 'pesv':
         return <GestionPESVMain />;
+      case 'preoperacionales':
+        return <InspeccionesPreoperacionalesMain />;
       // --- FIN DE CÓDIGO NUEVO ---
 
       default:
@@ -304,6 +308,23 @@ const ClienteDashboard = () => {
           >
             <span style={{ marginRight: '8px' }}>🚗</span>
             Gestión PESV
+          </button>
+
+          <button
+            className="btn me-2 mb-2"
+            onClick={() => setActiveTab('preoperacionales')}
+            style={{
+              backgroundColor: activeTab === 'preoperacionales' ? '#007bff' : '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderBottom: activeTab === 'preoperacionales' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+              borderRadius: '8px 8px 0 0',
+              color: activeTab === 'preoperacionales' ? 'white' : '#495057',
+              padding: '10px 20px',
+              fontWeight: '500'
+            }}
+          >
+            <span style={{ marginRight: '8px' }}>🔎</span>
+            Insp. Preoperacionales
           </button>
           {/* --- FIN DE CÓDIGO NUEVO --- */}
 
