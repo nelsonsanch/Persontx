@@ -485,13 +485,13 @@ const InspeccionesPreoperacionalesMain = () => {
                                                                         </span>
                                                                     </div>
                                                                     <div className="d-flex flex-column gap-2">
-                                                                        {/* GRUPO DE BOTONES VERTICAL PARA MÓVIL / HORIZONTAL ORDENADO */}
-                                                                        <div className="btn-group w-100" role="group">
+                                                                        <div className="d-flex flex-wrap gap-2 w-100">
                                                                             <Button
                                                                                 size="sm"
                                                                                 variant={checklistResponses[item.id] === 'BUENO' ? 'success' : 'outline-success'}
                                                                                 onClick={() => handleCheckChange(item.id, 'BUENO')}
-                                                                                className={checklistResponses[item.id] === 'BUENO' ? 'text-white' : ''}
+                                                                                className={`flex-grow-1 ${checklistResponses[item.id] === 'BUENO' ? 'text-white' : ''}`}
+                                                                                style={{ minWidth: '70px' }}
                                                                             >
                                                                                 Bueno
                                                                             </Button>
@@ -499,7 +499,8 @@ const InspeccionesPreoperacionalesMain = () => {
                                                                                 size="sm"
                                                                                 variant={checklistResponses[item.id] === 'REGULAR' ? 'warning' : 'outline-warning'}
                                                                                 onClick={() => handleCheckChange(item.id, 'REGULAR')}
-                                                                                className={checklistResponses[item.id] === 'REGULAR' ? 'text-dark' : ''}
+                                                                                className={`flex-grow-1 ${checklistResponses[item.id] === 'REGULAR' ? 'text-dark' : ''}`}
+                                                                                style={{ minWidth: '70px' }}
                                                                             >
                                                                                 Regular
                                                                             </Button>
@@ -507,7 +508,8 @@ const InspeccionesPreoperacionalesMain = () => {
                                                                                 size="sm"
                                                                                 variant={checklistResponses[item.id] === 'MALO' ? 'danger' : 'outline-danger'}
                                                                                 onClick={() => handleCheckChange(item.id, 'MALO')}
-                                                                                className={checklistResponses[item.id] === 'MALO' ? 'text-white' : ''}
+                                                                                className={`flex-grow-1 ${checklistResponses[item.id] === 'MALO' ? 'text-white' : ''}`}
+                                                                                style={{ minWidth: '70px' }}
                                                                             >
                                                                                 Malo
                                                                             </Button>
@@ -515,7 +517,8 @@ const InspeccionesPreoperacionalesMain = () => {
                                                                                 size="sm"
                                                                                 variant={checklistResponses[item.id] === 'NA' ? 'secondary' : 'outline-secondary'}
                                                                                 onClick={() => handleCheckChange(item.id, 'NA')}
-                                                                                className={checklistResponses[item.id] === 'NA' ? 'text-white' : ''}
+                                                                                className={`flex-grow-1 ${checklistResponses[item.id] === 'NA' ? 'text-white' : ''}`}
+                                                                                style={{ minWidth: '50px' }}
                                                                             >
                                                                                 N/A
                                                                             </Button>

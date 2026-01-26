@@ -1,20 +1,87 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // REGLA PARA USUARIOS
+    match /usuarios/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+    }
+    // REGLA PARA CLIENTES
+    match /clientes/{clienteId} {
+      allow read, write, delete: if request.auth != null && request.auth.token.email == 'admin@tuapp.com';
+      allow read, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create, update: if request.auth != null && request.resource.data.uid == request.auth.uid;
+    }
+    // REGLA PARA PERFILES DE CARGO
+    match /perfiles_cargo/{perfilId} {
+      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
+      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
+    }
+    // REGLA PARA TRABAJADORES
+    match /trabajadores/{trabajadorId} {
+      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
+      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
+      allow read: if true;
+    }
+    // REGLA PARA NOVEDADES
+    match /novedades/{novedadId} {
+      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
+      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
+    }
     
-    // Reglas existentes (genericas)
-    match /{document=**} {
+    // REGLA PARA EMOS
+    match /emos/{emoId} {
+      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
+      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
+    }
+    // REGLA PARA ENCUESTAS DE SALUD
+    match /encuestas_salud/{encuestaId} {
+      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
+      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
+      allow read: if true;
+    }
+    // REGLA PARA RESPUESTAS DE ENCUESTAS
+    match /respuestas_encuestas/{respuestaId} {
+      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
+      allow read, create, update: if true;
+      allow delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
+    }
+    // REGLA PARA ANÁLISIS DE ENCUESTAS
+    match /analisis_encuestas/{analisisId} {
+      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
+      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
+    }
+    // --- NUEVAS REGLAS PARA MÓDULO DE RECARGOS (ESTO ES LO QUE FALTABA) ---
+    match /parametros_recargos/{document} {
       allow read, write: if request.auth != null;
     }
-
+    match /recargos_laborales/{document} {
+      allow read, write: if request.auth != null;
+    }
+    match /inventarios/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    match /catalogo_global_activos/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    // Permitir gestión de plantillas
+    match /plantillas_documentos/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    // Permitir guardar los documentos generados
+    match /repositorio_documentos/{document=**} {
+      allow read, write: if request.auth != null;
+    }
     // Regla ESPECÍFICA para Inspecciones SST
     // Asegura que solo usuarios autenticados puedan guardar inspecciones
     match /inspecciones_sst/{document} {
       allow read, write: if request.auth != null;
     }
-    
-    // Reglas para inventarios (seguramente ya las tienes)
-    match /inventarios/{document} {
+    match /mantenimientos_vehiculos/{document} {
+      allow read, write: if request.auth != null;
+    }
+
+    // --- NUEVA REGLA PARA INSPECCIONES PREOPERACIONALES ---
+    match /inspecciones_preoperacionales/{document} {
       allow read, write: if request.auth != null;
     }
   }
