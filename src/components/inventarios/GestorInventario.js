@@ -220,7 +220,17 @@ const GestorInventario = ({ config }) => {
     };
 
     // Generar PDF (Acta de Asignación)
-    const handleDownloadPdf = (item) => {
+    const handleDownloadPdf = async (item) => {
+        // Helper para convertir URL a Base64
+        const toDataURL = (url) => fetch(url)
+            .then(response => response.blob())
+            .then(blob => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            }));
+
         const element = document.createElement('div');
         element.style.padding = '20px';
         element.style.fontFamily = 'Arial, sans-serif';
@@ -243,12 +253,11 @@ const GestorInventario = ({ config }) => {
         // 2. Detalles del Activo (Tabla)
         let rows = '';
         config.campos.forEach(field => {
-            if (field.showInTable === false && field.type !== 'image' && field.type !== 'tri_state_checklist') return; // Opcional: filtrar si se quiere menos info
+            if (field.showInTable === false && field.type !== 'image' && field.type !== 'tri_state_checklist') return;
 
             const val = item[field.name];
             let displayVal = val || '-';
 
-            // Formateo especial para PDF
             if (field.type === 'firestore_select') {
                 const options = dynamicOptions[field.name] || [];
                 const selected = options.find(o => o.value === val);
@@ -256,7 +265,6 @@ const GestorInventario = ({ config }) => {
             } else if (field.type === 'select_with_description') {
                 displayVal = val;
             } else if (typeof val === 'object' && val !== null) {
-                // Checklist Triestado o normal
                 if (field.type === 'tri_state_checklist') {
                     displayVal = Object.entries(val).map(([k, v]) => `${k}: ${v}`).join(' | ');
                 } else if (field.type === 'checklist' || Array.isArray(val)) {
@@ -266,7 +274,6 @@ const GestorInventario = ({ config }) => {
                 }
             }
 
-            // No mostrar imágenes grandes en la tabla, mejor al final
             if (field.type !== 'image') {
                 rows += `
                     <tr>
@@ -283,19 +290,36 @@ const GestorInventario = ({ config }) => {
             </table>
         `;
 
-        // 3. Imágenes (Si las hay)
+        // 3. Imágenes (Pre-procesadas a Base64)
         let imagesHtml = '';
         const imageFields = config.campos.filter(c => c.type === 'image' && item[c.name]);
+
         if (imageFields.length > 0) {
             imagesHtml = '<div style="margin-top: 20px; page-break-inside: avoid;"><h4>Registro Fotográfico</h4><div style="display: flex; flex-wrap: wrap; gap: 10px;">';
-            imageFields.forEach(f => {
-                imagesHtml += `
-                    <div style="text-align: center; width: 45%;">
-                        <img src="${item[f.name]}" style="max-width: 100%; max-height: 150px; border: 1px solid #ccc;" />
-                        <p style="font-size: 10px;">${f.label}</p>
-                    </div>
-                `;
+
+            // Usar Promise.all para cargar todas las imágenes
+            const imagePromises = imageFields.map(async (f) => {
+                try {
+                    const base64 = await toDataURL(item[f.name]);
+                    return `
+                        <div style="text-align: center; width: 45%;">
+                            <img src="${base64}" style="max-width: 100%; max-height: 150px; border: 1px solid #ccc;" />
+                            <p style="font-size: 10px;">${f.label}</p>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error("Error loading image for PDF:", f.label, error);
+                    return `
+                         <div style="text-align: center; width: 45%;">
+                            <div style="width: 100%; height: 100px; border: 1px dashed red; display: flex; align-items: center; justify-content: center;">Error Carga</div>
+                            <p style="font-size: 10px;">${f.label}</p>
+                        </div>
+                    `;
+                }
             });
+
+            const loadedImages = await Promise.all(imagePromises);
+            imagesHtml += loadedImages.join('');
             imagesHtml += '</div></div>';
         }
 
@@ -328,7 +352,7 @@ const GestorInventario = ({ config }) => {
             margin: 10,
             filename: `Acta_${config.titulo}_${item.id.substring(0, 6)}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
+            html2canvas: { scale: 2, useCORS: true }, // Added useCORS just in case
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
