@@ -1122,9 +1122,9 @@ const GestorInventario = ({ config }) => {
 
         const dataToExport = filteredItems.map(item => {
             const row = {};
-            // Mapear cada campo segÃºn la configuraciÃ³n
+            // Mapear cada campo según la configuración
             config.campos.forEach(field => {
-                // OMITIR IMÃGENES: No exportar columnas de tipo imagen
+                // OMITIR IMÁGENES: No exportar columnas de tipo imagen
                 if (field.type === 'image') return;
 
                 const val = item[field.name];
@@ -1132,6 +1132,11 @@ const GestorInventario = ({ config }) => {
                 // Formatear valores especiales
                 if (val === null || val === undefined) {
                     row[field.label] = '';
+                } else if (field.type === 'firestore_select') {
+                    // Resolver el ID a la etiqueta legible (Nombre del extintor, etc.)
+                    const options = dynamicOptions[field.name] || [];
+                    const selected = options.find(o => o.value === val);
+                    row[field.label] = selected ? selected.label : val;
                 } else if (field.type === 'checklist') {
                     row[field.label] = Array.isArray(val) ? val.join(', ') : val;
                 } else if (field.type === 'ghs_pictograms') {
