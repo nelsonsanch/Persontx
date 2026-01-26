@@ -6,6 +6,8 @@ import IndicadoresDashboard from '../components/cliente/IndicadoresDashboard';
 import EMOSList from '../components/cliente/EMOSList';
 import EncuestasSaludCliente from '../components/cliente/EncuestasSaludCliente';
 import PerfilesCargo from '../components/cliente/PerfilesCargo';
+import { usePermissions } from '../hooks/usePermissions';
+import { PERMISSIONS } from '../config/permissions';
 
 // --- INICIO DE CÓDIGO NUEVO ---
 // 1. Importamos el nuevo componente de Informes
@@ -22,6 +24,7 @@ import InspeccionesPreoperacionalesMain from '../components/pesv/InspeccionesPre
 
 const ClienteDashboard = () => {
   const { user, logout } = useAuth();
+  const { can } = usePermissions(); // Hook de permisos
   const [activeTab, setActiveTab] = useState('trabajadores');
 
   const handleLogout = () => {
@@ -101,104 +104,118 @@ const ClienteDashboard = () => {
       {/* Pestañas con estilo original y margen */}
       <div className="container-fluid" style={{ padding: '20px 30px' }}>
         <div className="d-flex flex-wrap" style={{ borderBottom: '1px solid #dee2e6', marginBottom: '20px' }}>
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('trabajadores')}
-            style={{
-              backgroundColor: activeTab === 'trabajadores' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'trabajadores' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'trabajadores' ? 'white' : '#495057',
-              padding: '10px 20px',
-              marginBottom: '-1px'
-            }}
-          >
-            👥 Registro de Trabajadores
-          </button>
 
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('base-datos')}
-            style={{
-              backgroundColor: activeTab === 'base-datos' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'base-datos' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'base-datos' ? 'white' : '#495057',
-              padding: '10px 20px',
-              marginBottom: '-1px'
-            }}
-          >
-            📂 Base de Datos
-          </button>
+          {(can(PERMISSIONS.MODULES.RRHH) || can(PERMISSIONS.MODULES.BASE_DATOS)) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('trabajadores')}
+              style={{
+                backgroundColor: activeTab === 'trabajadores' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'trabajadores' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'trabajadores' ? 'white' : '#495057',
+                padding: '10px 20px',
+                marginBottom: '-1px'
+              }}
+            >
+              👥 Registro de Trabajadores
+            </button>
+          )}
 
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('novedades')}
-            style={{
-              backgroundColor: activeTab === 'novedades' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'novedades' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'novedades' ? 'white' : '#495057',
-              padding: '10px 20px',
-              marginBottom: '-1px'
-            }}
-          >
-            📝 Registro de Novedades
-          </button>
+          {can(PERMISSIONS.MODULES.BASE_DATOS) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('base-datos')}
+              style={{
+                backgroundColor: activeTab === 'base-datos' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'base-datos' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'base-datos' ? 'white' : '#495057',
+                padding: '10px 20px',
+                marginBottom: '-1px'
+              }}
+            >
+              📂 Base de Datos
+            </button>
+          )}
 
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('indicadores')}
-            style={{
-              backgroundColor: activeTab === 'indicadores' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'indicadores' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'indicadores' ? 'white' : '#495057',
-              padding: '10px 20px',
-              marginBottom: '-1px'
-            }}
-          >
-            📊 Indicadores
-          </button>
+          {can(PERMISSIONS.MODULES.NOVEDADES) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('novedades')}
+              style={{
+                backgroundColor: activeTab === 'novedades' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'novedades' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'novedades' ? 'white' : '#495057',
+                padding: '10px 20px',
+                marginBottom: '-1px'
+              }}
+            >
+              📝 Registro de Novedades
+            </button>
+          )}
 
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('emos')}
-            style={{
-              backgroundColor: activeTab === 'emos' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'emos' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'emos' ? 'white' : '#495057',
-              padding: '10px 20px',
-              marginBottom: '-1px'
-            }}
-          >
-            🏥 EMOS
-          </button>
+          {can(PERMISSIONS.MODULES.INDICADORES) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('indicadores')}
+              style={{
+                backgroundColor: activeTab === 'indicadores' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'indicadores' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'indicadores' ? 'white' : '#495057',
+                padding: '10px 20px',
+                marginBottom: '-1px'
+              }}
+            >
+              📊 Indicadores
+            </button>
+          )}
 
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('perfiles')}
-            style={{
-              backgroundColor: activeTab === 'perfiles' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'perfiles' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'perfiles' ? 'white' : '#495057',
-              padding: '10px 20px',
-              marginBottom: '-1px'
-            }}
-          >
-            📋 Perfiles de Cargo
-          </button>
+          {can(PERMISSIONS.MODULES.EMOS) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('emos')}
+              style={{
+                backgroundColor: activeTab === 'emos' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'emos' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'emos' ? 'white' : '#495057',
+                padding: '10px 20px',
+                marginBottom: '-1px'
+              }}
+            >
+              🏥 EMOS
+            </button>
+          )}
+
+          {can(PERMISSIONS.MODULES.PERFILES) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('perfiles')}
+              style={{
+                backgroundColor: activeTab === 'perfiles' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'perfiles' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'perfiles' ? 'white' : '#495057',
+                padding: '10px 20px',
+                marginBottom: '-1px'
+              }}
+            >
+              📋 Perfiles de Cargo
+            </button>
+          )}
 
           {/* --- INICIO DE CÓDIGO NUEVO --- */}
           {/* 3. Añadimos el nuevo botón de la pestaña */}
+          {/* Consultas general (todos) */}
           <button
             className="btn me-2 mb-2"
             onClick={() => setActiveTab('informes')}
@@ -215,117 +232,135 @@ const ClienteDashboard = () => {
             ❓Consultas
           </button>
 
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('recargos')}
-            style={{
-              backgroundColor: activeTab === 'recargos' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'recargos' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'recargos' ? 'white' : '#495057',
-              padding: '10px 20px',
-              marginBottom: '-1px'
-            }}
-          >
-            ⏱️ Recargos
-          </button>
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('encuestas-salud')}
-            style={{
-              backgroundColor: activeTab === 'encuestas-salud' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'encuestas-salud' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'encuestas-salud' ? 'white' : '#495057',
-              padding: '10px 20px',
-              marginBottom: '-1px'
-            }}
-          >
-            📋 Encuestas de Salud
-          </button>
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('inventarios')}
-            style={{
-              backgroundColor: activeTab === 'inventarios' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'inventarios' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'inventarios' ? 'white' : '#495057',
-              padding: '10px 20px',
-              marginBottom: '-1px'
-            }}
-          >
-            📦 Inventarios
-          </button>
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('inspecciones')}
-            style={{
-              backgroundColor: activeTab === 'inspecciones' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'inspecciones' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'inspecciones' ? 'white' : '#495057',
-              padding: '10px 20px',
-              fontWeight: '500'
-            }}
-          >
-            <span style={{ marginRight: '8px' }}>✅</span>
-            Inspecciones SST
-          </button>
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('documental')}
-            style={{
-              backgroundColor: activeTab === 'documental' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'documental' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'documental' ? 'white' : '#495057',
-              padding: '10px 20px',
-              fontWeight: '500'
-            }}
-          >
-            <span style={{ marginRight: '8px' }}>📄</span>
-            Gestor Documental
-          </button>
+          {can(PERMISSIONS.MODULES.RECARGOS) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('recargos')}
+              style={{
+                backgroundColor: activeTab === 'recargos' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'recargos' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'recargos' ? 'white' : '#495057',
+                padding: '10px 20px',
+                marginBottom: '-1px'
+              }}
+            >
+              ⏱️ Recargos
+            </button>
+          )}
 
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('pesv')}
-            style={{
-              backgroundColor: activeTab === 'pesv' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'pesv' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'pesv' ? 'white' : '#495057',
-              padding: '10px 20px',
-              fontWeight: '500'
-            }}
-          >
-            <span style={{ marginRight: '8px' }}>🚗</span>
-            Gestión PESV
-          </button>
+          {can(PERMISSIONS.MODULES.ENCUESTAS) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('encuestas-salud')}
+              style={{
+                backgroundColor: activeTab === 'encuestas-salud' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'encuestas-salud' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'encuestas-salud' ? 'white' : '#495057',
+                padding: '10px 20px',
+                marginBottom: '-1px'
+              }}
+            >
+              📋 Encuestas de Salud
+            </button>
+          )}
 
-          <button
-            className="btn me-2 mb-2"
-            onClick={() => setActiveTab('preoperacionales')}
-            style={{
-              backgroundColor: activeTab === 'preoperacionales' ? '#007bff' : '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderBottom: activeTab === 'preoperacionales' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
-              borderRadius: '8px 8px 0 0',
-              color: activeTab === 'preoperacionales' ? 'white' : '#495057',
-              padding: '10px 20px',
-              fontWeight: '500'
-            }}
-          >
-            <span style={{ marginRight: '8px' }}>🔎</span>
-            Insp. Preoperacionales
-          </button>
+          {can(PERMISSIONS.MODULES.INVENTARIOS) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('inventarios')}
+              style={{
+                backgroundColor: activeTab === 'inventarios' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'inventarios' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'inventarios' ? 'white' : '#495057',
+                padding: '10px 20px',
+                marginBottom: '-1px'
+              }}
+            >
+              📦 Inventarios
+            </button>
+          )}
+
+          {can(PERMISSIONS.MODULES.INSPECCIONES) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('inspecciones')}
+              style={{
+                backgroundColor: activeTab === 'inspecciones' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'inspecciones' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'inspecciones' ? 'white' : '#495057',
+                padding: '10px 20px',
+                fontWeight: '500'
+              }}
+            >
+              <span style={{ marginRight: '8px' }}>✅</span>
+              Inspecciones SST
+            </button>
+          )}
+
+          {can(PERMISSIONS.MODULES.DOCUMENTAL) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('documental')}
+              style={{
+                backgroundColor: activeTab === 'documental' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'documental' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'documental' ? 'white' : '#495057',
+                padding: '10px 20px',
+                fontWeight: '500'
+              }}
+            >
+              <span style={{ marginRight: '8px' }}>📄</span>
+              Gestor Documental
+            </button>
+          )}
+
+          {can(PERMISSIONS.MODULES.PESV) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('pesv')}
+              style={{
+                backgroundColor: activeTab === 'pesv' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'pesv' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'pesv' ? 'white' : '#495057',
+                padding: '10px 20px',
+                fontWeight: '500'
+              }}
+            >
+              <span style={{ marginRight: '8px' }}>🚗</span>
+              Gestión PESV
+            </button>
+          )}
+
+          {can(PERMISSIONS.MODULES.PREOPERACIONALES) && (
+            <button
+              className="btn me-2 mb-2"
+              onClick={() => setActiveTab('preoperacionales')}
+              style={{
+                backgroundColor: activeTab === 'preoperacionales' ? '#007bff' : '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderBottom: activeTab === 'preoperacionales' ? '1px solid #f8f9fa' : '1px solid #dee2e6',
+                borderRadius: '8px 8px 0 0',
+                color: activeTab === 'preoperacionales' ? 'white' : '#495057',
+                padding: '10px 20px',
+                fontWeight: '500'
+              }}
+            >
+              <span style={{ marginRight: '8px' }}>🔎</span>
+              Insp. Preoperacionales
+            </button>
+          )}
           {/* --- FIN DE CÓDIGO NUEVO --- */}
 
         </div>

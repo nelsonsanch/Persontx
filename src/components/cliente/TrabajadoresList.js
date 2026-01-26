@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { secondaryAuth } from '../../firebase'; // Auth secundaria para crear usuarios sin cerrar sesión
+import { PERMISSIONS } from '../../config/permissions';
+import { Modal, Form, Button, Row, Col, Alert } from 'react-bootstrap';
+import { Shield, Key } from 'lucide-react';
 
 const TrabajadoresList = () => {
   const [trabajadores, setTrabajadores] = useState([]);
@@ -10,7 +15,15 @@ const TrabajadoresList = () => {
   const [perfilesCargo, setPerfilesCargo] = useState([]); // Nueva lista de perfiles de cargo
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+
   const [editingId, setEditingId] = useState(null);
+
+  // Estado para gestión de usuarios/permisos
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState(null);
+  const [userCredentials, setUserCredentials] = useState({ email: '', password: '' });
+  const [userPermissions, setUserPermissions] = useState([]);
+  const [userLoading, setUserLoading] = useState(false);
 
   // Estados para filtros
   const [filtros, setFiltros] = useState({
@@ -601,6 +614,109 @@ const TrabajadoresList = () => {
     }
   };
 
+
+
+  // --- LÓGICA DE GESTIÓN DE USUARIOS Y PERMISOS ---
+
+  const handleOpenUserModal = async (trabajador) => {
+    setSelectedWorker(trabajador);
+    setUserCredentials({
+      email: trabajador.correo || '',
+      password: ''
+    });
+    setUserPermissions([]); // Reiniciar permisos
+    setUserLoading(true);
+
+    // Verificar si ya tiene usuario asociado en la colección 'usuarios'
+    // Como el ID del doc en 'usuarios' es el UID, necesitamos buscar por el email o vincular el UID en el trabajador
+    // Opción simplificada: Buscar en colección 'usuarios' donde 'trabajadorId' == trabajador.id
+    try {
+      const q = query(collection(db, 'usuarios'), where('trabajadorId', '==', trabajador.id));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const userDoc = snapshot.docs[0].data();
+        setUserPermissions(userDoc.permisos || []);
+        setUserCredentials(prev => ({ ...prev, email: userDoc.email })); // Usar email real del usuario
+        // No podemos recuperar la contraseña
+      }
+    } catch (error) {
+      console.error("Error buscando usuario existente:", error);
+    }
+
+    setUserLoading(false);
+    setShowUserModal(true);
+  };
+
+  const handleTooglePermission = (permKey) => {
+    if (userPermissions.includes(permKey)) {
+      setUserPermissions(userPermissions.filter(p => p !== permKey));
+    } else {
+      setUserPermissions([...userPermissions, permKey]);
+    }
+  };
+
+  const handleSaveUser = async (e) => {
+    e.preventDefault();
+    if (!selectedWorker) return;
+    setUserLoading(true);
+
+    try {
+      const user = auth.currentUser; // Cliente actual (Jefe)
+      let targetUid = null;
+
+      // 1. Verificar si el usuario ya existe (por query anterior)
+      const q = query(collection(db, 'usuarios'), where('trabajadorId', '==', selectedWorker.id));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        // Actualizar permisos de usuario existente
+        targetUid = snapshot.docs[0].id; // El ID del doc es el UID
+        await updateDoc(doc(db, 'usuarios', targetUid), {
+          permisos: userPermissions,
+          email: userCredentials.email // Actualizar email si cambió (solo informativo en DB, auth necesita otro proceso)
+        });
+        alert('Permisos actualizados correctamente.');
+      } else {
+        // Crear NUEVO usuario
+        if (!userCredentials.password || userCredentials.password.length < 6) {
+          alert('La contraseña debe tener al menos 6 caracteres para crear un usuario.');
+          setUserLoading(false);
+          return;
+        }
+
+        // Usar secondaryAuth para no cerrar la sesión del cliente
+        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, userCredentials.email, userCredentials.password);
+        targetUid = userCredential.user.uid;
+
+        // Guardar documento en colección 'usuarios'
+        await setDoc(doc(db, 'usuarios', targetUid), {
+          email: userCredentials.email,
+          rol: 'trabajador',
+          clienteId: user.uid, // Vincular al jefe
+          trabajadorId: selectedWorker.id, // Vincular al registro de trabajador
+          permisos: userPermissions,
+          nombre: `${selectedWorker.nombres} ${selectedWorker.apellidos}`,
+          fechaCreacion: new Date().toISOString()
+        });
+
+        alert(`Usuario creado exitosamente.\n\nCredenciales:\nEmail: ${userCredentials.email}\nContraseña: ${userCredentials.password}`);
+      }
+
+      setShowUserModal(false);
+
+    } catch (error) {
+      console.error('Error gestionando usuario:', error);
+      if (error.code === 'auth/email-already-in-use') {
+        alert('El correo electrónico ya está registrado en el sistema.');
+      } else {
+        alert(`Error: ${error.message}`);
+      }
+    } finally {
+      setUserLoading(false);
+    }
+  };
+
   const getTipoCedulaLabel = (value) => {
     const tipo = tiposCedula.find(t => t.value === value);
     return tipo ? tipo.label : value;
@@ -673,6 +789,75 @@ const TrabajadoresList = () => {
               </button>
             </div>
           </div>
+
+          {/* MODAL DE GESTIÓN DE USUARIO */}
+          <Modal show={showUserModal} onHide={() => setShowUserModal(false)} size="lg">
+            <Modal.Header closeButton>
+              <Modal.Title>
+                <Shield className="me-2" size={24} />
+                Gestión de Acceso: {selectedWorker?.nombres} {selectedWorker?.apellidos}
+              </Modal.Title>
+            </Modal.Header>
+            <Form onSubmit={handleSaveUser}>
+              <Modal.Body>
+                <Alert variant="info">
+                  <Key className="me-2" size={18} />
+                  Aquí puedes crear una cuenta para que este trabajador ingrese al sistema y asignarle permisos específicos.
+                </Alert>
+
+                <h5 className="mb-3 border-bottom pb-2">1. Credenciales de Acceso</h5>
+                <Row className="mb-4">
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Correo Electrónico (Login)</Form.Label>
+                      <Form.Control
+                        type="email"
+                        required
+                        value={userCredentials.email}
+                        onChange={e => setUserCredentials({ ...userCredentials, email: e.target.value })}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Contraseña</Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder={userPermissions.length > 0 ? "(Dejar vacío para mantener actual)" : "Mínimo 6 caracteres"}
+                        value={userCredentials.password}
+                        onChange={e => setUserCredentials({ ...userCredentials, password: e.target.value })}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <h5 className="mb-3 border-bottom pb-2">2. Permisos de Módulo</h5>
+                <Row>
+                  {Object.entries(PERMISSIONS.MODULES).map(([key, value]) => (
+                    <Col md={4} key={key} className="mb-3">
+                      <Form.Check
+                        type="switch"
+                        id={`perm-${key}`}
+                        label={value.replace('modulo_', '').replace('_', ' ').toUpperCase()}
+                        checked={userPermissions.includes(value)}
+                        onChange={() => handleTooglePermission(value)}
+                        className="fw-bold"
+                      />
+                    </Col>
+                  ))}
+                </Row>
+
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" onClick={() => setShowUserModal(false)}>
+                  Cancelar
+                </Button>
+                <Button variant="primary" type="submit" disabled={userLoading}>
+                  {userLoading ? 'Guardando...' : 'Guardar y Asignar'}
+                </Button>
+              </Modal.Footer>
+            </Form>
+          </Modal>
 
           {/* Sección de Filtros y Consultas */}
           <div className="card mb-4">

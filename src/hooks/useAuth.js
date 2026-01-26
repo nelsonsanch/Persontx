@@ -1,10 +1,10 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { auth, db } from '../firebase';
-import { 
-  signInWithEmailAndPassword, 
-  signOut, 
+import {
+  signInWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -22,6 +22,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
+  const [userData, setUserData] = useState(null); // Nuevo estado para datos completos
+  const [dataScopeId, setDataScopeId] = useState(null); // ID del "Dueño de los datos" (Cliente)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -31,19 +33,33 @@ export const AuthProvider = ({ children }) => {
           // Consultar el rol del usuario en Firestore
           const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
           if (userDoc.exists()) {
-            const userData = userDoc.data();
-            // CORRECCIÓN: Cambiar 'role' por 'rol' para que coincida con Firestore
-            setUserRole(userData.rol || 'cliente'); // Por defecto 'cliente' si no tiene rol
+            const data = userDoc.data();
+            setUserData(data); // Guardar todo el documento
+            setUserRole(data.rol || 'cliente');
+
+            // Determinar el Scope de Datos
+            if (data.rol === 'trabajador' && data.clienteId) {
+              // Si es trabajador, ve los datos de su Jefe (Cliente)
+              setDataScopeId(data.clienteId);
+            } else {
+              // Si es Admin o Cliente, o no tiene jefe, ve sus propios datos
+              setDataScopeId(user.uid);
+            }
+
           } else {
             // Si no existe en Firestore, asignar rol por defecto
             setUserRole('cliente');
+            setDataScopeId(user.uid);
           }
         } catch (error) {
           console.error('Error al obtener rol del usuario:', error);
           setUserRole('cliente'); // Rol por defecto en caso de error
+          setDataScopeId(user.uid);
         }
       } else {
         setUserRole(null);
+        setUserData(null);
+        setDataScopeId(null);
       }
       setLoading(false);
     });
@@ -83,6 +99,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     userRole,
+    userData, // Exportar datos completos
+    dataScopeId, // Exportar ID del dueño de los datos
     login,
     logout,
     register,
