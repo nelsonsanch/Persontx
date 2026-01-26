@@ -575,7 +575,7 @@ const TrabajadoresList = () => {
             afp: row.afp || '',
             discapacidades: row.discapacidades || '',
             enfermedadesDiagnosticadas: row.enfermedadesDiagnosticadas || '',
-            enfermedadesDiagnosticadas: row.enfermedadesDiagnosticadas || '',
+
             estado: row.estado || 'activo',
             fechaIngreso: row.fechaIngreso || '',
             salario: row.salario || 0,
@@ -1282,7 +1282,15 @@ const TrabajadoresList = () => {
                           </td>
                           <td>{calcularAntiguedad(trabajador.fechaIngreso)}</td>
                           <td>
-                            <div className="btn-group" role="group">
+                            <div className="d-flex" role="group">
+                              <button
+                                className="btn btn-warning btn-sm me-2 d-flex align-items-center"
+                                onClick={() => handleOpenUserModal(trabajador)}
+                                title="Gestionar Usuario y Permisos"
+                                style={{ color: '#000' }}
+                              >
+                                <Key size={14} className="me-1" />
+                              </button>
                               <Link
                                 to={`/cliente/trabajador/${trabajador.id}`}
                                 className="btn btn-sm btn-outline-info"

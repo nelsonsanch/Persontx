@@ -2,8 +2,20 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // REGLA PARA USUARIOS
+    // REGLA PARA USUARIOS
     match /usuarios/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      // Permitir leer/escribir si es el propio usuario
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Permitir creación/gestión si el usuario que hace la petición es el "clienteId" (Jefe)
+      // Nota: Para lectura (listas), esto requiere queries que filtren por clienteId
+      allow read, write: if request.auth != null && (
+        resource.data.clienteId == request.auth.uid || 
+        request.resource.data.clienteId == request.auth.uid
+      );
+      
+      // Fallback temporal para permitir la creación inicial
+      allow create: if request.auth != null;
     }
     // REGLA PARA CLIENTES
     match /clientes/{clienteId} {
