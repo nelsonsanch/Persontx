@@ -9,7 +9,9 @@ import { toast } from 'react-toastify';
 // CONFIGURACIÓN DEL CHECKLIST (Actualizado según Imagen)
 import { PREOP_CHECKLIST } from './inspeccionesConfig';
 import DetalleInspeccionModal from './DetalleInspeccionModal';
-import { Eye } from 'lucide-react';
+import HistorialPreoperacionales from './HistorialPreoperacionales';
+import IndicadoresPreoperacionales from './IndicadoresPreoperacionales';
+import { Eye, BarChart2 } from 'lucide-react';
 
 const InspeccionesPreoperacionalesMain = () => {
     const { user } = useAuth();
@@ -237,10 +239,16 @@ const InspeccionesPreoperacionalesMain = () => {
                         <Nav.Item>
                             <Nav.Link eventKey="historial" className="fw-bold">Historial Completo</Nav.Link>
                         </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link eventKey="indicadores" className="fw-bold text-success">
+                                <BarChart2 size={16} className="me-1 mb-1" />
+                                Indicadores
+                            </Nav.Link>
+                        </Nav.Item>
                     </Nav>
                 </Card.Header>
                 <Card.Body className="p-3 p-md-4">
-                    {activeTab === 'nueva' ? (
+                    {activeTab === 'nueva' && (
                         <Form onSubmit={handleSubmit}>
                             {/* 1. Selección de Vehículo */}
                             <Row className="mb-4">
@@ -421,8 +429,13 @@ const InspeccionesPreoperacionalesMain = () => {
                                 </>
                             )}
                         </Form>
-                    ) : (
+                    )}
+                    {activeTab === 'historial' && (
                         <HistorialPreoperacionales vehiculos={vehiculos} user={user} />
+                    )}
+
+                    {activeTab === 'indicadores' && (
+                        <IndicadoresPreoperacionales user={user} />
                     )}
                 </Card.Body>
             </Card>
@@ -430,84 +443,6 @@ const InspeccionesPreoperacionalesMain = () => {
     );
 };
 
-// Componente simple para el historial interno
-const HistorialPreoperacionales = ({ vehiculos, user }) => {
-    const [registros, setRegistros] = useState([]);
-    const [selectedInspection, setSelectedInspection] = useState(null);
-    const [showModal, setShowModal] = useState(false);
 
-    useEffect(() => {
-        if (!user) return;
-        const q = query(
-            collection(db, 'inspecciones_preoperacionales'),
-            where('clienteId', '==', user.uid),
-            orderBy('fecha_registro', 'desc') // Requiere índice compuesto, si falla, quitar orderBy
-        );
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setRegistros(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-        }, (err) => {
-            console.error("Error historial (posible indice faltante):", err);
-        });
-        return () => unsubscribe();
-    }, [user]);
-
-    const handleViewDetail = (inspection) => {
-        setSelectedInspection(inspection);
-        setShowModal(true);
-    };
-
-    return (
-        <div className="table-responsive">
-            <Table hovered striped className="align-middle">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Vehículo</th>
-                        <th>Inspector</th>
-                        <th>Km</th>
-                        <th>Resultado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {registros.map(reg => (
-                        <tr key={reg.id}>
-                            <td>{new Date(reg.fecha_registro).toLocaleString()}</td>
-                            <td>{reg.vehiculo_placa}</td>
-                            <td>{reg.usuario_email}</td>
-                            <td>{reg.kilometraje_lectura?.toLocaleString()}</td>
-                            <td>
-                                <Badge bg={reg.resultado_global === 'APROBADO' ? 'success' : 'danger'}>
-                                    {reg.resultado_global}
-                                </Badge>
-                            </td>
-                            <td>
-                                <Button
-                                    variant="outline-primary"
-                                    size="sm"
-                                    onClick={() => handleViewDetail(reg)}
-                                    title="Ver Detalles"
-                                >
-                                    <Eye size={16} />
-                                </Button>
-                            </td>
-                        </tr>
-                    ))}
-                    {registros.length === 0 && (
-                        <tr>
-                            <td colSpan="6" className="text-center p-4">No hay inspecciones registradas.</td>
-                        </tr>
-                    )}
-                </tbody>
-            </Table>
-
-            <DetalleInspeccionModal
-                show={showModal}
-                onHide={() => setShowModal(false)}
-                inspection={selectedInspection}
-            />
-        </div>
-    );
-}
 
 export default InspeccionesPreoperacionalesMain;
