@@ -42,7 +42,7 @@ const GestionPESVMain = () => {
                 <Card.Body className="p-0 border-top">
                     {activeTab === 'vehiculos' && (
                         <div className="p-3">
-                            <GestorInventario config={vehiculosConfig} />
+                            <GestorInventario config={vehiculosConfig} hidePdfButton={true} />
                         </div>
                     )}
                     {activeTab === 'seguimiento' && (

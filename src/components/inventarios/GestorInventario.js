@@ -81,7 +81,7 @@ const GHSDiamond = ({ ghs, size = 60, style = {}, className = '', onClick }) => 
     );
 };
 
-const GestorInventario = ({ config }) => {
+const GestorInventario = ({ config, hidePdfButton = false }) => {
     const { user } = useAuth();
     const [items, setItems] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -1210,16 +1210,18 @@ const GestorInventario = ({ config }) => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ width: '250px' }}
                     />
-                    <Button
-                        variant="outline-danger"
-                        onClick={handleExportPDF}
-                        disabled={pdfGenerating}
-                        title="Descargar Reporte PDF"
-                        className="d-flex align-items-center"
-                    >
-                        <FileText size={18} className="me-2" />
-                        {pdfGenerating ? 'Generando...' : 'PDF'}
-                    </Button>
+                    {!hidePdfButton && (
+                        <Button
+                            variant="outline-danger"
+                            onClick={handleExportPDF}
+                            disabled={pdfGenerating}
+                            title="Descargar Reporte PDF"
+                            className="d-flex align-items-center"
+                        >
+                            <FileText size={18} className="me-2" />
+                            {pdfGenerating ? 'Generando...' : 'PDF'}
+                        </Button>
+                    )}
                     <Button variant="outline-success" onClick={handleExportExcel} title="Descargar Excel">
                         <FileText size={18} className="me-2" />
                         Excel
