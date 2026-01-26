@@ -15,9 +15,10 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { Table, Button, Modal, Form, Badge, Alert } from 'react-bootstrap';
-import { Trash2, Edit, Plus, FileText, Eye, Bomb, Flame, Skull, Biohazard, Radio, Droplet, Zap, Triangle, Ban, Camera } from 'lucide-react';
+import { Trash2, Edit, Plus, FileText, Eye, Bomb, Flame, Skull, Biohazard, Radio, Droplet, Zap, Triangle, Ban, Camera, Wrench } from 'lucide-react';
 import { read, utils, writeFile } from 'xlsx';
 import html2pdf from 'html2pdf.js';
+import MantenimientoVehiculo from '../pesv/MantenimientoVehiculo';
 
 const GHS_DEFINITIONS = [
     { key: 'Clase 1', label: 'Explosivo', bg: '#ff6600', text: '1', color: 'black', renderIcon: (s) => <Bomb size={s} /> },
@@ -93,6 +94,10 @@ const GestorInventario = ({ config }) => {
     const [catalogQuery, setCatalogQuery] = useState(''); // Lo que escribe el usuario para buscar
     const [uploading, setUploading] = useState(false); // Estado de carga de imagen
     const [dynamicOptions, setDynamicOptions] = useState({}); // Opciones cargadas dinÃ¡micamente
+
+    // Estado Hoja de Vida
+    const [selectedVehicleForMantenimiento, setSelectedVehicleForMantenimiento] = useState(null);
+    const [showMantenimientoModal, setShowMantenimientoModal] = useState(false);
 
     // Cargar opciones dinÃ¡micas (Firestore Select)
     useEffect(() => {
@@ -1242,6 +1247,19 @@ const GestorInventario = ({ config }) => {
                                             <Edit size={16} />
                                         </Button>
                                         <Button
+                                            variant="outline-secondary"
+                                            size="sm"
+                                            className="me-2"
+                                            title="Hoja de Vida (Mantenimientos)"
+                                            onClick={() => {
+                                                setSelectedVehicleForMantenimiento(item);
+                                                setShowMantenimientoModal(true);
+                                            }}
+                                            hidden={config.filtroCategoria !== 'vehiculos'}
+                                        >
+                                            <Wrench size={16} />
+                                        </Button>
+                                        <Button
                                             variant="outline-danger"
                                             size="sm"
                                             onClick={() => handleDelete(item.id)}
@@ -1254,6 +1272,15 @@ const GestorInventario = ({ config }) => {
                         </tbody>
                     </Table>
                 </div>
+            )}
+
+            {/* Modal de Mantenimiento (Hoja de Vida) */}
+            {selectedVehicleForMantenimiento && (
+                <MantenimientoVehiculo
+                    show={showMantenimientoModal}
+                    onHide={() => setShowMantenimientoModal(false)}
+                    vehiculo={selectedVehicleForMantenimiento}
+                />
             )}
 
             {/* Modal de CreaciÃ³n/EdiciÃ³n */}

@@ -63,6 +63,7 @@ export const vehiculosConfig = {
             options: ['Gasolina', 'Diesel', 'Gas', 'Híbrido', 'Eléctrico'],
             required: true
         },
+        { name: 'kilometraje_inicial', label: 'Kilometraje Inicial (Km)', type: 'number', placeholder: 'Ej: 0 o 40000', required: true },
         { name: 'kilometraje_actual', label: 'Kilometraje Actual (Km)', type: 'number', placeholder: 'Ej: 45000', required: true },
 
         // Propietario
