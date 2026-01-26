@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form, Table, Badge, Tab, Tabs, Alert } from 'react-bootstrap';
+import { Button, Form, Table, Badge, Tab, Tabs } from 'react-bootstrap';
 import { db, storage } from '../../firebase';
 import {
     collection, addDoc, query, where, onSnapshot, orderBy, deleteDoc, doc
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../../hooks/useAuth';
-import { Wrench, Trash2, CheckCircle, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
+import { Wrench, Trash2, CheckCircle, AlertTriangle, TrendingUp, X } from 'lucide-react';
 
 const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
     const { user } = useAuth();
@@ -31,7 +31,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
     const [formData, setFormData] = useState(initialForm);
 
     useEffect(() => {
-        if (!vehiculo || !show) return;
+        if (!vehiculo) return;
 
         // Cargar Historial
         const q = query(
@@ -46,7 +46,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
         });
 
         return () => unsubscribe();
-    }, [vehiculo, show]);
+    }, [vehiculo]);
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -113,7 +113,6 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
     const kmRecorrido = kmActual - kmInicial;
     const totalGastado = registros.reduce((acc, curr) => acc + (curr.costo_total || 0), 0);
 
-    // Helper para determinar estado (Semaforo) de cada fila
     const getRowStatus = (reg) => {
         if (reg.proximo_vencimiento_fecha) {
             const fechaVence = new Date(reg.proximo_vencimiento_fecha);
@@ -136,242 +135,250 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
         return null;
     };
 
+    // NOTE: Removed Modal wrapper, using div/card layout for accordion embedding
     return (
-        <Modal show={show} onHide={onHide} size="xl" centered>
-            <Modal.Header closeButton className="bg-light">
-                <Modal.Title className="d-flex align-items-center gap-2">
-                    <Wrench size={24} />
-                    Hoja de Vida: {vehiculo?.marca} {vehiculo?.linea} ({vehiculo?.placa})
-                </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
+        <div className="bg-white border rounded shadow-sm p-4 mt-2 position-relative">
+            {onHide && (
+                <Button
+                    variant="link"
+                    className="position-absolute top-0 end-0 m-2 text-muted"
+                    onClick={onHide}
+                    title="Cerrar Panel"
+                >
+                    <X size={24} />
+                </Button>
+            )}
 
-                {/* 1. Resumen de Kilometrajes e Inversión */}
-                <div className="row mb-4">
-                    <div className="col-md-3">
-                        <div className="card border-0 shadow-sm p-3 text-center bg-light">
-                            <h3 className="text-primary">${totalGastado.toLocaleString()}</h3>
-                            <small className="text-muted fw-bold">Inversión Total</small>
-                        </div>
-                    </div>
-                    <div className="col-md-3">
-                        <div className="card border-0 shadow-sm p-3 text-center bg-light">
-                            <h3 className="text-dark">{kmActual.toLocaleString()} km</h3>
-                            <small className="text-muted fw-bold">Kilometraje Actual</small>
-                        </div>
-                    </div>
-                    <div className="col-md-3">
-                        <div className="card border-0 shadow-sm p-3 text-center bg-light">
-                            <h3 className="text-info">{kmRecorrido.toLocaleString()} km</h3>
-                            <small className="text-muted fw-bold">Recorrido Total (En Empresa)</small>
-                        </div>
-                    </div>
-                    <div className="col-md-3">
-                        <div className="card border-0 shadow-sm p-3 text-center bg-light">
-                            <h3 className="text-secondary">{registros.length}</h3>
-                            <small className="text-muted fw-bold">Eventos Registrados</small>
-                        </div>
+            <div className="d-flex align-items-center gap-2 mb-4 border-bottom pb-2">
+                <Wrench size={24} className="text-primary" />
+                <h4 className="m-0 text-primary">Hoja de Vida: {vehiculo?.marca} {vehiculo?.linea} ({vehiculo?.placa})</h4>
+            </div>
+
+            {/* 1. Resumen de Kilometrajes e Inversión */}
+            <div className="row mb-4">
+                <div className="col-md-3">
+                    <div className="card border-0 shadow-sm p-3 text-center bg-light">
+                        <h3 className="text-primary">${totalGastado.toLocaleString()}</h3>
+                        <small className="text-muted fw-bold">Inversión Total</small>
                     </div>
                 </div>
+                <div className="col-md-3">
+                    <div className="card border-0 shadow-sm p-3 text-center bg-light">
+                        <h3 className="text-dark">{kmActual.toLocaleString()} km</h3>
+                        <small className="text-muted fw-bold">Kilometraje Actual</small>
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="card border-0 shadow-sm p-3 text-center bg-light">
+                        <h3 className="text-info">{kmRecorrido.toLocaleString()} km</h3>
+                        <small className="text-muted fw-bold">Recorrido Total (En Empresa)</small>
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="card border-0 shadow-sm p-3 text-center bg-light">
+                        <h3 className="text-secondary">{registros.length}</h3>
+                        <small className="text-muted fw-bold">Eventos Registrados</small>
+                    </div>
+                </div>
+            </div>
 
-                <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="mb-3 nav-fill">
-                    <Tab eventKey="historial" title="Historial Completo">
-                        <div className="table-responsive">
-                            <Table hover striped bordered className="align-middle">
-                                <thead className="bg-light">
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th>Tipo</th>
-                                        <th>Descripción</th>
-                                        <th>Km Evento</th>
-                                        <th>Costo</th>
-                                        <th>Próx. Cambio</th>
-                                        <th>Estado / Alerta</th>
-                                        <th>Evidencias</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {registros.map((reg) => {
-                                        const status = getRowStatus(reg);
-                                        return (
-                                            <tr key={reg.id}>
-                                                <td>{reg.fecha_evento}</td>
-                                                <td>
-                                                    <Badge bg={
-                                                        reg.tipo_evento.includes('Preventivo') ? 'success' :
-                                                            reg.tipo_evento.includes('Correctivo') ? 'warning' :
-                                                                reg.tipo_evento.includes('Legal') ? 'info' : 'secondary'
-                                                    }>
-                                                        {reg.tipo_evento}
+            <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="mb-3 nav-fill">
+                <Tab eventKey="historial" title="Historial Completo">
+                    <div className="table-responsive">
+                        <Table hover striped bordered className="align-middle">
+                            <thead className="bg-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Descripción</th>
+                                    <th>Km Evento</th>
+                                    <th>Costo</th>
+                                    <th>Próx. Cambio</th>
+                                    <th>Estado / Alerta</th>
+                                    <th>Evidencias</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {registros.map((reg) => {
+                                    const status = getRowStatus(reg);
+                                    return (
+                                        <tr key={reg.id}>
+                                            <td>{reg.fecha_evento}</td>
+                                            <td>
+                                                <Badge bg={
+                                                    reg.tipo_evento.includes('Preventivo') ? 'success' :
+                                                        reg.tipo_evento.includes('Correctivo') ? 'warning' :
+                                                            reg.tipo_evento.includes('Legal') ? 'info' : 'secondary'
+                                                }>
+                                                    {reg.tipo_evento}
+                                                </Badge>
+                                            </td>
+                                            <td>{reg.descripcion}</td>
+                                            <td>{reg.kilometraje_evento?.toLocaleString()} km</td>
+                                            <td>${reg.costo_total?.toLocaleString()}</td>
+                                            <td>
+                                                {reg.proximo_vencimiento_fecha ? (
+                                                    <small className="text-muted">
+                                                        Vence: {reg.proximo_vencimiento_fecha}
+                                                    </small>
+                                                ) : reg.proximo_cambio_kilometraje ? (
+                                                    <small className="text-muted">
+                                                        Meta: {reg.proximo_cambio_kilometraje.toLocaleString()} km
+                                                    </small>
+                                                ) : '-'}
+                                            </td>
+                                            <td>
+                                                {status ? (
+                                                    <Badge bg={status.bg} className="d-flex align-items-center gap-1 w-auto justify-content-center p-2">
+                                                        {status.icon} {status.text}
                                                     </Badge>
-                                                </td>
-                                                <td>{reg.descripcion}</td>
-                                                <td>{reg.kilometraje_evento?.toLocaleString()} km</td>
-                                                <td>${reg.costo_total?.toLocaleString()}</td>
-                                                <td>
-                                                    {reg.proximo_vencimiento_fecha ? (
-                                                        <small className="text-muted">
-                                                            Vence: {reg.proximo_vencimiento_fecha}
-                                                        </small>
-                                                    ) : reg.proximo_cambio_kilometraje ? (
-                                                        <small className="text-muted">
-                                                            Meta: {reg.proximo_cambio_kilometraje.toLocaleString()} km
-                                                        </small>
-                                                    ) : '-'}
-                                                </td>
-                                                <td>
-                                                    {status ? (
-                                                        <Badge bg={status.bg} className="d-flex align-items-center gap-1 w-auto justify-content-center p-2">
-                                                            {status.icon} {status.text}
-                                                        </Badge>
-                                                    ) : '-'}
-                                                </td>
-                                                <td>
-                                                    {reg.evidencias && reg.evidencias.length > 0 ? (
-                                                        <div className="d-flex gap-1">
-                                                            {reg.evidencias.map((url, i) => (
-                                                                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                                                                    <ReceiptIcon />
-                                                                </a>
-                                                            ))}
-                                                        </div>
-                                                    ) : '-'}
-                                                </td>
-                                                <td>
-                                                    <Button variant="outline-danger" size="sm" onClick={() => handleDelete(reg.id)}>
-                                                        <Trash2 size={14} />
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                    {registros.length === 0 && (
-                                        <tr>
-                                            <td colSpan="9" className="text-center text-muted py-4">
-                                                No hay registros en la hoja de vida de este vehículo.
+                                                ) : '-'}
+                                            </td>
+                                            <td>
+                                                {reg.evidencias && reg.evidencias.length > 0 ? (
+                                                    <div className="d-flex gap-1">
+                                                        {reg.evidencias.map((url, i) => (
+                                                            <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                                                                <ReceiptIcon />
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                ) : '-'}
+                                            </td>
+                                            <td>
+                                                <Button variant="outline-danger" size="sm" onClick={() => handleDelete(reg.id)}>
+                                                    <Trash2 size={14} />
+                                                </Button>
                                             </td>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </Table>
+                                    );
+                                })}
+                                {registros.length === 0 && (
+                                    <tr>
+                                        <td colSpan="9" className="text-center text-muted py-4">
+                                            No hay registros en la hoja de vida de este vehículo.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </Table>
+                    </div>
+                </Tab>
+
+                <Tab eventKey="nuevo" title="Registrar Nuevo Evento">
+                    <Form onSubmit={handleSubmit} className="p-4 border rounded bg-white shadow-sm">
+                        <h5 className="mb-3 text-primary border-bottom pb-2">Nuevo Registro de Mantenimiento</h5>
+
+                        <div className="row">
+                            <div className="col-md-4 mb-3">
+                                <Form.Label>Tipo de Evento</Form.Label>
+                                <Form.Select name="tipo_evento" value={formData.tipo_evento} onChange={handleInputChange} required>
+                                    <option>Mantenimiento Preventivo</option>
+                                    <option>Cambio de Aceite</option>
+                                    <option>Cambio de Llantas</option>
+                                    <option>Renovación SOAT</option>
+                                    <option>Renovación Tecnomecánica</option>
+                                    <option>Mantenimiento Correctivo</option>
+                                    <option>Documentación / Legal</option>
+                                    <option>Mejora / Accesorio</option>
+                                    <option>Siniestro / Accidente</option>
+                                    <option>Otro</option>
+                                </Form.Select>
+                            </div>
+                            <div className="col-md-4 mb-3">
+                                <Form.Label>Fecha del Evento</Form.Label>
+                                <Form.Control type="date" name="fecha_evento" value={formData.fecha_evento} onChange={handleInputChange} required />
+                            </div>
+                            <div className="col-md-4 mb-3">
+                                <Form.Label>Kilometraje al momento (Km)</Form.Label>
+                                <Form.Control type="number" name="kilometraje_evento" value={formData.kilometraje_evento} onChange={handleInputChange} placeholder="Ej: 50000" required />
+                            </div>
                         </div>
-                    </Tab>
 
-                    <Tab eventKey="nuevo" title="Registrar Nuevo Evento">
-                        <Form onSubmit={handleSubmit} className="p-4 border rounded bg-white shadow-sm">
-                            <h5 className="mb-3 text-primary border-bottom pb-2">Nuevo Registro de Mantenimiento</h5>
-
-                            <div className="row">
-                                <div className="col-md-4 mb-3">
-                                    <Form.Label>Tipo de Evento</Form.Label>
-                                    <Form.Select name="tipo_evento" value={formData.tipo_evento} onChange={handleInputChange} required>
-                                        <option>Mantenimiento Preventivo</option>
-                                        <option>Cambio de Aceite</option>
-                                        <option>Cambio de Llantas</option>
-                                        <option>Renovación SOAT</option>
-                                        <option>Renovación Tecnomecánica</option>
-                                        <option>Mantenimiento Correctivo</option>
-                                        <option>Documentación / Legal</option>
-                                        <option>Mejora / Accesorio</option>
-                                        <option>Siniestro / Accidente</option>
-                                        <option>Otro</option>
-                                    </Form.Select>
+                        {/* Alerta Proactiva (Kilometraje o Fecha) */}
+                        <div className="alert alert-light border-primary border-start border-4 mb-3">
+                            <div className="d-flex align-items-center gap-2 mb-2">
+                                <TrendingUp size={20} className="text-primary" />
+                                <strong>Programación de Próximo Cambio</strong>
+                                {formData.tipo_evento === 'Cambio de Aceite' && <Badge bg="danger" className="ms-2">Obligatorio</Badge>}
+                            </div>
+                            <div className="row align-items-center">
+                                <div className="col-md-6">
+                                    <small className="text-muted d-block mb-1">
+                                        {formData.tipo_evento.includes('SOAT') || formData.tipo_evento.includes('Tecno') || formData.tipo_evento.includes('Legal')
+                                            ? "Para documentos, define la fecha de vencimiento."
+                                            : "Para mantenimientos mecánicos, define el kilometraje meta."}
+                                    </small>
                                 </div>
-                                <div className="col-md-4 mb-3">
-                                    <Form.Label>Fecha del Evento</Form.Label>
-                                    <Form.Control type="date" name="fecha_evento" value={formData.fecha_evento} onChange={handleInputChange} required />
-                                </div>
-                                <div className="col-md-4 mb-3">
-                                    <Form.Label>Kilometraje al momento (Km)</Form.Label>
-                                    <Form.Control type="number" name="kilometraje_evento" value={formData.kilometraje_evento} onChange={handleInputChange} placeholder="Ej: 50000" required />
+                                <div className="col-md-6">
+                                    {formData.tipo_evento.includes('SOAT') || formData.tipo_evento.includes('Tecno') || formData.tipo_evento.includes('Legal') ? (
+                                        <Form.Control
+                                            type="date"
+                                            name="proximo_vencimiento_fecha"
+                                            value={formData.proximo_vencimiento_fecha || ''}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    ) : (
+                                        <Form.Control
+                                            type="number"
+                                            name="proximo_cambio_kilometraje"
+                                            value={formData.proximo_cambio_kilometraje || ''}
+                                            onChange={handleInputChange}
+                                            placeholder="Ej: Si cambia a los 50.000, prox cambio 55.000"
+                                            required={formData.tipo_evento === 'Cambio de Aceite'}
+                                        />
+                                    )}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Alerta Proactiva (Kilometraje o Fecha) */}
-                            <div className="alert alert-light border-primary border-start border-4 mb-3">
-                                <div className="d-flex align-items-center gap-2 mb-2">
-                                    <TrendingUp size={20} className="text-primary" />
-                                    <strong>Programación de Próximo Cambio</strong>
-                                    {formData.tipo_evento === 'Cambio de Aceite' && <Badge bg="danger" className="ms-2">Obligatorio</Badge>}
-                                </div>
-                                <div className="row align-items-center">
-                                    <div className="col-md-6">
-                                        <small className="text-muted d-block mb-1">
-                                            {formData.tipo_evento.includes('SOAT') || formData.tipo_evento.includes('Tecno') || formData.tipo_evento.includes('Legal')
-                                                ? "Para documentos, define la fecha de vencimiento."
-                                                : "Para mantenimientos mecánicos, define el kilometraje meta."}
-                                        </small>
-                                    </div>
-                                    <div className="col-md-6">
-                                        {formData.tipo_evento.includes('SOAT') || formData.tipo_evento.includes('Tecno') || formData.tipo_evento.includes('Legal') ? (
-                                            <Form.Control
-                                                type="date"
-                                                name="proximo_vencimiento_fecha"
-                                                value={formData.proximo_vencimiento_fecha || ''}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        ) : (
-                                            <Form.Control
-                                                type="number"
-                                                name="proximo_cambio_kilometraje"
-                                                value={formData.proximo_cambio_kilometraje || ''}
-                                                onChange={handleInputChange}
-                                                placeholder="Ej: Si cambia a los 50.000, prox cambio 55.000"
-                                                required={formData.tipo_evento === 'Cambio de Aceite'}
-                                            />
-                                        )}
-                                    </div>
-                                </div>
+                        <div className="row">
+                            <div className="col-md-6 mb-3">
+                                <Form.Label>Proveedor / Taller</Form.Label>
+                                <Form.Control type="text" name="proveedor" value={formData.proveedor} onChange={handleInputChange} placeholder="Ej: Serviteca Los Héroes" required />
                             </div>
+                            <div className="col-md-3 mb-3">
+                                <Form.Label>Costo Total ($)</Form.Label>
+                                <Form.Control type="number" name="costo_total" value={formData.costo_total} onChange={handleInputChange} placeholder="0" required />
+                            </div>
+                            <div className="col-md-3 mb-3">
+                                <Form.Label>Responsable / Autoriza</Form.Label>
+                                <Form.Control type="text" name="responsable" value={formData.responsable} onChange={handleInputChange} placeholder="Nombre..." />
+                            </div>
+                        </div>
 
-                            <div className="row">
-                                <div className="col-md-6 mb-3">
-                                    <Form.Label>Proveedor / Taller</Form.Label>
-                                    <Form.Control type="text" name="proveedor" value={formData.proveedor} onChange={handleInputChange} placeholder="Ej: Serviteca Los Héroes" required />
-                                </div>
-                                <div className="col-md-3 mb-3">
-                                    <Form.Label>Costo Total ($)</Form.Label>
-                                    <Form.Control type="number" name="costo_total" value={formData.costo_total} onChange={handleInputChange} placeholder="0" required />
-                                </div>
-                                <div className="col-md-3 mb-3">
-                                    <Form.Label>Responsable / Autoriza</Form.Label>
-                                    <Form.Control type="text" name="responsable" value={formData.responsable} onChange={handleInputChange} placeholder="Nombre..." />
-                                </div>
-                            </div>
+                        <div className="mb-3">
+                            <Form.Label>Descripción del Trabajo</Form.Label>
+                            <Form.Control as="textarea" rows={3} name="descripcion" value={formData.descripcion} onChange={handleInputChange} placeholder="Detalles de lo que se hizo (Cambio de aceite, filtros, frenos...)" required />
+                        </div>
 
-                            <div className="mb-3">
-                                <Form.Label>Descripción del Trabajo</Form.Label>
-                                <Form.Control as="textarea" rows={3} name="descripcion" value={formData.descripcion} onChange={handleInputChange} placeholder="Detalles de lo que se hizo (Cambio de aceite, filtros, frenos...)" required />
+                        <div className="mb-4">
+                            <Form.Label>Adjuntar Evidencias (Facturas, Fotos)</Form.Label>
+                            <div className="d-flex gap-2 align-items-center">
+                                <Form.Control type="file" onChange={handleFileUpload} disabled={uploading} />
+                                {uploading && <small className="text-muted">Subiendo...</small>}
                             </div>
+                            <div className="mt-2 d-flex gap-2">
+                                {formData.evidencias.map((url, i) => (
+                                    <Badge key={i} bg="secondary" className="d-flex align-items-center gap-1">
+                                        Adjunto {i + 1} <CheckCircle size={10} />
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
 
-                            <div className="mb-4">
-                                <Form.Label>Adjuntar Evidencias (Facturas, Fotos)</Form.Label>
-                                <div className="d-flex gap-2 align-items-center">
-                                    <Form.Control type="file" onChange={handleFileUpload} disabled={uploading} />
-                                    {uploading && <small className="text-muted">Subiendo...</small>}
-                                </div>
-                                <div className="mt-2 d-flex gap-2">
-                                    {formData.evidencias.map((url, i) => (
-                                        <Badge key={i} bg="secondary" className="d-flex align-items-center gap-1">
-                                            Adjunto {i + 1} <CheckCircle size={10} />
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="text-end">
-                                <Button variant="secondary" onClick={() => setActiveTab('historial')} className="me-2">Cancelar</Button>
-                                <Button variant="primary" type="submit" disabled={loading || uploading}>
-                                    {loading ? 'Guardando...' : 'Guardar Registro'}
-                                </Button>
-                            </div>
-                        </Form>
-                    </Tab>
-                </Tabs>
-            </Modal.Body>
-        </Modal>
+                        <div className="text-end">
+                            <Button variant="secondary" onClick={() => setActiveTab('historial')} className="me-2">Cancelar</Button>
+                            <Button variant="primary" type="submit" disabled={loading || uploading}>
+                                {loading ? 'Guardando...' : 'Guardar Registro'}
+                            </Button>
+                        </div>
+                    </Form>
+                </Tab>
+            </Tabs>
+        </div>
     );
 };
 

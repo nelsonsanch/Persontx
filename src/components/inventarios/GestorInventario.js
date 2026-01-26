@@ -95,9 +95,8 @@ const GestorInventario = ({ config }) => {
     const [uploading, setUploading] = useState(false); // Estado de carga de imagen
     const [dynamicOptions, setDynamicOptions] = useState({}); // Opciones cargadas dinÃ¡micamente
 
-    // Estado Hoja de Vida
-    const [selectedVehicleForMantenimiento, setSelectedVehicleForMantenimiento] = useState(null);
-    const [showMantenimientoModal, setShowMantenimientoModal] = useState(false);
+    // Estado Hoja de Vida (Accordion)
+    const [expandedVehicleId, setExpandedVehicleId] = useState(null);
 
     // Cargar opciones dinÃ¡micas (Firestore Select)
     useEffect(() => {
@@ -1207,7 +1206,7 @@ const GestorInventario = ({ config }) => {
                 <p>Cargando inventario...</p>
             ) : filteredItems.length === 0 ? (
                 <Alert variant="info">
-                    {items.length === 0 ? "No hay elementos registrados en este inventario." : "No se encontraron resultados para tu bÃºsqueda."}
+                    {items.length === 0 ? "No hay elementos registrados en este inventario." : "No se encontraron resultados para tu búsqueda."}
                 </Alert>
             ) : (
                 <div className="table-responsive shadow-sm rounded">
@@ -1222,66 +1221,70 @@ const GestorInventario = ({ config }) => {
                         </thead>
                         <tbody>
                             {filteredItems.map((item) => (
-                                <tr key={item.id}>
-                                    {fieldsToRender.map((field, idx) => (
-                                        <td key={idx} className="text-center">
-                                            {renderCell(item, field)}
+                                <React.Fragment key={item.id}>
+                                    <tr className={expandedVehicleId === item.id ? "table-active border-bottom-0" : ""}>
+                                        {fieldsToRender.map((field, idx) => (
+                                            <td key={idx} className="text-center">
+                                                {renderCell(item, field)}
+                                            </td>
+                                        ))}
+                                        <td className="text-center">
+                                            <Button
+                                                variant="outline-info"
+                                                size="sm"
+                                                className="me-2"
+                                                title="Ver Detalle"
+                                                onClick={() => openViewModal(item)}
+                                            >
+                                                <Eye size={16} />
+                                            </Button>
+                                            <Button
+                                                variant="outline-primary"
+                                                size="sm"
+                                                className="me-2"
+                                                onClick={() => openModal(item)}
+                                            >
+                                                <Edit size={16} />
+                                            </Button>
+                                            <Button
+                                                variant={expandedVehicleId === item.id ? "secondary" : "outline-secondary"}
+                                                size="sm"
+                                                className="me-2"
+                                                title="Hoja de Vida (Mantenimientos)"
+                                                onClick={() => setExpandedVehicleId(expandedVehicleId === item.id ? null : item.id)}
+                                                hidden={config.filtroCategoria !== 'vehiculos'}
+                                            >
+                                                <Wrench size={16} />
+                                            </Button>
+                                            <Button
+                                                variant="outline-danger"
+                                                size="sm"
+                                                onClick={() => handleDelete(item.id)}
+                                            >
+                                                <Trash2 size={16} />
+                                            </Button>
                                         </td>
-                                    ))}
-                                    <td className="text-center">
-                                        <Button
-                                            variant="outline-info"
-                                            size="sm"
-                                            className="me-2"
-                                            title="Ver Detalle"
-                                            onClick={() => openViewModal(item)}
-                                        >
-                                            <Eye size={16} />
-                                        </Button>
-                                        <Button
-                                            variant="outline-primary"
-                                            size="sm"
-                                            className="me-2"
-                                            onClick={() => openModal(item)}
-                                        >
-                                            <Edit size={16} />
-                                        </Button>
-                                        <Button
-                                            variant="outline-secondary"
-                                            size="sm"
-                                            className="me-2"
-                                            title="Hoja de Vida (Mantenimientos)"
-                                            onClick={() => {
-                                                setSelectedVehicleForMantenimiento(item);
-                                                setShowMantenimientoModal(true);
-                                            }}
-                                            hidden={config.filtroCategoria !== 'vehiculos'}
-                                        >
-                                            <Wrench size={16} />
-                                        </Button>
-                                        <Button
-                                            variant="outline-danger"
-                                            size="sm"
-                                            onClick={() => handleDelete(item.id)}
-                                        >
-                                            <Trash2 size={16} />
-                                        </Button>
-                                    </td>
-                                </tr>
+                                    </tr>
+                                    {expandedVehicleId === item.id && (
+                                        <tr>
+                                            <td colSpan={fieldsToRender.length + 1} className="p-0 border-top-0 bg-light">
+                                                <div className="p-3">
+                                                    <MantenimientoVehiculo
+                                                        vehiculo={item}
+                                                        onHide={() => setExpandedVehicleId(null)}
+                                                    />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
                             ))}
                         </tbody>
                     </Table>
                 </div>
             )}
 
-            {/* Modal de Mantenimiento (Hoja de Vida) */}
-            {selectedVehicleForMantenimiento && (
-                <MantenimientoVehiculo
-                    show={showMantenimientoModal}
-                    onHide={() => setShowMantenimientoModal(false)}
-                    vehiculo={selectedVehicleForMantenimiento}
-                />
-            )}
+            {/* Modal de Creación/Edición */}
 
             {/* Modal de CreaciÃ³n/EdiciÃ³n */}
             <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
