@@ -68,39 +68,50 @@ service cloud.firestore {
       allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
       allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
     }
-    // --- NUEVAS REGLAS PARA MÓDULO DE RECARGOS (ESTO ES LO QUE FALTABA) ---
+    // --- NUEVAS REGLAS PARA MÓDULO DE RECARGOS ---
     match /parametros_recargos/{document} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null; // Se puede refinar si es necesario
     }
     match /recargos_laborales/{document} {
-      allow read, write: if request.auth != null;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     match /inventarios/{document=**} {
-      allow read, write: if request.auth != null;
+      // Permitir lectura si está autorizado
+      allow read: if request.auth != null && (
+        isAuthorized(resource.data.clienteId) || 
+        resource.data.clienteId == request.auth.uid // Fallback directo
+      );
+      // Escritura restringida
+      allow create, update, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     match /catalogo_global_activos/{document=**} {
-      allow read, write: if request.auth != null;
+       allow read, write: if request.auth != null; // Catálogo global puede ser abierto
     }
     // Permitir gestión de plantillas
     match /plantillas_documentos/{document=**} {
-      allow read, write: if request.auth != null;
+       allow read, write: if request.auth != null;
     }
     // Permitir guardar los documentos generados
     match /repositorio_documentos/{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     // Regla ESPECÍFICA para Inspecciones SST
-    // Asegura que solo usuarios autenticados puedan guardar inspecciones
     match /inspecciones_sst/{document} {
-      allow read, write: if request.auth != null;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     match /mantenimientos_vehiculos/{document} {
-      allow read, write: if request.auth != null;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
 
     // --- NUEVA REGLA PARA INSPECCIONES PREOPERACIONALES ---
     match /inspecciones_preoperacionales/{document} {
-      allow read, write: if request.auth != null;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
   }
 }

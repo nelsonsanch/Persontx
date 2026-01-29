@@ -6,7 +6,7 @@ import { db } from '../../../firebase';
 import { useAuth } from '../../../hooks/useAuth';
 
 const SeleccionActivo = ({ categoria, config, onSelect, onBack }) => {
-    const { user } = useAuth();
+    const { user, dataScopeId } = useAuth();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -19,7 +19,7 @@ const SeleccionActivo = ({ categoria, config, onSelect, onBack }) => {
                 // Consultar Inventario Real
                 const q = query(
                     collection(db, config.coleccion), // 'inventarios'
-                    where('clienteId', '==', user.uid),
+                    where('clienteId', '==', dataScopeId),
                     where('categoria', '==', config.filtroCategoria)
                 );
 

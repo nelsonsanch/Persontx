@@ -3,6 +3,7 @@ import { Card, Nav, Button, Row, Col, Form, Badge, Table, Alert } from 'react-bo
 import { db } from '../../firebase';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, orderBy } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
+import { usePermissions } from '../../hooks/usePermissions';
 import { ClipboardCheck, CheckCircle, XCircle, AlertTriangle, Truck } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -14,7 +15,8 @@ import IndicadoresPreoperacionales from './IndicadoresPreoperacionales';
 import { Eye, BarChart2 } from 'lucide-react';
 
 const InspeccionesPreoperacionalesMain = () => {
-    const { user } = useAuth();
+    const { user, dataScopeId, userRole } = useAuth();
+    const { can } = usePermissions();
     const [activeTab, setActiveTab] = useState('nueva');
     const [vehiculos, setVehiculos] = useState([]);
     const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -33,7 +35,7 @@ const InspeccionesPreoperacionalesMain = () => {
         const q = query(
             collection(db, 'inventarios'),
             where('categoria', '==', 'vehiculos'),
-            where('clienteId', '==', user.uid)
+            where('clienteId', '==', dataScopeId)
         );
         const unsubscribe = onSnapshot(q, (snapshot) => {
             setVehiculos(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -56,6 +58,7 @@ const InspeccionesPreoperacionalesMain = () => {
             // Sorting client-side is safe for this volume of data.
             const q = query(
                 collection(db, 'mantenimientos_vehiculos'),
+                where('clienteId', '==', dataScopeId),
                 where('vehiculo_id', '==', selectedVehicle.id)
             );
 
@@ -183,7 +186,7 @@ const InspeccionesPreoperacionalesMain = () => {
             // 1. Guardar Inspección
             await addDoc(collection(db, 'inspecciones_preoperacionales'), {
                 fecha_registro: new Date().toISOString(),
-                clienteId: user.uid,
+                clienteId: dataScopeId,
                 usuario_id: user.uid,
                 usuario_email: user.email,
                 vehiculo_id: selectedVehicle.id,
@@ -236,15 +239,19 @@ const InspeccionesPreoperacionalesMain = () => {
                         <Nav.Item>
                             <Nav.Link eventKey="nueva" className="fw-bold"> Nueva Inspección</Nav.Link>
                         </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="historial" className="fw-bold">Historial Completo</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="indicadores" className="fw-bold text-success">
-                                <BarChart2 size={16} className="me-1 mb-1" />
-                                Indicadores
-                            </Nav.Link>
-                        </Nav.Item>
+                        {(userRole === 'cliente' || userRole === 'admin') && (
+                            <>
+                                <Nav.Item>
+                                    <Nav.Link eventKey="historial" className="fw-bold">Historial Completo</Nav.Link>
+                                </Nav.Item>
+                                <Nav.Item>
+                                    <Nav.Link eventKey="indicadores" className="fw-bold text-success">
+                                        <BarChart2 size={16} className="me-1 mb-1" />
+                                        Indicadores
+                                    </Nav.Link>
+                                </Nav.Item>
+                            </>
+                        )}
                     </Nav>
                 </Card.Header>
                 <Card.Body className="p-3 p-md-4">
@@ -430,12 +437,12 @@ const InspeccionesPreoperacionalesMain = () => {
                             )}
                         </Form>
                     )}
-                    {activeTab === 'historial' && (
-                        <HistorialPreoperacionales vehiculos={vehiculos} user={user} />
+                    {activeTab === 'historial' && (userRole === 'cliente' || userRole === 'admin') && (
+                        <HistorialPreoperacionales vehiculos={vehiculos} user={{ ...user, uid: dataScopeId }} />
                     )}
 
-                    {activeTab === 'indicadores' && (
-                        <IndicadoresPreoperacionales user={user} />
+                    {activeTab === 'indicadores' && (userRole === 'cliente' || userRole === 'admin') && (
+                        <IndicadoresPreoperacionales user={{ ...user, uid: dataScopeId }} />
                     )}
                 </Card.Body>
             </Card>

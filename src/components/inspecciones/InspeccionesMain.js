@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Card, Nav, Tab } from 'react-bootstrap';
+import { useAuth } from '../../hooks/useAuth'; // Import useAuth
 import InspectorWizard from './InspectorWizard';
 import HistorialInspecciones from './HistorialInspecciones';
 import ProgramacionInspecciones from './ProgramacionInspecciones';
 import DashboardInspecciones from './DashboardInspecciones';
 
 const InspeccionesMain = () => {
-    const [activeTab, setActiveTab] = useState('programadas'); // Default per user context
+    const { userRole } = useAuth();
+    // Default tab based on role: Worker -> 'nueva', Client/Admin -> 'dashboard' or 'programadas' (keeping 'programadas' as requested/original but with role check logic)
+    // Actually original was 'programadas'. Let's default 'dashboard' for client, 'nueva' for worker.
+    const [activeTab, setActiveTab] = useState(userRole === 'trabajador' ? 'nueva' : 'dashboard');
     const [preSelectedAsset, setPreSelectedAsset] = useState(null);
 
     const handleInspect = (asset) => {
@@ -21,31 +25,37 @@ const InspeccionesMain = () => {
             <Card className="shadow-sm border-0">
                 <Card.Header className="bg-white">
                     <Nav variant="tabs" activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
-                        <Nav.Item>
-                            <Nav.Link eventKey="dashboard" className="fw-bold text-primary">
-                                📊 Dashboard
-                            </Nav.Link>
-                        </Nav.Item>
+                        {(userRole === 'cliente' || userRole === 'admin') && (
+                            <Nav.Item>
+                                <Nav.Link eventKey="dashboard" className="fw-bold text-primary">
+                                    📊 Dashboard
+                                </Nav.Link>
+                            </Nav.Item>
+                        )}
                         <Nav.Item>
                             <Nav.Link eventKey="nueva" className="fw-bold">
                                 ➕ Nueva Inspección
                             </Nav.Link>
                         </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="historial" className="fw-bold">
-                                📜 Historial
-                            </Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link eventKey="programadas" className="fw-bold text-info">
-                                📅 Programadas
-                            </Nav.Link>
-                        </Nav.Item>
+                        {(userRole === 'cliente' || userRole === 'admin') && (
+                            <>
+                                <Nav.Item>
+                                    <Nav.Link eventKey="historial" className="fw-bold">
+                                        📜 Historial
+                                    </Nav.Link>
+                                </Nav.Item>
+                                <Nav.Item>
+                                    <Nav.Link eventKey="programadas" className="fw-bold text-info">
+                                        📅 Programadas
+                                    </Nav.Link>
+                                </Nav.Item>
+                            </>
+                        )}
                     </Nav>
                 </Card.Header>
                 <Card.Body>
                     <Tab.Content>
-                        {activeTab === 'dashboard' && (
+                        {(activeTab === 'dashboard' && (userRole === 'cliente' || userRole === 'admin')) && (
                             <div className="p-2">
                                 <DashboardInspecciones />
                             </div>
@@ -55,12 +65,12 @@ const InspeccionesMain = () => {
                                 <InspectorWizard initialAsset={preSelectedAsset} />
                             </div>
                         )}
-                        {activeTab === 'historial' && (
+                        {(activeTab === 'historial' && (userRole === 'cliente' || userRole === 'admin')) && (
                             <div className="p-2">
                                 <HistorialInspecciones />
                             </div>
                         )}
-                        {activeTab === 'programadas' && (
+                        {(activeTab === 'programadas' && (userRole === 'cliente' || userRole === 'admin')) && (
                             <div className="p-2">
                                 <ProgramacionInspecciones onInspect={handleInspect} />
                             </div>

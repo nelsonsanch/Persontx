@@ -25,7 +25,23 @@ import InspeccionesPreoperacionalesMain from '../components/pesv/InspeccionesPre
 const ClienteDashboard = () => {
   const { user, logout } = useAuth();
   const { can } = usePermissions(); // Hook de permisos
-  const [activeTab, setActiveTab] = useState('trabajadores');
+  // Determinar la pestaña inicial basada en permisos
+  const getInitialTab = () => {
+    if (can(PERMISSIONS.MODULES.RRHH) || can(PERMISSIONS.MODULES.BASE_DATOS)) return 'trabajadores';
+    if (can(PERMISSIONS.MODULES.NOVEDADES)) return 'novedades';
+    if (can(PERMISSIONS.MODULES.INDICADORES)) return 'indicadores';
+    if (can(PERMISSIONS.MODULES.EMOS)) return 'emos';
+    if (can(PERMISSIONS.MODULES.PERFILES)) return 'perfiles';
+    if (can(PERMISSIONS.MODULES.ENCUESTAS)) return 'encuestas-salud';
+    if (can(PERMISSIONS.MODULES.INVENTARIOS)) return 'inventarios';
+    if (can(PERMISSIONS.MODULES.INSPECCIONES)) return 'inspecciones';
+    if (can(PERMISSIONS.MODULES.DOCUMENTAL)) return 'documental';
+    if (can(PERMISSIONS.MODULES.PESV)) return 'pesv';
+    if (can(PERMISSIONS.MODULES.PREOPERACIONALES)) return 'preoperacionales';
+    return 'informes'; // Default fallback
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab());
 
   const handleLogout = () => {
     logout();

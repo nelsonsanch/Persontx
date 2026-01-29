@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import DetalleInspeccion from './DetalleInspeccion';
 
 const HistorialInspecciones = () => {
-    const { user } = useAuth();
+    const { user, dataScopeId } = useAuth();
     const [inspecciones, setInspecciones] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filtroCategoria, setFiltroCategoria] = useState('');
@@ -24,7 +24,7 @@ const HistorialInspecciones = () => {
             const ref = collection(db, 'inspecciones_sst');
             const q = query(
                 ref,
-                where('empresaId', '==', user.uid),
+                where('empresaId', '==', dataScopeId),
                 orderBy('fechaInspeccion', 'desc')
             );
 

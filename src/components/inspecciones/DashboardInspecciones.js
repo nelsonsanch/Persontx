@@ -11,7 +11,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Activity, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
 
 const DashboardInspecciones = () => {
-    const { user } = useAuth();
+    const { user, dataScopeId } = useAuth();
     const [inspecciones, setInspecciones] = useState([]);
     const [inventario, setInventario] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -29,7 +29,7 @@ const DashboardInspecciones = () => {
             try {
                 // Fetch History
                 const refHist = collection(db, 'inspecciones_sst');
-                const qHist = query(refHist, where('empresaId', '==', user.uid));
+                const qHist = query(refHist, where('empresaId', '==', dataScopeId));
                 const snapHist = await getDocs(qHist);
                 const dataHist = snapHist.docs.map(doc => ({
                     id: doc.id,
@@ -42,7 +42,7 @@ const DashboardInspecciones = () => {
 
                 // Fetch Inventory for Schedule
                 const refInv = collection(db, 'inventarios');
-                const qInv = query(refInv, where('clienteId', '==', user.uid));
+                const qInv = query(refInv, where('clienteId', '==', dataScopeId));
                 const snapInv = await getDocs(qInv);
                 const dataInv = snapInv.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setInventario(dataInv);

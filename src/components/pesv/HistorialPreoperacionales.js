@@ -172,7 +172,7 @@ const HistorialPreoperacionales = ({ vehiculos, user }) => {
 
             {/* Table Results */}
             <div className="table-responsive bg-white rounded shadow-sm">
-                <Table hovered striped className="align-middle mb-0">
+                <Table hover striped className="align-middle mb-0">
                     <thead className="bg-light">
                         <tr>
                             <th className="py-3 ps-3">Fecha</th>
