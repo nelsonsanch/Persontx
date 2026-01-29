@@ -610,3 +610,133 @@
     at async handle (C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:89:17)
 [error] 
 [error] Error: There was an error deploying functions
+[debug] [2026-01-29T13:15:22.040Z] ----------------------------------------------------------------------
+[debug] [2026-01-29T13:15:22.053Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2026-01-29T13:15:22.054Z] CLI Version:   14.16.0
+[debug] [2026-01-29T13:15:22.054Z] Platform:      win32
+[debug] [2026-01-29T13:15:22.054Z] Node Version:  v24.11.0
+[debug] [2026-01-29T13:15:22.054Z] Time:          Thu Jan 29 2026 08:15:22 GMT-0500 (hora estándar de Colombia)
+[debug] [2026-01-29T13:15:22.054Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-29T13:15:22.868Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-29T13:15:22.869Z] > authorizing via signed-in user (nelson@sanchezcya.com)
+[debug] [2026-01-29T13:15:22.869Z] [iam] checking project gestion-empleados-app for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2026-01-29T13:15:22.872Z] Checked if tokens are valid: false, expires at: 1769690854486
+[debug] [2026-01-29T13:15:22.872Z] Checked if tokens are valid: false, expires at: 1769690854486
+[debug] [2026-01-29T13:15:22.872Z] > refreshing access token with scopes: []
+[debug] [2026-01-29T13:15:22.876Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-29T13:15:22.876Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-29T13:15:23.305Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-29T13:15:23.305Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-29T13:15:23.312Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app:testIamPermissions [none]
+[debug] [2026-01-29T13:15:23.313Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app:testIamPermissions x-goog-quota-user=projects/gestion-empleados-app
+[debug] [2026-01-29T13:15:23.313Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-01-29T13:15:23.907Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app:testIamPermissions 200
+[debug] [2026-01-29T13:15:23.907Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-01-29T13:15:23.908Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:23.908Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:23.908Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/gestion-empleados-app/serviceAccounts/gestion-empleados-app@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-01-29T13:15:23.908Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/gestion-empleados-app/serviceAccounts/gestion-empleados-app@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-01-29T13:15:24.550Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/gestion-empleados-app/serviceAccounts/gestion-empleados-app@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2026-01-29T13:15:24.550Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/gestion-empleados-app/serviceAccounts/gestion-empleados-app@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'gestion-empleados-app'...
+[info] 
+[info] i  deploying functions 
+[debug] [2026-01-29T13:15:24.560Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:24.560Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:24.560Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app [none]
+[debug] [2026-01-29T13:15:24.741Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app 200
+[debug] [2026-01-29T13:15:24.741Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app {"projectNumber":"427525556289","projectId":"gestion-empleados-app","lifecycleState":"ACTIVE","name":"gestion-empleados-app","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-09-10T20:36:22.414826Z","parent":{"type":"organization","id":"668909831230"}}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2026-01-29T13:15:24.753Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:24.753Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:24.754Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/gestion-empleados-app/adminSdkConfig [none]
+[debug] [2026-01-29T13:15:25.314Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/gestion-empleados-app/adminSdkConfig 200
+[debug] [2026-01-29T13:15:25.314Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/gestion-empleados-app/adminSdkConfig {"projectId":"gestion-empleados-app","storageBucket":"gestion-empleados-app.firebasestorage.app"}
+[debug] [2026-01-29T13:15:25.314Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:25.314Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:25.314Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/gestion-empleados-app/configs [none]
+[debug] [2026-01-29T13:15:25.710Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/gestion-empleados-app/configs 200
+[debug] [2026-01-29T13:15:25.710Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/gestion-empleados-app/configs {}
+[debug] [2026-01-29T13:15:25.713Z] Validating nodejs source
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] !  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2026-01-29T13:15:27.980Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^6.0.0"
+  },
+  "private": true
+}
+[debug] [2026-01-29T13:15:27.980Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[info] i  functions: You are using a version of firebase-functions SDK (4.9.0) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2026-01-29T13:15:27.982Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-01-29T13:15:27.994Z] Found firebase-functions binary at 'C:\Users\NELSON\gestion-empleados\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8856
+
+[debug] [2026-01-29T13:15:29.479Z] Got response from /__/functions.yaml {"endpoints":{"validatePreOpInspection":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","eventFilters":{"resource":"projects/gestion-empleados-app/databases/(default)/documents/inspecciones_preoperacionales/{docId}"},"retry":false},"labels":{},"entryPoint":"validatePreOpInspection"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged C:\Users\NELSON\gestion-empleados\functions (40.71 KB) for uploading 
+[debug] [2026-01-29T13:15:33.608Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:33.609Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:33.609Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/gestion-empleados-app/locations/-/functions [none]
+[debug] [2026-01-29T13:15:34.547Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/gestion-empleados-app/locations/-/functions 200
+[debug] [2026-01-29T13:15:34.547Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/gestion-empleados-app/locations/-/functions {"functions":[{"name":"projects/gestion-empleados-app/locations/us-central1/functions/validatePreOpInspection","eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/gestion-empleados-app/databases/(default)/documents/inspecciones_preoperacionales/{docId}","service":"firestore.googleapis.com","failurePolicy":{}},"status":"OFFLINE","entryPoint":"validatePreOpInspection","timeout":"60s","availableMemoryMb":256,"serviceAccountEmail":"gestion-empleados-app@appspot.gserviceaccount.com","updateTime":"2026-01-29T04:41:17.104672132Z","versionId":"2","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"c850558f9136c97f15bf8a80e9a3aab381cdcf6a"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-177609182409.us-central1.cloudfunctions.appspot.com/1ce1289a-e815-4760-96b4-39363e401672.zip","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"gestion-empleados-app\",\"storageBucket\":\"gestion-empleados-app.firebasestorage.app\"}","GCLOUD_PROJECT":"gestion-empleados-app","EVENTARC_CLOUD_EVENT_SOURCE":"projects/gestion-empleados-app/locations/us-central1/functions/validatePreOpInspection"},"runtime":"nodejs22","maxInstances":3000,"ingressSettings":"ALLOW_ALL","buildId":"71436319-aabc-43b8-8e5e-ec4007a118e9","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"buildName":"projects/427525556289/locations/us-central1/builds/71436319-aabc-43b8-8e5e-ec4007a118e9","dockerRegistry":"ARTIFACT_REGISTRY","automaticUpdatePolicy":{},"buildServiceAccount":"projects/gestion-empleados-app/serviceAccounts/427525556289-compute@developer.gserviceaccount.com","satisfiesPzi":true}]}
+[debug] [2026-01-29T13:15:34.548Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:34.548Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:34.548Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/gestion-empleados-app/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2026-01-29T13:15:35.027Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/gestion-empleados-app/locations/-/functions 200
+[debug] [2026-01-29T13:15:35.027Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/gestion-empleados-app/locations/-/functions {}
+[debug] [2026-01-29T13:15:35.031Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:35.031Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:35.031Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app [none]
+[debug] [2026-01-29T13:15:35.753Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app 200
+[debug] [2026-01-29T13:15:35.753Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/gestion-empleados-app {"projectNumber":"427525556289","projectId":"gestion-empleados-app","lifecycleState":"ACTIVE","name":"gestion-empleados-app","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-09-10T20:36:22.414826Z","parent":{"type":"organization","id":"668909831230"}}
+[info] i  functions: updating Node.js 22 (1st Gen) function validatePreOpInspection(us-central1)... 
+[debug] [2026-01-29T13:15:35.758Z] Precondition failed. Cannot update a GCF function without sourceUrl
+[debug] [2026-01-29T13:15:35.759Z] Total Function Deployment time: 1
+[debug] [2026-01-29T13:15:35.759Z] 1 Functions Deployed
+[debug] [2026-01-29T13:15:35.759Z] 1 Functions Errored
+[debug] [2026-01-29T13:15:35.759Z] 0 Function Deployments Aborted
+[debug] [2026-01-29T13:15:35.759Z] Average Function Deployment time: 0
+[info] 
+[info] Functions deploy had errors with the following functions:
+	validatePreOpInspection(us-central1)
+[debug] [2026-01-29T13:15:35.761Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:35.761Z] Checked if tokens are valid: true, expires at: 1769696122306
+[debug] [2026-01-29T13:15:35.762Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/gestion-empleados-app/locations/us-central1/repositories/gcf-artifacts [none]
+[debug] [2026-01-29T13:15:36.333Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/gestion-empleados-app/locations/us-central1/repositories/gcf-artifacts 200
+[debug] [2026-01-29T13:15:36.333Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/gestion-empleados-app/locations/us-central1/repositories/gcf-artifacts {"name":"projects/gestion-empleados-app/locations/us-central1/repositories/gcf-artifacts","format":"DOCKER","description":"This repository is created and used by Cloud Functions for storing function docker images.","labels":{"goog-managed-by":"cloudfunctions"},"createTime":"2026-01-29T04:40:48.427550Z","updateTime":"2026-01-29T04:43:36.528535Z","mode":"STANDARD_REPOSITORY","cleanupPolicies":{"firebase-functions-cleanup":{"id":"firebase-functions-cleanup","action":"DELETE","condition":{"tagState":"ANY","olderThan":"86400s"}}},"vulnerabilityScanningConfig":{"lastEnableTime":"2026-01-29T04:40:40.000476857Z","enablementState":"SCANNING_DISABLED","enablementStateReason":"API containerscanning.googleapis.com is not enabled."},"satisfiesPzi":true,"registryUri":"us-central1-docker.pkg.dev/gestion-empleados-app/gcf-artifacts"}
+[debug] [2026-01-29T13:15:36.333Z] Functions deploy failed.
+[debug] [2026-01-29T13:15:36.333Z] {}
+[debug] [2026-01-29T13:15:36.334Z] Error: Precondition failed
+    at Fabricator.updateV1Function (C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:361:19)
+    at Fabricator.updateEndpoint (C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:157:24)
+    at C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:71
+    at handle (C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:89:23)
+    at Fabricator.applyChangeset (C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:26)
+    at C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:69:40
+    at Array.map (<anonymous>)
+    at Fabricator.applyPlan (C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:68:54)
+    at release (C:\Users\NELSON\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\index.js:76:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[error] 
+[error] Error: There was an error deploying functions
