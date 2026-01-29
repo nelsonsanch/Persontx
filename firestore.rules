@@ -2,6 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // REGLA PARA USUARIOS
+    // FUNCIÓN HELPER para verificar acceso (Cliente dueño O Trabajador autorizado)
+    function isAuthorized(clienteId) {
+      let isOwner = request.auth.uid == clienteId;
+      let isWorker = get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.clienteId == clienteId;
+      return isOwner || isWorker;
+    }
+
     // REGLA PARA USUARIOS
     match /usuarios/{userId} {
       // Permitir leer/escribir si es el propio usuario
@@ -25,31 +32,30 @@ service cloud.firestore {
     }
     // REGLA PARA PERFILES DE CARGO
     match /perfiles_cargo/{perfilId} {
-      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
-      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     // REGLA PARA TRABAJADORES
     match /trabajadores/{trabajadorId} {
-      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
-      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
-      allow read: if true;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
+      // Removed generic allow read: if true; as it is insecure
     }
     // REGLA PARA NOVEDADES
     match /novedades/{novedadId} {
-      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
-      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     
     // REGLA PARA EMOS
     match /emos/{emoId} {
-      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
-      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     // REGLA PARA ENCUESTAS DE SALUD
     match /encuestas_salud/{encuestaId} {
-      allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
-      allow create, update: if request.auth != null && request.resource.data.clienteId == request.auth.uid;
-      allow read: if true;
+      allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     // REGLA PARA RESPUESTAS DE ENCUESTAS
     match /respuestas_encuestas/{respuestaId} {

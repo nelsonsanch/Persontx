@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
+import { useAuth } from '../../hooks/useAuth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import {
   Chart as ChartJS,
@@ -30,6 +31,7 @@ ChartJS.register(
 );
 
 const IndicadoresDashboard = () => {
+  const { dataScopeId } = useAuth();
   const [novedades, setNovedades] = useState([]);
   const [trabajadores, setTrabajadores] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +59,7 @@ const IndicadoresDashboard = () => {
       // Cargar novedades
       const novedadesQuery = query(
         collection(db, 'novedades'),
-        where('clienteId', '==', user.uid)
+        where('clienteId', '==', dataScopeId)
       );
       const novedadesSnapshot = await getDocs(novedadesQuery);
       const novedadesData = [];
@@ -68,7 +70,7 @@ const IndicadoresDashboard = () => {
       // Cargar trabajadores
       const trabajadoresQuery = query(
         collection(db, 'trabajadores'),
-        where('clienteId', '==', user.uid)
+        where('clienteId', '==', dataScopeId)
       );
       const trabajadoresSnapshot = await getDocs(trabajadoresQuery);
       const trabajadoresData = [];
@@ -121,33 +123,33 @@ const IndicadoresDashboard = () => {
   // FUNCIÓN: Calcular "No Recuperable" por responsable de pago
   const calcularNoRecuperable = (responsable) => {
     let total = 0;
-    
+
     novedadesFiltradas.forEach(novedad => {
       // Filtrar por responsable
       let esDelResponsable = false;
       if (responsable === 'EPS' && novedad.responsablePago === 'EPS') esDelResponsable = true;
       if (responsable === 'ARL' && novedad.responsablePago === 'ARL') esDelResponsable = true;
       if (responsable === 'Otros' && !['EPS', 'ARL'].includes(novedad.responsablePago)) esDelResponsable = true;
-      
+
       if (!esDelResponsable) return;
-      
+
       const valorPagado = parseFloat(novedad.valorPagado) || 0;
       const valorPendiente = parseFloat(novedad.valorPendiente) || 0;
       const estado = novedad.estado || '';
-      
+
       // Condiciones para "No Recuperable"
       const tienePagado = valorPagado > 0;
       const tienePendiente = valorPendiente > 0;
-      const estadoPagado = estado.toLowerCase().includes('pagada') || 
-                          estado.toLowerCase().includes('pagado') ||
-                          estado === 'Radicada pagada' ||
-                          estado === 'radicada_pagada';
-      
+      const estadoPagado = estado.toLowerCase().includes('pagada') ||
+        estado.toLowerCase().includes('pagado') ||
+        estado === 'Radicada pagada' ||
+        estado === 'radicada_pagada';
+
       if (tienePagado && tienePendiente && estadoPagado) {
         total += valorPendiente;
       }
     });
-    
+
     return total;
   };
 
@@ -161,7 +163,7 @@ const IndicadoresDashboard = () => {
         return false;
       })
       .reduce((sum, n) => sum + (n.valorPendiente || 0), 0);
-    
+
     const noRecuperable = calcularNoRecuperable(responsable);
     return pendienteTotal - noRecuperable;
   };
@@ -176,7 +178,7 @@ const IndicadoresDashboard = () => {
         return false;
       })
       .reduce((sum, n) => sum + (n.valorTotal || 0), 0);
-    
+
     const valorPagado = novedadesFiltradas
       .filter(n => {
         if (responsable === 'EPS') return n.responsablePago === 'EPS';
@@ -185,7 +187,7 @@ const IndicadoresDashboard = () => {
         return false;
       })
       .reduce((sum, n) => sum + (n.valorPagado || 0), 0);
-    
+
     if (valorTotal === 0) return 0;
     return ((valorPagado / valorTotal) * 100).toFixed(1);
   };
@@ -199,9 +201,9 @@ const IndicadoresDashboard = () => {
         return false;
       })
       .reduce((sum, n) => sum + (n.valorTotal || 0), 0);
-    
+
     const pendienteReal = calcularPendienteReal(responsable);
-    
+
     if (valorTotal === 0) return 0;
     return ((pendienteReal / valorTotal) * 100).toFixed(1);
   };
@@ -215,9 +217,9 @@ const IndicadoresDashboard = () => {
         return false;
       })
       .reduce((sum, n) => sum + (n.valorTotal || 0), 0);
-    
+
     const noRecuperable = calcularNoRecuperable(responsable);
-    
+
     if (valorTotal === 0) return 0;
     return ((noRecuperable / valorTotal) * 100).toFixed(1);
   };
@@ -272,16 +274,16 @@ const IndicadoresDashboard = () => {
           font: {
             size: 10
           },
-          generateLabels: function(chart) {
+          generateLabels: function (chart) {
             const data = chart.data;
             if (data.labels.length && data.datasets.length) {
               const dataset = data.datasets[0];
               const total = dataset.data.reduce((sum, value) => sum + value, 0);
-              
+
               return data.labels.map((label, i) => {
                 const value = dataset.data[i];
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                
+
                 return {
                   text: `${label}: ${percentage}%`,
                   fillStyle: dataset.backgroundColor[i],
@@ -298,7 +300,7 @@ const IndicadoresDashboard = () => {
       },
       tooltip: {
         callbacks: {
-          label: function(context) {
+          label: function (context) {
             const label = context.label || '';
             const value = context.parsed;
             const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
@@ -315,15 +317,15 @@ const IndicadoresDashboard = () => {
   const totalNovedades = novedadesFiltradas.length;
   const totalDias = novedadesFiltradas.reduce((sum, novedad) => sum + (novedad.dias || 0), 0);
   const valorTotal = novedadesFiltradas.reduce((sum, novedad) => sum + (novedad.valorTotal || 0), 0);
-  
+
   // CORREGIDO: Solo contar trabajadores activos
   const totalTrabajadoresActivos = trabajadores.filter(t => t.estado === 'activo').length;
-  
-  const pendientes = novedadesFiltradas.filter(n => 
-    n.estado === 'pendiente_por_radicar_sin_informacion' || 
+
+  const pendientes = novedadesFiltradas.filter(n =>
+    n.estado === 'pendiente_por_radicar_sin_informacion' ||
     n.estado === 'pendiente_por_gestionar'
   ).length;
-  
+
   // CORREGIDO: Usar trabajadores activos para calcular tasa de ausentismo
   const tasaAusentismo = totalTrabajadoresActivos > 0 ? ((totalDias / (totalTrabajadoresActivos * 30)) * 100) : 0;
 
@@ -478,7 +480,7 @@ const IndicadoresDashboard = () => {
       },
       tooltip: {
         callbacks: {
-          afterBody: function(context) {
+          afterBody: function (context) {
             const dataIndex = context[0].dataIndex;
             const topTrabajadores = Object.entries(novedadesFiltradas.reduce((acc, novedad) => {
               const key = novedad.empleadoNombre || 'Sin nombre';
@@ -495,8 +497,8 @@ const IndicadoresDashboard = () => {
               acc[key].valorTotal += novedad.valorTotal || 0;
               return acc;
             }, {}))
-            .sort(([,a], [,b]) => b.novedades - a.novedades)
-            .slice(0, 10);
+              .sort(([, a], [, b]) => b.novedades - a.novedades)
+              .slice(0, 10);
 
             const trabajador = topTrabajadores[dataIndex];
             if (trabajador) {
@@ -615,7 +617,7 @@ const IndicadoresDashboard = () => {
       datasets: [{
         data: Object.values(tiposCount),
         backgroundColor: [
-          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
           '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
         ]
       }]
@@ -635,7 +637,7 @@ const IndicadoresDashboard = () => {
         label: 'Días de Ausentismo',
         data: Object.values(tiposDias),
         backgroundColor: [
-          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
           '#9966FF', '#FF9F40'
         ]
       }]
@@ -688,14 +690,14 @@ const IndicadoresDashboard = () => {
     });
 
     const diagnosticosOrdenados = Object.entries(diagnosticos)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 10);
 
     return {
       labels: diagnosticosOrdenados.map(([diag]) => diag),
       datasets: [{
         label: 'Frecuencia de Diagnósticos',
-        data: diagnosticosOrdenados.map(([,count]) => count),
+        data: diagnosticosOrdenados.map(([, count]) => count),
         backgroundColor: '#36A2EB'
       }]
     };
@@ -734,7 +736,7 @@ const IndicadoresDashboard = () => {
       datasets: [{
         data: Object.values(segmentos),
         backgroundColor: [
-          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
           '#9966FF', '#FF9F40'
         ]
       }]
@@ -779,7 +781,7 @@ const IndicadoresDashboard = () => {
     }, {});
 
     const topTrabajadores = Object.entries(trabajadoresStats)
-      .sort(([,a], [,b]) => b.novedades - a.novedades)
+      .sort(([, a], [, b]) => b.novedades - a.novedades)
       .slice(0, 10);
 
     const nombres = topTrabajadores.map(([nombre]) => {
@@ -792,13 +794,13 @@ const IndicadoresDashboard = () => {
       datasets: [
         {
           label: 'Cantidad de Novedades',
-          data: topTrabajadores.map(([,stats]) => stats.novedades),
+          data: topTrabajadores.map(([, stats]) => stats.novedades),
           backgroundColor: '#FF6384',
           yAxisID: 'y'
         },
         {
           label: 'Total Días de Ausentismo',
-          data: topTrabajadores.map(([,stats]) => stats.dias),
+          data: topTrabajadores.map(([, stats]) => stats.dias),
           backgroundColor: '#36A2EB',
           yAxisID: 'y1'
         }
@@ -834,7 +836,7 @@ const IndicadoresDashboard = () => {
               <select
                 className="form-select"
                 value={filtros.año}
-                onChange={(e) => setFiltros({...filtros, año: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, año: e.target.value })}
               >
                 {[2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030].map(año => (
                   <option key={año} value={año}>{año}</option>
@@ -846,14 +848,14 @@ const IndicadoresDashboard = () => {
               <select
                 className="form-select"
                 value={filtros.mes}
-                onChange={(e) => setFiltros({...filtros, mes: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, mes: e.target.value })}
               >
                 <option value="">Todos los meses</option>
                 {[
-                  {value: 1, label: 'Enero'}, {value: 2, label: 'Febrero'}, {value: 3, label: 'Marzo'},
-                  {value: 4, label: 'Abril'}, {value: 5, label: 'Mayo'}, {value: 6, label: 'Junio'},
-                  {value: 7, label: 'Julio'}, {value: 8, label: 'Agosto'}, {value: 9, label: 'Septiembre'},
-                  {value: 10, label: 'Octubre'}, {value: 11, label: 'Noviembre'}, {value: 12, label: 'Diciembre'}
+                  { value: 1, label: 'Enero' }, { value: 2, label: 'Febrero' }, { value: 3, label: 'Marzo' },
+                  { value: 4, label: 'Abril' }, { value: 5, label: 'Mayo' }, { value: 6, label: 'Junio' },
+                  { value: 7, label: 'Julio' }, { value: 8, label: 'Agosto' }, { value: 9, label: 'Septiembre' },
+                  { value: 10, label: 'Octubre' }, { value: 11, label: 'Noviembre' }, { value: 12, label: 'Diciembre' }
                 ].map(mes => (
                   <option key={mes.value} value={mes.value}>{mes.label}</option>
                 ))}
@@ -864,7 +866,7 @@ const IndicadoresDashboard = () => {
               <select
                 className="form-select"
                 value={filtros.tipoNovedad}
-                onChange={(e) => setFiltros({...filtros, tipoNovedad: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, tipoNovedad: e.target.value })}
               >
                 <option value="">Todos los tipos</option>
                 {[...new Set(novedades.map(n => n.tipoNovedad))].map(tipo => (
@@ -877,7 +879,7 @@ const IndicadoresDashboard = () => {
               <select
                 className="form-select"
                 value={filtros.estado}
-                onChange={(e) => setFiltros({...filtros, estado: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
               >
                 <option value="">Todos los estados</option>
                 <option value="pendiente_por_radicar_sin_informacion">Pendiente por radicar</option>
@@ -1001,10 +1003,10 @@ const IndicadoresDashboard = () => {
               </div>
               {/* Gráfico de Dona para EPS */}
               <div className="mt-3" style={{ height: '200px' }}>
-                <Doughnut 
+                <Doughnut
                   id="dona-eps-chart"
-                  data={generarDatosDonaResponsable('EPS')} 
-                  options={donutOptions} 
+                  data={generarDatosDonaResponsable('EPS')}
+                  options={donutOptions}
                 />
               </div>
             </div>
@@ -1061,10 +1063,10 @@ const IndicadoresDashboard = () => {
               </div>
               {/* Gráfico de Dona para ARL */}
               <div className="mt-3" style={{ height: '200px' }}>
-                <Doughnut 
+                <Doughnut
                   id="dona-arl-chart"
-                  data={generarDatosDonaResponsable('ARL')} 
-                  options={donutOptions} 
+                  data={generarDatosDonaResponsable('ARL')}
+                  options={donutOptions}
                 />
               </div>
             </div>
@@ -1121,10 +1123,10 @@ const IndicadoresDashboard = () => {
               </div>
               {/* Gráfico de Dona para Otros */}
               <div className="mt-3" style={{ height: '200px' }}>
-                <Doughnut 
+                <Doughnut
                   id="dona-otros-chart"
-                  data={generarDatosDonaResponsable('Otros')} 
-                  options={donutOptions} 
+                  data={generarDatosDonaResponsable('Otros')}
+                  options={donutOptions}
                 />
               </div>
             </div>
@@ -1148,13 +1150,13 @@ const IndicadoresDashboard = () => {
               </div>
               <div className="col-md-4">
                 <p className="mb-2">
-                  <strong>🟡 Pendiente Real:</strong> Valor pendiente menos el valor no recuperable. 
+                  <strong>🟡 Pendiente Real:</strong> Valor pendiente menos el valor no recuperable.
                   Representa lo que realmente se puede cobrar.
                 </p>
               </div>
               <div className="col-md-4">
                 <p className="mb-2">
-                  <strong>🔴 No Recuperable:</strong> Valor pendiente de novedades parcialmente pagadas 
+                  <strong>🔴 No Recuperable:</strong> Valor pendiente de novedades parcialmente pagadas
                   que no se podrá recuperar.
                 </p>
               </div>
@@ -1162,7 +1164,7 @@ const IndicadoresDashboard = () => {
             <div className="row">
               <div className="col-md-6">
                 <small className="text-muted">
-                  <strong>Trabajadores Activos:</strong> Solo se cuentan trabajadores con estado "activo" 
+                  <strong>Trabajadores Activos:</strong> Solo se cuentan trabajadores con estado "activo"
                   para el total y la tasa de ausentismo.
                 </small>
               </div>
@@ -1182,7 +1184,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">📈 Evolución Mensual</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('evolucion-mensual-chart')}
                 title="Copiar gráfico"
@@ -1191,10 +1193,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '300px' }}>
-              <Line 
+              <Line
                 id="evolucion-mensual-chart"
-                data={generarEvolucionMensual()} 
-                options={lineOptions} 
+                data={generarEvolucionMensual()}
+                options={lineOptions}
               />
             </div>
           </div>
@@ -1203,7 +1205,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">📊 Novedades por Tipo</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('novedades-tipo-chart')}
                 title="Copiar gráfico"
@@ -1212,10 +1214,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '300px' }}>
-              <Pie 
+              <Pie
                 id="novedades-tipo-chart"
-                data={generarNovedadesPorTipo()} 
-                options={pieOptions} 
+                data={generarNovedadesPorTipo()}
+                options={pieOptions}
               />
             </div>
           </div>
@@ -1224,7 +1226,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">📅 Días Ausentismo por Tipo</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('dias-ausentismo-chart')}
                 title="Copiar gráfico"
@@ -1233,10 +1235,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '300px' }}>
-              <Bar 
+              <Bar
                 id="dias-ausentismo-chart"
-                data={generarDiasAusentismoPorTipo()} 
-                options={barOptions} 
+                data={generarDiasAusentismoPorTipo()}
+                options={barOptions}
               />
             </div>
           </div>
@@ -1245,7 +1247,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">📋 Estados Novedades</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('estados-novedades-chart')}
                 title="Copiar gráfico"
@@ -1254,10 +1256,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '300px' }}>
-              <Pie 
+              <Pie
                 id="estados-novedades-chart"
-                data={generarEstadosNovedades()} 
-                options={pieOptions} 
+                data={generarEstadosNovedades()}
+                options={pieOptions}
               />
             </div>
           </div>
@@ -1270,7 +1272,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">🔍 Estados Investigación</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('estados-investigacion-chart')}
                 title="Copiar gráfico"
@@ -1279,10 +1281,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '250px' }}>
-              <Pie 
+              <Pie
                 id="estados-investigacion-chart"
-                data={generarEstadosInvestigacion()} 
-                options={pieOptions} 
+                data={generarEstadosInvestigacion()}
+                options={pieOptions}
               />
             </div>
           </div>
@@ -1291,7 +1293,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">🏥 Diagnósticos Frecuentes</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('diagnosticos-chart')}
                 title="Copiar gráfico"
@@ -1300,10 +1302,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '250px' }}>
-              <Bar 
+              <Bar
                 id="diagnosticos-chart"
-                data={generarDiagnosticosFrecuentes()} 
-                options={barOptionsCompact} 
+                data={generarDiagnosticosFrecuentes()}
+                options={barOptionsCompact}
               />
             </div>
           </div>
@@ -1312,7 +1314,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">🏭 Tipos de Lesión</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('tipos-lesion-chart')}
                 title="Copiar gráfico"
@@ -1321,10 +1323,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '250px' }}>
-              <Bar 
+              <Bar
                 id="tipos-lesion-chart"
-                data={generarTiposLesion()} 
-                options={barOptionsCompact} 
+                data={generarTiposLesion()}
+                options={barOptionsCompact}
               />
             </div>
           </div>
@@ -1333,7 +1335,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">🫀 Segmentos Corporales</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('segmentos-corporales-chart')}
                 title="Copiar gráfico"
@@ -1342,10 +1344,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '250px' }}>
-              <Pie 
+              <Pie
                 id="segmentos-corporales-chart"
-                data={generarSegmentosCorporales()} 
-                options={pieOptions} 
+                data={generarSegmentosCorporales()}
+                options={pieOptions}
               />
             </div>
           </div>
@@ -1358,7 +1360,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">⚙️ Mecanismos Accidente</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('mecanismos-accidente-chart')}
                 title="Copiar gráfico"
@@ -1367,10 +1369,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '250px' }}>
-              <Bar 
+              <Bar
                 id="mecanismos-accidente-chart"
-                data={generarMecanismosAccidente()} 
-                options={barOptionsCompact} 
+                data={generarMecanismosAccidente()}
+                options={barOptionsCompact}
               />
             </div>
           </div>
@@ -1379,7 +1381,7 @@ const IndicadoresDashboard = () => {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <h6 className="mb-0">👥 Top Trabajadores</h6>
-              <button 
+              <button
                 className="btn btn-sm btn-outline-primary"
                 onClick={() => copiarGrafico('top-trabajadores-chart')}
                 title="Copiar gráfico"
@@ -1388,10 +1390,10 @@ const IndicadoresDashboard = () => {
               </button>
             </div>
             <div className="card-body" style={{ height: '250px' }}>
-              <Bar 
+              <Bar
                 id="top-trabajadores-chart"
-                data={generarTopTrabajadores()} 
-                options={topTrabajadoresOptions} 
+                data={generarTopTrabajadores()}
+                options={topTrabajadoresOptions}
               />
             </div>
           </div>
@@ -1408,7 +1410,7 @@ const IndicadoresDashboard = () => {
               </div>
               <div className="mt-auto">
                 <small className="text-muted">
-                  Solo cuenta "Accidente de Trabajo"<br/>
+                  Solo cuenta "Accidente de Trabajo"<br />
                   (No incluye incapacidades derivadas)
                 </small>
               </div>

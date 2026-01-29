@@ -6,10 +6,12 @@ import * as XLSX from 'xlsx';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { secondaryAuth } from '../../firebase'; // Auth secundaria para crear usuarios sin cerrar sesión
 import { PERMISSIONS } from '../../config/permissions';
+import { useAuth } from '../../hooks/useAuth';
 import { Modal, Form, Button, Row, Col, Alert } from 'react-bootstrap';
 import { Shield, Key } from 'lucide-react';
 
 const TrabajadoresList = () => {
+  const { dataScopeId } = useAuth();
   const [trabajadores, setTrabajadores] = useState([]);
   const [trabajadoresFiltrados, setTrabajadoresFiltrados] = useState([]);
   const [perfilesCargo, setPerfilesCargo] = useState([]); // Nueva lista de perfiles de cargo
@@ -93,7 +95,7 @@ const TrabajadoresList = () => {
       // Consultar perfiles de cargo del usuario actual (SIN orderBy para evitar el error de índice)
       const q = query(
         collection(db, 'perfiles_cargo'),
-        where('clienteId', '==', user.uid)
+        where('clienteId', '==', dataScopeId)
       );
 
       const querySnapshot = await getDocs(q);
@@ -135,7 +137,7 @@ const TrabajadoresList = () => {
       // Consultar trabajadores del usuario actual
       const q = query(
         collection(db, 'trabajadores'),
-        where('clienteId', '==', user.uid)
+        where('clienteId', '==', dataScopeId)
       );
 
       const querySnapshot = await getDocs(q);
@@ -635,7 +637,7 @@ const TrabajadoresList = () => {
       const q = query(
         collection(db, 'usuarios'),
         where('trabajadorId', '==', trabajador.id),
-        where('clienteId', '==', user.uid)
+        where('clienteId', '==', dataScopeId)
       );
       const snapshot = await getDocs(q);
 
@@ -674,7 +676,7 @@ const TrabajadoresList = () => {
       const q = query(
         collection(db, 'usuarios'),
         where('trabajadorId', '==', selectedWorker.id),
-        where('clienteId', '==', user.uid)
+        where('clienteId', '==', dataScopeId)
       );
       const snapshot = await getDocs(q);
 

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db, auth } from '../../firebase';
+import { useAuth } from '../../hooks/useAuth';
 import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { toast } from 'react-toastify';
 import * as XLSX from 'xlsx';
 
 const NovedadesList = () => {
+  const { dataScopeId } = useAuth();
   const [novedades, setNovedades] = useState([]);
   const [novedadesFiltradas, setNovedadesFiltradas] = useState([]);
   const [trabajadores, setTrabajadores] = useState([]);
@@ -190,37 +192,37 @@ const NovedadesList = () => {
   // Función para calcular horas entre dos tiempos
   const calcularHorasEntreTiempos = (horaInicio, horaFin) => {
     if (!horaInicio || !horaFin) return 0;
-    
+
     const [horaIni, minIni] = horaInicio.split(':').map(Number);
     const [horaFin2, minFin] = horaFin.split(':').map(Number);
-    
+
     let minutosInicio = horaIni * 60 + minIni;
     let minutosFin = horaFin2 * 60 + minFin;
-    
+
     let diferenciaMinutos = minutosFin - minutosInicio;
-    
+
     // Si la hora de fin es menor que la de inicio, asumimos que cruza medianoche
     if (diferenciaMinutos < 0) {
       diferenciaMinutos += 24 * 60; // Agregar 24 horas en minutos
     }
-    
+
     return diferenciaMinutos / 60; // Convertir a horas
   };
 
   // FUNCIÓN CORREGIDA: Formatear fecha sin problemas de zona horaria
   const formatearFecha = (fechaString) => {
     if (!fechaString) return '';
-    
+
     // Si la fecha ya está en formato YYYY-MM-DD, la usamos directamente
     if (fechaString.includes('-') && fechaString.length === 10) {
       const [year, month, day] = fechaString.split('-');
       return `${day}/${month}/${year}`;
     }
-    
+
     // Si es un timestamp o fecha de JavaScript
     const fecha = new Date(fechaString);
     if (isNaN(fecha.getTime())) return fechaString;
-    
+
     // Usar toLocaleDateString para evitar problemas de zona horaria
     return fecha.toLocaleDateString('es-CO', {
       day: '2-digit',
@@ -232,16 +234,16 @@ const NovedadesList = () => {
   // Función para formatear fecha para input
   const formatearFechaParaInput = (fechaString) => {
     if (!fechaString) return '';
-    
+
     // Si ya está en formato YYYY-MM-DD, devolverla tal como está
     if (fechaString.includes('-') && fechaString.length === 10) {
       return fechaString;
     }
-    
+
     // Si es un timestamp o fecha de JavaScript
     const fecha = new Date(fechaString);
     if (isNaN(fecha.getTime())) return '';
-    
+
     // Convertir a formato YYYY-MM-DD
     return fecha.toISOString().split('T')[0];
   };
@@ -271,7 +273,7 @@ const NovedadesList = () => {
     novedadesFiltradas.forEach(novedad => {
       // Sumar días (tiempo)
       totales.tiempo += parseInt(novedad.dias) || 0;
-      
+
       // Sumar valores monetarios
       totales.valorTotal += parseFloat(novedad.valorTotal) || 0;
       totales.valorPagado += parseFloat(novedad.valorPagado) || 0;
@@ -343,7 +345,7 @@ const NovedadesList = () => {
       // Cargar trabajadores
       const trabajadoresQuery = query(
         collection(db, 'trabajadores'),
-        where('clienteId', '==', user.uid)
+        where('clienteId', '==', dataScopeId)
       );
       const trabajadoresSnapshot = await getDocs(trabajadoresQuery);
       const trabajadoresData = [];
@@ -355,7 +357,7 @@ const NovedadesList = () => {
       // Cargar novedades
       const novedadesQuery = query(
         collection(db, 'novedades'),
-        where('clienteId', '==', user.uid)
+        where('clienteId', '==', dataScopeId)
       );
       const novedadesSnapshot = await getDocs(novedadesQuery);
       const novedadesData = [];
@@ -411,8 +413,8 @@ const NovedadesList = () => {
       // Obtener trabajadores que tienen el cargo seleccionado
       const trabajadoresConCargo = trabajadores.filter(t => t.cargo === filtros.cargo);
       const cedulasConCargo = trabajadoresConCargo.map(t => t.numeroDocumento);
-      
-      novedadesFiltradas = novedadesFiltradas.filter(novedad => 
+
+      novedadesFiltradas = novedadesFiltradas.filter(novedad =>
         cedulasConCargo.includes(novedad.numeroDocumento)
       );
     }
@@ -534,7 +536,7 @@ const NovedadesList = () => {
   // Resto de funciones del componente original (handleSubmit, editarNovedad, etc.)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -563,8 +565,8 @@ const NovedadesList = () => {
       }
 
       // Validaciones específicas para Accidente de Trabajo
-      if ((formData.tipoNovedad === 'Accidente de Trabajo' || formData.tipoNovedad === 'Incapacidad por Accidente de Trabajo') && 
-          (!formData.tipoLesion || !formData.segmentoCorporal || !formData.mecanismoAccidente)) {
+      if ((formData.tipoNovedad === 'Accidente de Trabajo' || formData.tipoNovedad === 'Incapacidad por Accidente de Trabajo') &&
+        (!formData.tipoLesion || !formData.segmentoCorporal || !formData.mecanismoAccidente)) {
         toast.error('Tipo de lesión, segmento corporal y mecanismo de accidente son obligatorios para Accidentes de Trabajo');
         return;
       }
@@ -577,7 +579,7 @@ const NovedadesList = () => {
 
       const novedadData = {
         ...formData,
-        clienteId: user.uid,
+        clienteId: dataScopeId,
         fechaCreacion: new Date().toISOString(),
         dias: valoresCalculados.dias,
         horas: valoresCalculados.horas,
@@ -904,7 +906,7 @@ const NovedadesList = () => {
                 className="form-control"
                 placeholder="Ej: 12345678"
                 value={filtros.cedula}
-                onChange={(e) => setFiltros({...filtros, cedula: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, cedula: e.target.value })}
               />
             </div>
 
@@ -913,7 +915,7 @@ const NovedadesList = () => {
               <select
                 className="form-select"
                 value={filtros.estado}
-                onChange={(e) => setFiltros({...filtros, estado: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
               >
                 <option value="">Todos</option>
                 {estadosNovedad.map(estado => (
@@ -929,7 +931,7 @@ const NovedadesList = () => {
               <select
                 className="form-select"
                 value={filtros.tipoNovedad}
-                onChange={(e) => setFiltros({...filtros, tipoNovedad: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, tipoNovedad: e.target.value })}
               >
                 <option value="">Todos</option>
                 {tiposNovedad.map(tipo => (
@@ -944,7 +946,7 @@ const NovedadesList = () => {
                 type="date"
                 className="form-control"
                 value={filtros.fechaDesde}
-                onChange={(e) => setFiltros({...filtros, fechaDesde: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, fechaDesde: e.target.value })}
               />
             </div>
 
@@ -954,7 +956,7 @@ const NovedadesList = () => {
                 type="date"
                 className="form-control"
                 value={filtros.fechaHasta}
-                onChange={(e) => setFiltros({...filtros, fechaHasta: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, fechaHasta: e.target.value })}
               />
             </div>
 
@@ -964,7 +966,7 @@ const NovedadesList = () => {
               <select
                 className="form-select"
                 value={filtros.cargo}
-                onChange={(e) => setFiltros({...filtros, cargo: e.target.value})}
+                onChange={(e) => setFiltros({ ...filtros, cargo: e.target.value })}
               >
                 <option value="">Todos los cargos</option>
                 {listaCargos.map(cargo => (
@@ -980,13 +982,13 @@ const NovedadesList = () => {
           <div className="row">
             <div className="col-12">
               <div className="d-flex gap-2 flex-wrap">
-                <button 
+                <button
                   className="btn btn-secondary"
                   onClick={limpiarFiltros}
                 >
                   🗑️ Limpiar Filtros
                 </button>
-                <button 
+                <button
                   className="btn btn-success"
                   onClick={descargarExcelFiltrado}
                   disabled={novedadesFiltradas.length === 0}
@@ -1001,20 +1003,20 @@ const NovedadesList = () => {
           <div className="row mt-3">
             <div className="col-12">
               <div className="alert alert-info mb-0">
-                <strong>Resultados:</strong> Se encontraron {novedadesFiltradas.length} novedad(es) 
+                <strong>Resultados:</strong> Se encontraron {novedadesFiltradas.length} novedad(es)
                 de un total de {novedades.length} registradas.
-                {(filtros.cedula || filtros.estado || filtros.tipoNovedad || 
+                {(filtros.cedula || filtros.estado || filtros.tipoNovedad ||
                   filtros.fechaDesde || filtros.fechaHasta || filtros.cargo) && (
-                  <span className="ms-2">
-                    <strong>Filtros activos:</strong>
-                    {filtros.cedula && <span className="badge bg-primary ms-1">Cédula: {filtros.cedula}</span>}
-                    {filtros.estado && <span className="badge bg-primary ms-1">Estado: {estadosNovedad.find(e => e.value === filtros.estado)?.label}</span>}
-                    {filtros.tipoNovedad && <span className="badge bg-primary ms-1">Tipo: {filtros.tipoNovedad}</span>}
-                    {filtros.fechaDesde && <span className="badge bg-primary ms-1">Desde: {filtros.fechaDesde}</span>}
-                    {filtros.fechaHasta && <span className="badge bg-primary ms-1">Hasta: {filtros.fechaHasta}</span>}
-                    {filtros.cargo && <span className="badge bg-success ms-1">Cargo: {filtros.cargo}</span>}
-                  </span>
-                )}
+                    <span className="ms-2">
+                      <strong>Filtros activos:</strong>
+                      {filtros.cedula && <span className="badge bg-primary ms-1">Cédula: {filtros.cedula}</span>}
+                      {filtros.estado && <span className="badge bg-primary ms-1">Estado: {estadosNovedad.find(e => e.value === filtros.estado)?.label}</span>}
+                      {filtros.tipoNovedad && <span className="badge bg-primary ms-1">Tipo: {filtros.tipoNovedad}</span>}
+                      {filtros.fechaDesde && <span className="badge bg-primary ms-1">Desde: {filtros.fechaDesde}</span>}
+                      {filtros.fechaHasta && <span className="badge bg-primary ms-1">Hasta: {filtros.fechaHasta}</span>}
+                      {filtros.cargo && <span className="badge bg-success ms-1">Cargo: {filtros.cargo}</span>}
+                    </span>
+                  )}
               </div>
             </div>
           </div>
@@ -1061,14 +1063,13 @@ const NovedadesList = () => {
                           </span>
                         </td> {/* NUEVA COLUMNA */}
                         <td>
-                          <span className={`badge ${
-                            novedad.tipoNovedad === 'Incapacidad Médica' ? 'bg-info' :
-                            novedad.tipoNovedad === 'Accidente de Trabajo' ? 'bg-danger' :
-                            novedad.tipoNovedad === 'Incapacidad por Accidente de Trabajo' ? 'bg-danger' :
-                            novedad.tipoNovedad === 'Incapacidad por Enfermedad Profesional' ? 'bg-warning' :
-                            esTipoNovedadPorHoras(novedad.tipoNovedad) ? 'bg-warning text-dark' :
-                            'bg-secondary'
-                          }`}>
+                          <span className={`badge ${novedad.tipoNovedad === 'Incapacidad Médica' ? 'bg-info' :
+                              novedad.tipoNovedad === 'Accidente de Trabajo' ? 'bg-danger' :
+                                novedad.tipoNovedad === 'Incapacidad por Accidente de Trabajo' ? 'bg-danger' :
+                                  novedad.tipoNovedad === 'Incapacidad por Enfermedad Profesional' ? 'bg-warning' :
+                                    esTipoNovedadPorHoras(novedad.tipoNovedad) ? 'bg-warning text-dark' :
+                                      'bg-secondary'
+                            }`}>
                             {novedad.tipoNovedad}
                             {esTipoNovedadPorHoras(novedad.tipoNovedad) && ' ⏰'}
                           </span>
@@ -1077,7 +1078,7 @@ const NovedadesList = () => {
                           <small>
                             {formatearFecha(novedad.fechaInicio)} - {formatearFecha(novedad.fechaFin)}
                             {esTipoNovedadPorHoras(novedad.tipoNovedad) && novedad.horaInicio && novedad.horaFin && (
-                              <><br/>{novedad.horaInicio} - {novedad.horaFin}</>
+                              <><br />{novedad.horaInicio} - {novedad.horaFin}</>
                             )}
                           </small>
                         </td>
@@ -1103,7 +1104,7 @@ const NovedadesList = () => {
                           </span>
                           {requiereEstadoInvestigacion(novedad.tipoNovedad) && (
                             <>
-                              <br/>
+                              <br />
                               <small>
                                 {novedad.estadoInvestigacion ? (
                                   <span className={`badge bg-${getEstadoInvestigacionColor(novedad.estadoInvestigacion)}`}>
@@ -1165,7 +1166,7 @@ const NovedadesList = () => {
                     </li>
                     {[...Array(totalPaginas)].map((_, index) => (
                       <li key={index + 1} className={`page-item ${paginaActual === index + 1 ? 'active' : ''}`}>
-                        <button 
+                        <button
                           className="page-link"
                           onClick={() => setPaginaActual(index + 1)}
                         >
@@ -1174,7 +1175,7 @@ const NovedadesList = () => {
                       </li>
                     ))}
                     <li className={`page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`}>
-                      <button 
+                      <button
                         className="page-link"
                         onClick={() => setPaginaActual(paginaActual + 1)}
                         disabled={paginaActual === totalPaginas}
@@ -1199,8 +1200,8 @@ const NovedadesList = () => {
                 <h5 className="modal-title">
                   {editingId ? '✏️ Editar Novedad' : '➕ Nueva Novedad'}
                 </h5>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn-close"
                   onClick={() => {
                     setShowForm(false);
@@ -1219,11 +1220,11 @@ const NovedadesList = () => {
                           type="text"
                           className="form-control"
                           value={formData.numeroDocumento}
-                          onChange={(e) => setFormData({...formData, numeroDocumento: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, numeroDocumento: e.target.value })}
                           required
                         />
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="btn btn-outline-primary"
                           onClick={buscarEmpleado}
                         >
@@ -1251,7 +1252,7 @@ const NovedadesList = () => {
                       <select
                         className="form-select"
                         value={formData.tipoNovedad}
-                        onChange={(e) => setFormData({...formData, tipoNovedad: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, tipoNovedad: e.target.value })}
                         required
                       >
                         <option value="">Seleccione un tipo</option>
@@ -1268,7 +1269,7 @@ const NovedadesList = () => {
                       <select
                         className="form-select"
                         value={formData.estado}
-                        onChange={(e) => setFormData({...formData, estado: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
                         required
                       >
                         {estadosNovedad.map(estado => (
@@ -1284,7 +1285,7 @@ const NovedadesList = () => {
                         <select
                           className="form-select"
                           value={formData.estadoInvestigacion}
-                          onChange={(e) => setFormData({...formData, estadoInvestigacion: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, estadoInvestigacion: e.target.value })}
                           required
                         >
                           <option value="">Seleccione estado</option>
@@ -1308,7 +1309,7 @@ const NovedadesList = () => {
                           className="form-control"
                           value={formData.fechaInicio}
                           onChange={(e) => setFormData({
-                            ...formData, 
+                            ...formData,
                             fechaInicio: e.target.value,
                             fechaFin: e.target.value // Para incidentes, fecha inicio = fecha fin
                           })}
@@ -1322,7 +1323,7 @@ const NovedadesList = () => {
                           className="form-control"
                           placeholder="Ej: 1300000"
                           value={formData.salarioCotizacion}
-                          onChange={(e) => setFormData({...formData, salarioCotizacion: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, salarioCotizacion: e.target.value })}
                           required
                         />
                       </div>
@@ -1342,7 +1343,7 @@ const NovedadesList = () => {
                             className="form-control"
                             value={formData.fechaInicio}
                             onChange={(e) => setFormData({
-                              ...formData, 
+                              ...formData,
                               fechaInicio: e.target.value,
                               fechaFin: e.target.value // Para permisos por horas, fecha inicio = fecha fin
                             })}
@@ -1355,7 +1356,7 @@ const NovedadesList = () => {
                             type="time"
                             className="form-control"
                             value={formData.horaInicio}
-                            onChange={(e) => setFormData({...formData, horaInicio: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, horaInicio: e.target.value })}
                             required
                           />
                           <small className="text-muted">Hora en que sale del trabajo</small>
@@ -1366,7 +1367,7 @@ const NovedadesList = () => {
                             type="time"
                             className="form-control"
                             value={formData.horaFin}
-                            onChange={(e) => setFormData({...formData, horaFin: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, horaFin: e.target.value })}
                             required
                           />
                           <small className="text-muted">Hora en que regresa al trabajo</small>
@@ -1380,7 +1381,7 @@ const NovedadesList = () => {
                             className="form-control"
                             placeholder="Ej: 1300000"
                             value={formData.salarioCotizacion}
-                            onChange={(e) => setFormData({...formData, salarioCotizacion: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, salarioCotizacion: e.target.value })}
                             required
                           />
                           <small className="text-muted">Se calculará el valor por hora: Salario ÷ (30 días × 8 horas)</small>
@@ -1396,7 +1397,7 @@ const NovedadesList = () => {
                           type="date"
                           className="form-control"
                           value={formData.fechaInicio}
-                          onChange={(e) => setFormData({...formData, fechaInicio: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
                           required
                         />
                       </div>
@@ -1406,7 +1407,7 @@ const NovedadesList = () => {
                           type="date"
                           className="form-control"
                           value={formData.fechaFin}
-                          onChange={(e) => setFormData({...formData, fechaFin: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
                           required
                         />
                       </div>
@@ -1417,7 +1418,7 @@ const NovedadesList = () => {
                           className="form-control"
                           placeholder="Ej: 1300000"
                           value={formData.salarioCotizacion}
-                          onChange={(e) => setFormData({...formData, salarioCotizacion: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, salarioCotizacion: e.target.value })}
                           required
                         />
                       </div>
@@ -1437,7 +1438,7 @@ const NovedadesList = () => {
                             className="form-control"
                             placeholder="Ej: 500000"
                             value={formData.valorPagado}
-                            onChange={(e) => setFormData({...formData, valorPagado: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, valorPagado: e.target.value })}
                           />
                           <small className="text-muted">Ingrese el valor que ya ha sido pagado (opcional)</small>
                         </div>
@@ -1446,7 +1447,7 @@ const NovedadesList = () => {
                           <select
                             className="form-select"
                             value={formData.responsablePago}
-                            onChange={(e) => setFormData({...formData, responsablePago: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, responsablePago: e.target.value })}
                           >
                             <option value="">Asignar automáticamente</option>
                             {responsablesPago.map(responsable => (
@@ -1471,7 +1472,7 @@ const NovedadesList = () => {
                             className="form-control"
                             placeholder="Ej: Gripe, Gastroenteritis, Lumbalgia, etc."
                             value={formData.diagnosticoEnfermedad}
-                            onChange={(e) => setFormData({...formData, diagnosticoEnfermedad: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, diagnosticoEnfermedad: e.target.value })}
                             required
                           />
                           <small className="text-muted">Especifique el diagnóstico médico de la incapacidad</small>
@@ -1490,7 +1491,7 @@ const NovedadesList = () => {
                           <select
                             className="form-select"
                             value={formData.tipoLesion}
-                            onChange={(e) => setFormData({...formData, tipoLesion: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, tipoLesion: e.target.value })}
                             required
                           >
                             <option value="">Seleccione el tipo de lesión</option>
@@ -1505,7 +1506,7 @@ const NovedadesList = () => {
                           <select
                             className="form-select"
                             value={formData.segmentoCorporal}
-                            onChange={(e) => setFormData({...formData, segmentoCorporal: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, segmentoCorporal: e.target.value })}
                             required
                           >
                             <option value="">Seleccione el segmento</option>
@@ -1520,7 +1521,7 @@ const NovedadesList = () => {
                           <select
                             className="form-select"
                             value={formData.mecanismoAccidente}
-                            onChange={(e) => setFormData({...formData, mecanismoAccidente: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, mecanismoAccidente: e.target.value })}
                             required
                           >
                             <option value="">Seleccione el mecanismo</option>
@@ -1541,7 +1542,7 @@ const NovedadesList = () => {
                       rows="3"
                       placeholder="Descripción adicional de la novedad..."
                       value={formData.descripcion}
-                      onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                     />
                   </div>
 
@@ -1597,8 +1598,8 @@ const NovedadesList = () => {
                 </form>
               </div>
               <div className="modal-footer">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => {
                     setShowForm(false);
@@ -1607,7 +1608,7 @@ const NovedadesList = () => {
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   type="button"
                   className="btn btn-primary"
                   onClick={handleSubmit}
@@ -1627,8 +1628,8 @@ const NovedadesList = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">🔍 Consultar Novedades por Cédula</h5>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn-close"
                   onClick={() => setShowConsulta(false)}
                 ></button>
@@ -1645,7 +1646,7 @@ const NovedadesList = () => {
                     />
                   </div>
                   <div className="col-md-4">
-                    <button 
+                    <button
                       className="btn btn-primary w-100"
                       onClick={consultarPorCedula}
                     >
@@ -1653,7 +1654,7 @@ const NovedadesList = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 {novedadesConsulta.length > 0 && (
                   <div className="table-responsive">
                     <table className="table table-striped">
@@ -1682,7 +1683,7 @@ const NovedadesList = () => {
                               <small>
                                 {formatearFecha(novedad.fechaInicio)} - {formatearFecha(novedad.fechaFin)}
                                 {esTipoNovedadPorHoras(novedad.tipoNovedad) && novedad.horaInicio && novedad.horaFin && (
-                                  <><br/>{novedad.horaInicio} - {novedad.horaFin}</>
+                                  <><br />{novedad.horaInicio} - {novedad.horaFin}</>
                                 )}
                               </small>
                             </td>
@@ -1734,8 +1735,8 @@ const NovedadesList = () => {
                 )}
               </div>
               <div className="modal-footer">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowConsulta(false)}
                 >
@@ -1754,18 +1755,18 @@ const NovedadesList = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">💬 Observaciones - {novedadSeleccionada.empleadoNombre}</h5>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn-close"
                   onClick={() => setShowObservaciones(false)}
                 ></button>
               </div>
               <div className="modal-body">
                 <div className="mb-3">
-                  <strong>Tipo:</strong> {novedadSeleccionada.tipoNovedad}<br/>
+                  <strong>Tipo:</strong> {novedadSeleccionada.tipoNovedad}<br />
                   <strong>Fechas:</strong> {formatearFecha(novedadSeleccionada.fechaInicio)} - {formatearFecha(novedadSeleccionada.fechaFin)}
                   {esTipoNovedadPorHoras(novedadSeleccionada.tipoNovedad) && novedadSeleccionada.horaInicio && novedadSeleccionada.horaFin && (
-                    <><br/><strong>Horas:</strong> {novedadSeleccionada.horaInicio} - {novedadSeleccionada.horaFin}</>
+                    <><br /><strong>Horas:</strong> {novedadSeleccionada.horaInicio} - {novedadSeleccionada.horaFin}</>
                   )}
                 </div>
 
@@ -1778,7 +1779,7 @@ const NovedadesList = () => {
                     onChange={(e) => setNuevaObservacion(e.target.value)}
                     placeholder="Escriba su observación aquí..."
                   />
-                  <button 
+                  <button
                     className="btn btn-primary mt-2"
                     onClick={agregarObservacion}
                     disabled={!nuevaObservacion.trim()}
@@ -1807,8 +1808,8 @@ const NovedadesList = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowObservaciones(false)}
                 >
@@ -1819,7 +1820,7 @@ const NovedadesList = () => {
           </div>
         </div>
       )}
-      
+
     </div>
   );
 };
