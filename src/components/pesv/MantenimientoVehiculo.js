@@ -9,7 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Wrench, Trash2, CheckCircle, AlertTriangle, TrendingUp, X } from 'lucide-react';
 
 const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
-    const { user } = useAuth();
+    const { user, dataScopeId } = useAuth();
     const [registros, setRegistros] = useState([]);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('historial');
@@ -36,17 +36,19 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
         // Cargar Historial
         const q = query(
             collection(db, 'mantenimientos_vehiculos'),
-            where('vehiculo_id', '==', vehiculo.id),
-            orderBy('fecha_evento', 'desc')
+            where('clienteId', '==', dataScopeId),
+            where('vehiculo_id', '==', vehiculo.id)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Ordenar por fecha descendente en el cliente para evitar requerir índice compuesto
+            docs.sort((a, b) => new Date(b.fecha_evento) - new Date(a.fecha_evento));
             setRegistros(docs);
         });
 
         return () => unsubscribe();
-    }, [vehiculo]);
+    }, [vehiculo, dataScopeId]);
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -82,7 +84,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
             await addDoc(collection(db, 'mantenimientos_vehiculos'), {
                 ...formData,
                 vehiculo_id: vehiculo.id,
-                clienteId: user.uid,
+                clienteId: dataScopeId,
                 fecha_registro: new Date().toISOString(),
                 creado_por: user.email,
                 costo_total: Number(formData.costo_total) || 0,
