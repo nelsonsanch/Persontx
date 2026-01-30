@@ -53,6 +53,7 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
             // 2. Guardar Inspección Centralizada
             const inspeccionData = {
                 empresaId: user.uid,
+                clienteId: user.uid, // Requerido por reglas de seguridad
                 fechaInspeccion: new Date(),
                 categoria: categoria,
                 inspectorEmail: user.email,

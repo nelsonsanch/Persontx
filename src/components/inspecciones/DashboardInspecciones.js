@@ -29,7 +29,7 @@ const DashboardInspecciones = () => {
             try {
                 // Fetch History
                 const refHist = collection(db, 'inspecciones_sst');
-                const qHist = query(refHist, where('empresaId', '==', dataScopeId));
+                const qHist = query(refHist, where('clienteId', '==', dataScopeId));
                 const snapHist = await getDocs(qHist);
                 const dataHist = snapHist.docs.map(doc => ({
                     id: doc.id,
