@@ -6,8 +6,10 @@ import jsPDF from 'jspdf';
 import { ITEMS_PLANTILLA } from './data/inspectionSeeds';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useAuth } from '../../hooks/useAuth';
 
 const DetalleInspeccion = ({ show, handleClose, inspeccion }) => {
+    const { user } = useAuth();
     const reportRef = useRef();
     const [historyList, setHistoryList] = useState([]);
     const [selectedInspection, setSelectedInspection] = useState(null);
@@ -30,7 +32,8 @@ const DetalleInspeccion = ({ show, handleClose, inspeccion }) => {
             // Query by active ID only (Client-side sort to avoid Index requirements)
             const q = query(
                 ref,
-                where('activo.id', '==', baseInspection.activo.id)
+                where('activo.id', '==', baseInspection.activo.id),
+                where('clienteId', '==', user.uid) // Requerido por reglas de seguridad
             );
 
             const snapshot = await getDocs(q);

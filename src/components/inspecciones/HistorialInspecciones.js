@@ -24,7 +24,7 @@ const HistorialInspecciones = () => {
             const ref = collection(db, 'inspecciones_sst');
             const q = query(
                 ref,
-                where('empresaId', '==', dataScopeId),
+                where('clienteId', '==', dataScopeId),
                 orderBy('fechaInspeccion', 'desc')
             );
 

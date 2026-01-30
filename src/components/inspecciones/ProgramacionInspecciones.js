@@ -73,7 +73,11 @@ const ProgramacionInspecciones = ({ onInspect }) => {
             // Find audits for this asset
             const ref = collection(db, 'inspecciones_sst');
             // Note: simple where avoids calling for index on complex sorts. We sort in memory.
-            const q = query(ref, where('activo.id', '==', asset.id));
+            const q = query(
+                ref,
+                where('activo.id', '==', asset.id),
+                where('clienteId', '==', user.uid) // Requerido por reglas de seguridad
+            );
             const snapshot = await getDocs(q);
 
             if (snapshot.empty) {
