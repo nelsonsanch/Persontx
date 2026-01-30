@@ -1,0 +1,18 @@
+# General
+log
+test
+.DS_Store
+
+# Node artifacts
+node_modules
+jspm_packages
+
+# Local environment artifacts
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
