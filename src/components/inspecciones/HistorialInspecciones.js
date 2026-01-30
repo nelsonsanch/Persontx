@@ -24,8 +24,7 @@ const HistorialInspecciones = () => {
             const ref = collection(db, 'inspecciones_sst');
             const q = query(
                 ref,
-                where('clienteId', '==', dataScopeId),
-                orderBy('fechaInspeccion', 'desc')
+                where('clienteId', '==', dataScopeId)
             );
 
             const snapshot = await getDocs(q);
@@ -34,6 +33,10 @@ const HistorialInspecciones = () => {
                 ...doc.data(),
                 fecha: doc.data().fechaInspeccion?.toDate()
             }));
+
+            // Ordenamiento en cliente para evitar requerir índice compuesto en Firestore
+            data.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
+
             setInspecciones(data);
         } catch (error) {
             console.error("Error cargando historial:", error);
