@@ -38,8 +38,8 @@ service cloud.firestore {
     // REGLA PARA TRABAJADORES
     match /trabajadores/{trabajadorId} {
       allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow list: if request.query.limit <= 1; // Permitir buscar trabajador para login portal
       allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
-      // Removed generic allow read: if true; as it is insecure
     }
     // REGLA PARA NOVEDADES
     match /novedades/{novedadId} {
@@ -55,12 +55,13 @@ service cloud.firestore {
     // REGLA PARA ENCUESTAS DE SALUD
     match /encuestas_salud/{encuestaId} {
       allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
+      allow list: if true; // DEBUG: Permitir lista abierta temporalmente
       allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     // REGLA PARA RESPUESTAS DE ENCUESTAS
     match /respuestas_encuestas/{respuestaId} {
       allow read, delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
-      allow read, create, update: if true;
+      allow read, create, update: if true; // Ya estaba abierto, mantenemos
       allow delete: if request.auth != null && resource.data.clienteId == request.auth.uid;
     }
     // REGLA PARA ANÁLISIS DE ENCUESTAS

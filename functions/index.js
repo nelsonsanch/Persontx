@@ -1,4 +1,5 @@
 const functions = require("firebase-functions/v1");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 
@@ -219,3 +220,48 @@ exports.onNewInspection = functions.region("us-east1").firestore
         // 3. Update
         return snap.ref.update(updates);
     });
+
+// ============================================================================
+exports.validarTrabajador = onCall({ region: "us-east1" }, async (request) => {
+    const { cedula, codigo } = request.data;
+    console.log(`[AUTH-PORTAL] Validando trabajador: ${cedula}`);
+
+    if (!cedula) {
+        throw new HttpsError('invalid-argument', 'La cédula es requerida.');
+    }
+
+    try {
+        const trabajadoresRef = db.collection('trabajadores');
+        // Usar 'numeroDocumento' como en el frontend original
+        const snapshot = await trabajadoresRef.where('numeroDocumento', '==', cedula).limit(1).get();
+
+        if (snapshot.empty) {
+            console.warn(`[AUTH-PORTAL] Trabajador no encontrado: ${cedula}`);
+            throw new HttpsError('not-found', 'No se encontró un trabajador con esa cédula.');
+        }
+
+        const trabajadorDoc = snapshot.docs[0];
+        const trabajadorData = trabajadorDoc.data();
+
+        // Validación de código (Mismo que cédula)
+        if (codigo !== cedula) {
+            throw new HttpsError('permission-denied', 'Código de acceso incorrecto.');
+        }
+
+        // Retornamos solo lo necesario para el frontend
+        return {
+            id: trabajadorDoc.id,
+            nombres: trabajadorData.nombres,
+            apellidos: trabajadorData.apellidos,
+            numero: trabajadorData.numeroDocumento || trabajadorData.numero,
+            cargo: trabajadorData.cargo,
+            clienteId: trabajadorData.clienteId
+        };
+
+    } catch (error) {
+        console.error("[AUTH-PORTAL] Error:", error);
+        // Re-lanzar error si ya es HttpsError, sino genérico
+        if (error.code) throw error;
+        throw new HttpsError('internal', 'Error interno del servidor.');
+    }
+});

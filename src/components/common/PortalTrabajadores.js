@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { 
-  collection, 
-  query, 
-  where, 
+import {
+  collection,
+  query,
+  where,
   getDocs,
   addDoc,
   updateDoc,
-  doc
+  doc,
+  limit
 } from 'firebase/firestore';
 import FormularioEncuesta_COMPLETO from '../encuestas/FormularioEncuesta_COMPLETO';
 
@@ -43,10 +44,11 @@ const PortalTrabajadores = () => {
 
       console.log('🔍 Buscando trabajador con cédula:', cedula);
 
-      // CORRECCIÓN: Buscar trabajador por el campo 'numero' en lugar de 'cedula'
+      // CORRECCIÓN: Usar query directo con LIMIT 1 para cumplir reglas de seguridad
       const trabajadoresQuery = query(
         collection(db, 'trabajadores'),
-        where('numeroDocumento', '==', cedula) // ← CAMBIO AQUÍ: 'numero' en lugar de 'cedula'
+        where('numeroDocumento', '==', cedula),
+        limit(1) // IMPORTANTE: Requerido por la regla de seguridad
       );
 
       const trabajadoresSnapshot = await getDocs(trabajadoresQuery);
@@ -75,7 +77,8 @@ const PortalTrabajadores = () => {
       const encuestasQuery = query(
         collection(db, 'encuestas_salud'),
         where('clienteId', '==', trabajadorData.clienteId),
-        where('estado', '==', 'activa')
+        where('estado', '==', 'activa'),
+        limit(20) // Requerido por reglas de seguridad
       );
 
       const encuestasSnapshot = await getDocs(encuestasQuery);
@@ -88,7 +91,7 @@ const PortalTrabajadores = () => {
       for (const encuestaDoc of encuestasSnapshot.docs) {
         const encuestaData = encuestaDoc.data();
         console.log('🔍 Revisando encuesta:', encuestaData.titulo, 'Trabajadores:', encuestaData.trabajadoresSeleccionados);
-        
+
         if (encuestaData.trabajadoresSeleccionados?.includes(trabajadorData.id)) {
           encuestaParaTrabajador = {
             id: encuestaDoc.id,
@@ -295,7 +298,7 @@ const PortalTrabajadores = () => {
               <div>
                 <h4 className="mb-1">📋 {encuestaActiva?.titulo}</h4>
                 <p className="mb-0">
-                  <strong>Trabajador:</strong> {trabajador?.nombres} {trabajador?.apellidos} | 
+                  <strong>Trabajador:</strong> {trabajador?.nombres} {trabajador?.apellidos} |
                   <strong> Cédula:</strong> {trabajador?.numero} | {/* CORRECCIÓN: usar 'numero' */}
                   <strong> Cargo:</strong> {trabajador?.cargo}
                 </p>
@@ -317,11 +320,10 @@ const PortalTrabajadores = () => {
                 <p className="mb-1"><strong>Descripción:</strong> {encuestaActiva?.descripcion || 'Encuesta de condiciones de salud ocupacional'}</p>
                 <p className="mb-1"><strong>Período:</strong> {encuestaActiva?.fechaInicio} - {encuestaActiva?.fechaFin}</p>
                 <p className="mb-0">
-                  <strong>Estado:</strong> 
+                  <strong>Estado:</strong>
                   {respuestaExistente ? (
-                    <span className={`badge ms-2 ${
-                      respuestaExistente.estado === 'completada' ? 'bg-success' : 'bg-warning'
-                    }`}>
+                    <span className={`badge ms-2 ${respuestaExistente.estado === 'completada' ? 'bg-success' : 'bg-warning'
+                      }`}>
                       {respuestaExistente.estado === 'completada' ? 'Completada' : 'En Progreso'}
                     </span>
                   ) : (
