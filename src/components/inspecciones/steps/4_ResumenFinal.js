@@ -10,7 +10,7 @@ import { PLANTILLAS } from '../data/inspectionSeeds';
 
 const ResumenFinal = ({ data, onBack, onReset }) => {
     const { user } = useAuth();
-    const { activoSeleccionado, checklist, observaciones, categoria, fechaProximaRecarga, configRef, resultadoPreliminar, fechaProxima } = data;
+    const { activoSeleccionado, checklist, observaciones, categoria, fechaProximaRecarga, configRef, resultadoPreliminar, fechaProxima, horometroLectura } = data;
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
@@ -64,7 +64,8 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
                     ubicacion: activoSeleccionado.ubicacion || 'Sin Ubicación',
                     foto: activoSeleccionado.foto || null,
                     familia: activoSeleccionado.familia || null,
-                    tipo: activoSeleccionado.tipo_equipo || activoSeleccionado.tipo || null
+                    tipo: activoSeleccionado.tipo_equipo || activoSeleccionado.tipo || null,
+                    horometro: horometroLectura || null // Guardar snapshot horómetro
                 },
                 resultados: {
                     checklist: checklist, // Se guarda el objeto completo con obs/fotos
@@ -84,10 +85,8 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
             // 3. Actualizar Inventario (Estado y Fechas)
             try {
                 // Determinar colección destino (generalmente 'inventarios')
-                // Si heights usa 'inventarios', está bien.
                 const colName = configRef?.coleccion || 'inventarios';
                 const itemRef = doc(db, colName, activoSeleccionado.id);
-
                 let updateData = {};
 
                 if (categoria === 'alturas') {
@@ -101,6 +100,13 @@ const ResumenFinal = ({ data, onBack, onReset }) => {
                         updateData = {
                             fechaProximaRecarga: fechaProximaRecarga,
                             fechaUltimaRecarga: new Date().toISOString().split('T')[0]
+                        };
+                    }
+                } else if (categoria === 'maquinaria_pesada') { // Lógica Maquinaria
+                    if (horometroLectura) {
+                        updateData = {
+                            horometro_actual: horometroLectura,
+                            fecha_ultima_lectura: new Date().toISOString()
                         };
                     }
                 }

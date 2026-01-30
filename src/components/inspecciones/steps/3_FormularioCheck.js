@@ -12,6 +12,7 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
     // Estado de respuestas: Soporta simple {'Item': 'Bueno'} y complejo {'ID': { valor: 'SI', obs: '', foto: '' }}
     const [respuestas, setRespuestas] = useState(data.checklist || {});
     const [observacionGeneral, setObservacionGeneral] = useState(data.observaciones || '');
+    const [horometroLectura, setHorometroLectura] = useState(data.horometroLectura || ''); // Nuevo estado para Horómetro
 
     // Estado para controlar qué acordión de item está abierto (para obs/foto)
     const [openItem, setOpenItem] = useState(null);
@@ -114,6 +115,10 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
             ...prev,
             checklist: respuestas,
             observaciones: observacionGeneral,
+            ...prev,
+            checklist: respuestas,
+            observaciones: observacionGeneral,
+            horometroLectura: horometroLectura, // Pasamos el horómetro
             resultadoPreliminar: resultadoCalculado // Guardamos esto para el resumen
         }));
         onNext();
@@ -307,6 +312,35 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                 <div className="alert alert-warning">
                     No se encontró una plantilla de inspección configurada para este tipo de equipo.
                 </div>
+            )}
+
+            {/* CAMPO DE HORÓMETRO (SOLO MAQUINARIA PESADA) */}
+            {categoria === 'maquinaria_pesada' && (
+                <Card className="mb-4 border-primary">
+                    <Card.Header className="bg-primary text-white fw-bold">
+                        ⏱️ Horas Acumuladas
+                    </Card.Header>
+                    <Card.Body>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group>
+                                    <Form.Label className="fw-bold">Lectura Actual del Horómetro</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        placeholder="Ingrese el valor del horómetro..."
+                                        value={horometroLectura}
+                                        onChange={(e) => setHorometroLectura(e.target.value)}
+                                        min={activoSeleccionado.horometro_actual || 0}
+                                        required
+                                    />
+                                    <Form.Text className="text-muted">
+                                        Valor anterior registrado: {activoSeleccionado.horometro_actual || 0} horas
+                                    </Form.Text>
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                    </Card.Body>
+                </Card>
             )}
 
             <div className="checklist-container mb-4">
