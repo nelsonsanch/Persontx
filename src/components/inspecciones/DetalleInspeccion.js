@@ -9,7 +9,7 @@ import { db } from '../../firebase';
 import { useAuth } from '../../hooks/useAuth';
 
 const DetalleInspeccion = ({ show, handleClose, inspeccion }) => {
-    const { user } = useAuth();
+    const { user, dataScopeId } = useAuth();
     const reportRef = useRef();
     const [historyList, setHistoryList] = useState([]);
     const [selectedInspection, setSelectedInspection] = useState(null);
@@ -33,7 +33,7 @@ const DetalleInspeccion = ({ show, handleClose, inspeccion }) => {
             const q = query(
                 ref,
                 where('activo.id', '==', baseInspection.activo.id),
-                where('clienteId', '==', user.uid) // Requerido por reglas de seguridad
+                where('clienteId', '==', dataScopeId) // Requerido por reglas de seguridad
             );
 
             const snapshot = await getDocs(q);

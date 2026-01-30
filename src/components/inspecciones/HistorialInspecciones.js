@@ -43,7 +43,7 @@ const HistorialInspecciones = () => {
 
     useEffect(() => {
         fetchHistory();
-    }, [user]);
+    }, [user, dataScopeId]);
 
     const handleDelete = async (id) => {
         if (window.confirm("¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.")) {

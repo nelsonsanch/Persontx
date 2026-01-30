@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import DetalleInspeccion from './DetalleInspeccion';
 
 const ProgramacionInspecciones = ({ onInspect }) => {
-    const { user } = useAuth();
+    const { user, dataScopeId } = useAuth();
     const [futureMonth, setFutureMonth] = useState(new Date().getMonth());
     const [futureYear, setFutureYear] = useState(new Date().getFullYear());
     const [inventario, setInventario] = useState([]);
@@ -35,7 +35,7 @@ const ProgramacionInspecciones = ({ onInspect }) => {
             setLoading(true);
             try {
                 const ref = collection(db, 'inventarios');
-                const q = query(ref, where('clienteId', '==', user.uid));
+                const q = query(ref, where('clienteId', '==', dataScopeId));
                 const snapshot = await getDocs(q);
                 const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setInventario(data);
@@ -44,8 +44,10 @@ const ProgramacionInspecciones = ({ onInspect }) => {
             }
             setLoading(false);
         };
-        fetchInventory();
-    }, [user]);
+        if (dataScopeId) {
+            fetchInventory();
+        }
+    }, [user, dataScopeId]);
 
     // Helper: Calcular Semáforo
     const calculateStatus = (dateStr) => {
@@ -76,7 +78,7 @@ const ProgramacionInspecciones = ({ onInspect }) => {
             const q = query(
                 ref,
                 where('activo.id', '==', asset.id),
-                where('clienteId', '==', user.uid) // Requerido por reglas de seguridad
+                where('clienteId', '==', dataScopeId) // Requerido por reglas de seguridad
             );
             const snapshot = await getDocs(q);
 

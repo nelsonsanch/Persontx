@@ -53,8 +53,10 @@ const DashboardInspecciones = () => {
                 setLoading(false);
             }
         };
-        fetchData();
-    }, [user]);
+        if (dataScopeId) {
+            fetchData();
+        }
+    }, [user, dataScopeId]);
 
     // Computed Data: History
     const filteredData = useMemo(() => {
