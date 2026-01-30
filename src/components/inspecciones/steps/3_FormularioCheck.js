@@ -35,9 +35,10 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
             }
 
         } else if (configRef) {
-            // Lógica Legacy (Extintores, Botiquines, etc.)
+            // Lógica Legacy extendida (Extintores, Botiquines, Maquinaria, etc.)
             configRef.campos.forEach(campo => {
-                if ((campo.type === 'checklist' || campo.type === 'checklist_with_quantity') && campo.options) {
+                const isValidType = ['checklist', 'checklist_with_quantity', 'tri_state_checklist'].includes(campo.type);
+                if (isValidType && campo.options) {
                     items = [...items, ...campo.options];
                 }
             });
@@ -272,19 +273,22 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                         className="me-3 rounded"
                         style={{
                             width: '60px', height: '60px',
-                            backgroundImage: activoSeleccionado.foto ? `url(${activoSeleccionado.foto})` : 'none',
+                            backgroundImage: (activoSeleccionado.foto || activoSeleccionado.foto_frente) ? `url(${activoSeleccionado.foto || activoSeleccionado.foto_frente})` : 'none',
                             backgroundColor: '#e9ecef',
                             backgroundSize: 'cover'
                         }}
                     >
-                        {!activoSeleccionado.foto && <span className="d-flex h-100 justify-content-center align-items-center">📦</span>}
+                        {!(activoSeleccionado.foto || activoSeleccionado.foto_frente) && <span className="d-flex h-100 justify-content-center align-items-center">📦</span>}
                     </div>
                     <div>
-                        <h5 className="mb-0">{activoSeleccionado.nombre || activoSeleccionado.tipo}</h5>
+                        <h5 className="mb-0">
+                            {activoSeleccionado.tipo_maquinaria ? `${activoSeleccionado.tipo_maquinaria} ${activoSeleccionado.marca || ''} ${activoSeleccionado.modelo || ''}` :
+                                activoSeleccionado.nombre || activoSeleccionado.tipo}
+                        </h5>
                         <small className="text-muted">
-                            {activoSeleccionado.codigo_interno || activoSeleccionado.codigo || activoSeleccionado.id || 'S/C'} | {activoSeleccionado.ubicacion}
+                            {activoSeleccionado.placa_interna || activoSeleccionado.serie_chasis || activoSeleccionado.codigo_interno || activoSeleccionado.codigo || activoSeleccionado.id || 'S/C'} | {activoSeleccionado.ubicacion}
                             <br />
-                            <strong>Familia:</strong> {activoSeleccionado.familia || 'N/A'} | <strong>Tipo:</strong> {activoSeleccionado.tipo_equipo || activoSeleccionado.tipo || 'N/A'}
+                            <strong>Familia:</strong> {activoSeleccionado.familia || 'N/A'} | <strong>Tipo:</strong> {activoSeleccionado.tipo_maquinaria || activoSeleccionado.tipo_equipo || activoSeleccionado.tipo || 'N/A'}
                         </small>
                     </div>
                     <div className="ms-auto">
@@ -294,7 +298,9 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
             </Card>
 
             <h5 className="mb-3">
-                {categoria === 'alturas' ? 'Inspección Detallada según Norma' : 'Lista de Chequeo Rápida'}
+                {categoria === 'alturas' ? 'Inspección Detallada según Norma' :
+                    categoria === 'maquinaria_pesada' ? 'Inspección Preoperacional (Diaria)' :
+                        'Lista de Chequeo Rápida'}
             </h5>
 
             {checklistItems.length === 0 && (
@@ -304,7 +310,56 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
             )}
 
             <div className="checklist-container mb-4">
-                {checklistItems.map((item, idx) => renderItem(item, idx))}
+                {checklistItems.map((item, idx) => {
+                    if (categoria === 'maquinaria_pesada') {
+                        // --- RENDER MAQUINARIA PESADA (Preoperacional 4 opciones) ---
+                        const estado = respuestas[item];
+                        return (
+                            <Card key={idx} className={`mb-2 border-${estado === 'Malo' ? 'danger' : estado === 'Regular' ? 'warning' : estado === 'Bueno' ? 'success' : 'light'}`}>
+                                <Card.Body className="p-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <span className="fw-medium">{item}</span>
+                                    <div className="btn-group" role="group">
+                                        <Button
+                                            variant={estado === 'Bueno' ? 'success' : 'outline-success'}
+                                            size="sm"
+                                            onClick={() => handleCheck(item, 'Bueno')}
+                                            title="Bueno"
+                                        >
+                                            Bueno
+                                        </Button>
+                                        <Button
+                                            variant={estado === 'Regular' ? 'warning' : 'outline-warning'}
+                                            size="sm"
+                                            onClick={() => handleCheck(item, 'Regular')}
+                                            title="Regular"
+                                            className={estado === 'Regular' ? 'text-dark' : ''}
+                                        >
+                                            Regular
+                                        </Button>
+                                        <Button
+                                            variant={estado === 'Malo' ? 'danger' : 'outline-danger'}
+                                            size="sm"
+                                            onClick={() => handleCheck(item, 'Malo')}
+                                            title="Malo"
+                                        >
+                                            Malo
+                                        </Button>
+                                        <Button
+                                            variant={estado === 'N/A' ? 'secondary' : 'outline-secondary'}
+                                            size="sm"
+                                            onClick={() => handleCheck(item, 'N/A')}
+                                            title="No Aplica"
+                                        >
+                                            N/A
+                                        </Button>
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        );
+                    } else {
+                        return renderItem(item, idx);
+                    }
+                })}
             </div>
 
             <Form.Group className="mb-4">

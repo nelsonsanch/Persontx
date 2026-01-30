@@ -11,6 +11,7 @@ import { camillasConfig } from './configs/camillasConfig';
 import { activosConfig } from './configs/activosConfig';
 import { gabinetesConfig } from './configs/gabinetesConfig';
 import { alturasConfig } from './configs/alturasConfig';
+import { maquinariaPesadaConfig } from './configs/maquinariaPesadaConfig'; // Nuevo Módulo
 import { otrosConfig } from './configs/otrosConfig';
 
 // Importar Motor
@@ -30,6 +31,7 @@ const InventariosMain = () => {
         activos: <span className="me-2">🛠️</span>,
         gabinetes: <span className="me-2">🚒</span>,
         alturas: <span className="me-2">🧗</span>,
+        maquinaria: <span className="me-2">🚜</span>, // Icono Tractor
         otros: <span className="me-2">📦</span>
     };
 
@@ -76,6 +78,11 @@ const InventariosMain = () => {
                                     <Nav.Item>
                                         <Nav.Link eventKey="alturas" className="d-flex align-items-center mb-1">
                                             {icons.alturas} Equipos de Alturas
+                                        </Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <Nav.Link eventKey="maquinaria" className="d-flex align-items-center mb-1">
+                                            {icons.maquinaria} Maquinaria Pesada
                                         </Nav.Link>
                                     </Nav.Item>
                                     <Nav.Item>
@@ -127,6 +134,9 @@ const InventariosMain = () => {
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="alturas">
                                         <GestorInventario config={alturasConfig} />
+                                    </Tab.Pane>
+                                    <Tab.Pane eventKey="maquinaria">
+                                        <GestorInventario config={maquinariaPesadaConfig} />
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="otros">
                                         <GestorInventario config={otrosConfig} />

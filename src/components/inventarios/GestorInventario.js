@@ -902,6 +902,8 @@ const GestorInventario = ({ config, hidePdfButton = false }) => {
                 );
             case 'tri_state_checklist':
                 const checklistData = formData[field.name] || {};
+                const labels = field.columnLabels || ['Si', 'No', 'N/A']; // Soporte para etiquetas personalizadas
+
                 const handleTriStateChange = (item, val) => {
                     setFormData({ ...formData, [field.name]: { ...checklistData, [item]: val } });
                 };
@@ -912,9 +914,9 @@ const GestorInventario = ({ config, hidePdfButton = false }) => {
                             <thead>
                                 <tr>
                                     <th>Ítem</th>
-                                    <th className="text-center" width="50">Si</th>
-                                    <th className="text-center" width="50">No</th>
-                                    <th className="text-center" width="60">N/A</th>
+                                    <th className="text-center" width="80">{labels[0]}</th>
+                                    <th className="text-center" width="80">{labels[1]}</th>
+                                    <th className="text-center" width="80">{labels[2]}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -925,24 +927,24 @@ const GestorInventario = ({ config, hidePdfButton = false }) => {
                                             <Form.Check
                                                 type="radio"
                                                 name={`tri_state_${field.name}_${idx}`}
-                                                checked={checklistData[opt] === 'Si'}
-                                                onChange={() => handleTriStateChange(opt, 'Si')}
+                                                checked={checklistData[opt] === labels[0]}
+                                                onChange={() => handleTriStateChange(opt, labels[0])}
                                             />
                                         </td>
                                         <td className="text-center">
                                             <Form.Check
                                                 type="radio"
                                                 name={`tri_state_${field.name}_${idx}`}
-                                                checked={checklistData[opt] === 'No'}
-                                                onChange={() => handleTriStateChange(opt, 'No')}
+                                                checked={checklistData[opt] === labels[1]}
+                                                onChange={() => handleTriStateChange(opt, labels[1])}
                                             />
                                         </td>
                                         <td className="text-center">
                                             <Form.Check
                                                 type="radio"
                                                 name={`tri_state_${field.name}_${idx}`}
-                                                checked={checklistData[opt] === 'N/A'}
-                                                onChange={() => handleTriStateChange(opt, 'N/A')}
+                                                checked={checklistData[opt] === labels[2]}
+                                                onChange={() => handleTriStateChange(opt, labels[2])}
                                             />
                                         </td>
                                     </tr>

@@ -114,7 +114,7 @@ const SeleccionActivo = ({ categoria, config, onSelect, onBack }) => {
                                         style={{
                                             width: '80px',
                                             backgroundColor: '#f8f9fa',
-                                            backgroundImage: item.foto ? `url(${item.foto})` : 'none',
+                                            backgroundImage: (item.foto || item.foto_frente) ? `url(${item.foto || item.foto_frente})` : 'none',
                                             backgroundSize: 'cover',
                                             backgroundPosition: 'center',
                                             display: 'flex',
@@ -122,21 +122,22 @@ const SeleccionActivo = ({ categoria, config, onSelect, onBack }) => {
                                             justifyContent: 'center'
                                         }}
                                     >
-                                        {!item.foto && <span style={{ fontSize: '2rem' }}>📦</span>}
+                                        {!(item.foto || item.foto_frente) && <span style={{ fontSize: '2rem' }}>📦</span>}
                                     </div>
 
                                     {/* Info */}
                                     <Card.Body className="p-2">
-                                        <h6 className="mb-1 text-truncate" title={item.nombre || item.tipo || item.tipoAgente || 'Sin Nombre'}>
-                                            {item.tipo_equipo ? item.tipo_equipo :
-                                                item.tipoAgente ? `${item.tipoAgente} - ${item.capacidad || ''}` :
-                                                    item.tipo ? item.tipo :
-                                                        item.nombre || 'Ítem Sin Nombre'}
+                                        <h6 className="mb-1 text-truncate" title={item.nombre || item.tipo || item.tipoAgente || item.tipo_maquinaria || 'Sin Nombre'}>
+                                            {item.tipo_maquinaria ? `${item.tipo_maquinaria} ${item.marca || ''} ${item.modelo || ''}` :
+                                                item.tipo_equipo ? item.tipo_equipo :
+                                                    item.tipoAgente ? `${item.tipoAgente} - ${item.capacidad || ''}` :
+                                                        item.tipo ? item.tipo :
+                                                            item.nombre || 'Ítem Sin Nombre'}
                                         </h6>
 
                                         <div className="small text-muted mb-1">
                                             <Hash size={12} className="me-1" />
-                                            <strong>ID:</strong> {item.codigo_interno || item.codigo || item.id || 'S/C'}
+                                            <strong>ID:</strong> {item.placa_interna || item.serie_chasis || item.codigo_interno || item.codigo || item.id || 'S/C'}
                                         </div>
 
                                         <div className="small text-muted">
