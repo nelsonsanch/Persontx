@@ -38,7 +38,7 @@ service cloud.firestore {
     // REGLA PARA TRABAJADORES
     match /trabajadores/{trabajadorId} {
       allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
-      allow list: if request.query.limit <= 1; // Permitir buscar trabajador para login portal
+      allow list: if request.query.limit <= 1; // Permitir buscar trabajador por cédula (limitado)
       allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     // REGLA PARA NOVEDADES
@@ -55,7 +55,7 @@ service cloud.firestore {
     // REGLA PARA ENCUESTAS DE SALUD
     match /encuestas_salud/{encuestaId} {
       allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
-      allow list: if true; // DEBUG: Permitir lista abierta temporalmente
+      allow list: if request.query.limit <= 20; // Permitir al portal listar encuestas activas (limitado)
       allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
     }
     // REGLA PARA RESPUESTAS DE ENCUESTAS
