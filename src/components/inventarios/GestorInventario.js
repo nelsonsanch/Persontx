@@ -1048,10 +1048,10 @@ const GestorInventario = ({ config, hidePdfButton = false }) => {
 
                 if (diffDays < 0) {
                     variant = 'danger';
-                    msg = `Vencido hace ${Math.abs(diffDays)} dÃ­as`;
+                    msg = `Vencido hace ${Math.abs(diffDays)} días`;
                 } else if (diffDays <= 30) {
                     variant = 'warning';
-                    msg = `Vence en ${diffDays} dÃ­as`;
+                    msg = `Vence en ${diffDays} días`;
                     return (
                         <div className="d-flex flex-column align-items-center">
                             <span className="mb-1">{value}</span>
