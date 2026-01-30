@@ -1,13 +1,9 @@
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
-const { setGlobalOptions } = require("firebase-functions/v2");
+const functions = require("firebase-functions/v1");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 
 initializeApp();
 const db = getFirestore();
-
-// Configuración Global para Gen 2
-setGlobalOptions({ region: "us-central1" });
 
 // ============================================================================
 // CONFIGURACIÓN (Copia exacta del Frontend para garantizar consistencia)
@@ -146,82 +142,80 @@ const PREOP_CHECKLIST = [
 ];
 
 // ============================================================================
-// FUNCIONES CLOUD (Versión v2 - Mejor Compatibilidad Node 20+)
+// FUNCIONES CLOUD (Versión v1 - Compatibilidad Máxima)
+// Cambiado de Gen 2 a Gen 1 para evitar errores de infraestructura de Cloud Cloud Build
 // ============================================================================
 
-exports.validatePreOpInspection = onDocumentCreated("inspecciones_preoperacionales/{docId}", async (event) => {
+exports.onNewInspection = functions.region("us-east1").firestore
+    .document("inspecciones_preoperacionales/{docId}")
+    .onCreate(async (snap, context) => {
 
-    // En v2, 'event' contiene 'data' y 'params'
-    const snap = event.data;
-    const docId = event.params.docId;
+        const docId = context.params.docId;
 
-    if (!snap) {
-        // El documento fue borrado
-        return;
-    }
+        if (!snap.exists) {
+            return null;
+        }
 
-    const data = snap.data();
+        const data = snap.data();
 
-    // Evitar bucles infinitos si actualizamos el documento
-    if (data.server_validated) return;
+        // Evitar bucles infinitos
+        if (data.server_validated) return null;
 
-    console.log(`[Árbitro Digital V2] Validando inspección: ${docId}`);
+        console.log(`[Árbitro Digital V1] Validando inspección: ${docId}`);
 
-    // 1. Recalcular Score y Critical Fail
-    const checklistResponses = data.checklist || {};
-    let totalItems = 0;
-    let totalPass = 0;
-    let criticalFail = false;
+        // 1. Recalcular Score y Critical Fail
+        const checklistResponses = data.checklist || {};
+        let totalItems = 0;
+        let totalPass = 0;
+        let criticalFail = false;
 
-    PREOP_CHECKLIST.forEach(category => {
-        category.items.forEach(item => {
-            const response = checklistResponses[item.id];
+        PREOP_CHECKLIST.forEach(category => {
+            category.items.forEach(item => {
+                const response = checklistResponses[item.id];
 
-            // Si es "No Aplica" o no contestado, ignoramos
-            if (!response || response === 'NA') return;
+                // Si es "No Aplica" o no contestado, ignoramos
+                if (!response || response === 'NA') return;
 
-            totalItems++;
-            // Score metric: Bueno=1, Regular=0.5, Malo=0
-            if (response === 'BUENO') totalPass += 1;
-            if (response === 'REGULAR') totalPass += 0.5;
+                totalItems++;
+                // Score metric: Bueno=1, Regular=0.5, Malo=0
+                if (response === 'BUENO') totalPass += 1;
+                if (response === 'REGULAR') totalPass += 0.5;
 
-            // Detección de Falla Crítica
-            if (item.critical && response === 'MALO') {
-                criticalFail = true;
-                console.warn(`[ALERTA] Falla crítica detectada en item: ${item.label} (${item.id})`);
-            }
+                // Detección de Falla Crítica
+                if (item.critical && response === 'MALO') {
+                    criticalFail = true;
+                    console.warn(`[ALERTA] Falla crítica detectada en item: ${item.label} (${item.id})`);
+                }
+            });
         });
+
+        const maxScore = totalItems > 0 ? totalItems : 1;
+        const calculatedScore = (totalPass / maxScore) * 100;
+        const calculatedResult = criticalFail ? "RECHAZADO" : "APROBADO";
+
+        // 2. Comparar con lo que envió el cliente
+        const clientResult = data.resultado_global;
+        const clientScore = data.score;
+
+        const isScoreAccurate = Math.abs(calculatedScore - clientScore) < 1;
+        const isResultAccurate = calculatedResult === clientResult;
+
+        const updates = {
+            server_validated: true,
+            validated_at: new Date().toISOString()
+        };
+
+        if (!isResultAccurate || !isScoreAccurate) {
+            console.error(`[SEGURIDAD] Discrepancia detectada en Doc ${docId}. Cliente: ${clientResult} (${clientScore}). Servidor: ${calculatedResult} (${calculatedScore}). CORRIGIENDO.`);
+
+            updates.resultado_global = calculatedResult;
+            updates.score = Math.round(calculatedScore);
+            updates.items_criticos_fallidos = criticalFail;
+            updates.security_flag = "DATA_MISMATCH_CORRECTED";
+        } else {
+            console.log(`[OK] Inspección ${docId} validada correctamente. (Score: ${Math.round(calculatedScore)})`);
+        }
+
+        // 3. Update
+        return snap.ref.update(updates);
     });
-
-    const maxScore = totalItems > 0 ? totalItems : 1;
-    const calculatedScore = (totalPass / maxScore) * 100;
-    const calculatedResult = criticalFail ? "RECHAZADO" : "APROBADO";
-
-    // 2. Comparar con lo que envió el cliente
-    const clientResult = data.resultado_global;
-    const clientScore = data.score;
-
-    // Tolerancia pequeña por redondeo en floats, pero 'criticalFail' es booleano absoluto
-    const isScoreAccurate = Math.abs(calculatedScore - clientScore) < 1;
-    const isResultAccurate = calculatedResult === clientResult;
-
-    const updates = {
-        server_validated: true,
-        validated_at: new Date().toISOString()
-    };
-
-    if (!isResultAccurate || !isScoreAccurate) {
-        console.error(`[SEGURIDAD] Discrepancia detectada en Doc ${docId}. Cliente: ${clientResult} (${clientScore}). Servidor: ${calculatedResult} (${calculatedScore}). CORRIGIENDO.`);
-
-        updates.resultado_global = calculatedResult;
-        updates.score = Math.round(calculatedScore);
-        updates.items_criticos_fallidos = criticalFail;
-        updates.security_flag = "DATA_MISMATCH_CORRECTED"; // Marca para auditoría
-    } else {
-        console.log(`[OK] Inspección ${docId} validada correctamente. (Score: ${Math.round(calculatedScore)})`);
-    }
-
-    // 3. Escribir corrección/confirmación en Firestore
-    // snap.ref sigue funcionando en v2 para documentos Firestore
-    return snap.ref.update(updates);
-});
