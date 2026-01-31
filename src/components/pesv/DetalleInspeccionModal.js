@@ -1,12 +1,17 @@
 import React from 'react';
 import { Modal, Button, Row, Col, Badge, Card, Alert } from 'react-bootstrap';
-import { PREOP_CHECKLIST } from './inspeccionesConfig';
+import { PREOP_CHECKLIST, HEAVY_MACHINERY_CHECKLIST } from './inspeccionesConfig';
 import { CheckCircle, XCircle, AlertTriangle, MinusCircle } from 'lucide-react';
 
 const DetalleInspeccionModal = ({ show, onHide, inspection }) => {
     if (!inspection) return null;
 
-    const { checklist, maintenance_status_snapshot, resultado_global, score, observations, item_details } = inspection;
+    const { checklist, maintenance_status_snapshot, resultado_global, score, observations, item_details, tipo_activo } = inspection;
+
+    // Determine active checklist
+    const activeChecklist = tipo_activo === 'maquinaria' ? HEAVY_MACHINERY_CHECKLIST : PREOP_CHECKLIST;
+    const usageLabel = tipo_activo === 'maquinaria' ? 'Horas Motor' : 'Kilometraje';
+    const usageUnit = tipo_activo === 'maquinaria' ? ' Horas' : ' km';
 
     // Helper to get status color and icon
     const getStatusInfo = (status) => {
@@ -30,23 +35,46 @@ const DetalleInspeccionModal = ({ show, onHide, inspection }) => {
                         {resultado_global}
                     </Badge>
                     <Badge bg="info" className="ms-2">Score: {score}%</Badge>
+                    <Badge bg="secondary" className="ms-2 small">{tipo_activo === 'maquinaria' ? 'Maquinaria' : 'Vehículo'}</Badge>
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body className="p-4">
                 {/* Header Info */}
                 <Row className="mb-4">
                     <Col md={4}>
-                        <strong>Vehículo:</strong> {inspection.vehiculo_placa} <br />
+                        <strong>Equipo:</strong> {inspection.vehiculo_placa} <br />
                         <small className="text-muted">{inspection.vehiculo_marca}</small>
                     </Col>
                     <Col md={4}>
                         <strong>Fecha:</strong> {new Date(inspection.fecha_registro).toLocaleString()} <br />
-                        <strong>Inspector:</strong> {inspection.usuario_email}
+                        <strong>Inspector:</strong> {inspection.operador_nombre || inspection.usuario_email} <br />
+                        {inspection.operador_cedula && <small className="text-muted">ID: {inspection.operador_cedula}</small>}
                     </Col>
                     <Col md={4}>
-                        <strong>Kilometraje:</strong> {inspection.kilometraje_lectura?.toLocaleString()} km
+                        <strong>{usageLabel}:</strong> {inspection.lectura_uso?.toLocaleString() || inspection.kilometraje_lectura?.toLocaleString()}{usageUnit}
                     </Col>
                 </Row>
+
+                {/* Condiciones del Operador (NUEVO) */}
+                {(inspection.estado_salud || inspection.horas_sueno) && (
+                    <Alert variant={inspection.horas_sueno <= 6 ? 'danger' : 'light'} className="mb-4 border">
+                        <h6 className="fw-bold border-bottom pb-2">⚕️ Reporte de Operador</h6>
+                        <Row>
+                            <Col xs={6} md={3}>
+                                <strong>Salud:</strong> {inspection.estado_salud}
+                            </Col>
+                            <Col xs={6} md={3}>
+                                <strong>Sueño:</strong> {inspection.horas_sueno} horas
+                            </Col>
+                            <Col xs={12} md={6}>
+                                <strong>Medicamentos:</strong> {inspection.toma_medicamentos === 'Si' ? `SÍ (${inspection.nombre_medicamento})` : 'NO'}
+                            </Col>
+                        </Row>
+                        {inspection.horas_sueno <= 6 && (
+                            <div className="mt-2 fw-bold text-danger">⚠️ ALERTA: Fatiga reportada (≤ 6 horas).</div>
+                        )}
+                    </Alert>
+                )}
 
                 {/* Observaciones */}
                 {inspection.observaciones && (
@@ -76,9 +104,9 @@ const DetalleInspeccionModal = ({ show, onHide, inspection }) => {
                 )}
 
                 {/* Checklist Breakdown */}
-                <h6 className="border-bottom pb-2 mb-3 text-secondary">Checklist Detallado</h6>
+                <h6 className="border-bottom pb-2 mb-3 text-secondary">Checklist Detallado ({tipo_activo === 'maquinaria' ? 'Maquinaria' : 'Vehículo'})</h6>
                 <Row className="g-3">
-                    {PREOP_CHECKLIST.map((cat, idx) => (
+                    {activeChecklist.map((cat, idx) => (
                         <Col xs={12} lg={6} key={idx}>
                             <Card className="h-100 shadow-sm">
                                 <Card.Header className="py-2 bg-light fw-bold text-primary small">

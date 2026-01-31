@@ -3,8 +3,11 @@ import { Card, Nav } from 'react-bootstrap';
 import GestorInventario from '../inventarios/GestorInventario';
 import { vehiculosConfig } from '../inventarios/configs/vehiculosConfig';
 import { Car, ClipboardCheck, BarChart2 } from 'lucide-react';
+import IndicadoresPreoperacionales from './IndicadoresPreoperacionales';
+import { useAuth } from '../../hooks/useAuth';
 
 const GestionPESVMain = () => {
+    const { user, dataScopeId } = useAuth();
     const [activeTab, setActiveTab] = useState('vehiculos');
 
     return (
@@ -52,9 +55,8 @@ const GestionPESVMain = () => {
                         </div>
                     )}
                     {activeTab === 'indicadores' && (
-                        <div className="p-5 text-center text-muted">
-                            <h4>🚧 Módulo en Construcción</h4>
-                            <p>Aquí se visualizarán los indicadores de gestión del PESV.</p>
+                        <div className="p-3">
+                            <IndicadoresPreoperacionales user={{ ...user, uid: dataScopeId }} />
                         </div>
                     )}
                 </Card.Body>

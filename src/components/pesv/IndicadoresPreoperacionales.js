@@ -3,7 +3,7 @@ import { Card, Row, Col, Badge, Table, Button } from 'react-bootstrap';
 import { db } from '../../firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { AlertTriangle, CheckCircle, XCircle, Activity, Eye } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Activity, Eye, Truck } from 'lucide-react';
 import DetalleInspeccionModal from './DetalleInspeccionModal';
 
 const IndicadoresPreoperacionales = ({ user }) => {
@@ -13,7 +13,8 @@ const IndicadoresPreoperacionales = ({ user }) => {
         total: 0,
         approved: 0,
         rejected: 0,
-        rate: 0
+        rate: 0,
+        totalDistance: 0
     });
     const [chartData, setChartData] = useState([]);
     const [criticalVehicles, setCriticalVehicles] = useState([]);
@@ -48,7 +49,10 @@ const IndicadoresPreoperacionales = ({ user }) => {
         const rejected = total - approved;
         const rate = total > 0 ? ((approved / total) * 100).toFixed(1) : 0;
 
-        setStats({ total, approved, rejected, rate });
+        // Sumar distancia recorrida (asegurando que sea número)
+        const totalDistance = data.reduce((acc, curr) => acc + (Number(curr.distancia_recorrida) || 0), 0);
+
+        setStats({ total, approved, rejected, rate, totalDistance });
 
         // 2. Failures by Category/Item
         const failures = {};
@@ -113,6 +117,19 @@ const IndicadoresPreoperacionales = ({ user }) => {
                                     <h2 className="fw-bold mb-0">{stats.total}</h2>
                                 </div>
                                 <Activity size={32} className="opacity-50" />
+                            </div>
+                        </Card.Body>
+                    </Card>
+                </Col>
+                <Col xs={12} md={3}>
+                    <Card className="h-100 border-0 shadow-sm bg-info text-white">
+                        <Card.Body>
+                            <div className="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 className="opacity-75">Km Recorridos (Mes)</h6>
+                                    <h2 className="fw-bold mb-0">{(stats.totalDistance || 0).toLocaleString()} km</h2>
+                                </div>
+                                <Truck size={32} className="opacity-50" />
                             </div>
                         </Card.Body>
                     </Card>

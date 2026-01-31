@@ -1285,7 +1285,7 @@ const GestorInventario = ({ config, hidePdfButton = false }) => {
                                                 className="me-2"
                                                 title="Hoja de Vida (Mantenimientos)"
                                                 onClick={() => setExpandedVehicleId(expandedVehicleId === item.id ? null : item.id)}
-                                                hidden={config.filtroCategoria !== 'vehiculos'}
+                                                hidden={config.filtroCategoria !== 'vehiculos' && config.filtroCategoria !== 'maquinaria_pesada'}
                                             >
                                                 <Wrench size={16} />
                                             </Button>

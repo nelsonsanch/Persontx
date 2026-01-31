@@ -8,19 +8,24 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../../hooks/useAuth';
 import { Wrench, Trash2, CheckCircle, AlertTriangle, TrendingUp, X } from 'lucide-react';
 
-const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
+const MantenimientoVehiculo = ({ show, onHide, vehiculo, initialType }) => {
     const { user, dataScopeId } = useAuth();
     const [registros, setRegistros] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('historial');
+    const [activeTab, setActiveTab] = useState(initialType ? 'nuevo' : 'historial'); // Auto-switch tab if type provided
     const [uploading, setUploading] = useState(false);
+
+    // Detectar si es maquinaria (usa horas en vez de km)
+    const isMachinery = vehiculo?.categoria === 'maquinaria_pesada' || vehiculo?.tipo_maquinaria || vehiculo?.horometro_actual !== undefined;
+    const unitLabel = isMachinery ? 'Horas' : 'km';
+    const measureLabel = isMachinery ? 'Horómetro' : 'Kilometraje';
 
     // Form State
     const initialForm = {
-        tipo_evento: 'Mantenimiento Preventivo',
+        tipo_evento: initialType || 'Mantenimiento Preventivo', // Pre-select type
         fecha_evento: new Date().toISOString().split('T')[0],
-        kilometraje_evento: '',
-        proximo_cambio_kilometraje: '',
+        kilometraje_evento: '', // Se usa este mismo campo para Horas en maquinaria
+        proximo_cambio_kilometraje: '', // Se usa este mismo campo para Horas en maquinaria
         proximo_vencimiento_fecha: '',
         descripcion: '',
         proveedor: '',
@@ -90,7 +95,8 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                 costo_total: Number(formData.costo_total) || 0,
                 kilometraje_evento: Number(formData.kilometraje_evento) || 0,
                 proximo_cambio_kilometraje: formData.proximo_cambio_kilometraje ? Number(formData.proximo_cambio_kilometraje) : null,
-                proximo_vencimiento_fecha: formData.proximo_vencimiento_fecha || null
+                proximo_vencimiento_fecha: formData.proximo_vencimiento_fecha || null,
+                tipo_activo: isMachinery ? 'maquinaria' : 'vehiculo' // Helpful Metadata
             });
 
             setFormData(initialForm);
@@ -110,9 +116,9 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
     };
 
     // --- LÓGICA DE UI Y MÉTRICAS ---
-    const kmInicial = Number(vehiculo?.kilometraje_inicial) || 0;
-    const kmActual = Number(vehiculo?.kilometraje_actual) || 0;
-    const kmRecorrido = kmActual - kmInicial;
+    const usageInicial = isMachinery ? (Number(vehiculo?.horometro_inicial) || 0) : (Number(vehiculo?.kilometraje_inicial) || 0);
+    const usageActual = isMachinery ? (Number(vehiculo?.horometro_actual) || 0) : (Number(vehiculo?.kilometraje_actual) || 0);
+    const usageRecorrido = usageActual - usageInicial;
     const totalGastado = registros.reduce((acc, curr) => acc + (curr.costo_total || 0), 0);
 
     const getRowStatus = (reg) => {
@@ -128,10 +134,10 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
         }
 
         if (reg.proximo_cambio_kilometraje > 0) {
-            const restante = reg.proximo_cambio_kilometraje - kmActual;
-            if (restante <= 0) return { bg: 'danger', icon: <AlertTriangle size={14} />, text: `Vencido por ${Math.abs(restante).toLocaleString()} km` };
-            if (restante <= 500) return { bg: 'warning', icon: <AlertTriangle size={14} />, text: `Faltan ${restante.toLocaleString()} km` };
-            return { bg: 'success', icon: <CheckCircle size={14} />, text: `Faltan ${restante.toLocaleString()} km` };
+            const restante = reg.proximo_cambio_kilometraje - usageActual;
+            if (restante <= 0) return { bg: 'danger', icon: <AlertTriangle size={14} />, text: `Vencido por ${Math.abs(restante).toLocaleString()} ${unitLabel}` };
+            if (restante <= (isMachinery ? 50 : 500)) return { bg: 'warning', icon: <AlertTriangle size={14} />, text: `Faltan ${restante.toLocaleString()} ${unitLabel}` }; // 50 hours warning vs 500 km
+            return { bg: 'success', icon: <CheckCircle size={14} />, text: `Faltan ${restante.toLocaleString()} ${unitLabel}` };
         }
 
         return null;
@@ -153,7 +159,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
 
             <div className="d-flex align-items-center gap-2 mb-4 border-bottom pb-2">
                 <Wrench size={24} className="text-primary" />
-                <h4 className="m-0 text-primary">Hoja de Vida: {vehiculo?.marca} {vehiculo?.linea} ({vehiculo?.placa})</h4>
+                <h4 className="m-0 text-primary">Hoja de Vida: {vehiculo?.marca} {vehiculo?.modelo || vehiculo?.linea} ({vehiculo?.placa || vehiculo?.placa_interna || vehiculo?.serie_chasis})</h4>
             </div>
 
             {/* 1. Resumen de Kilometrajes e Inversión */}
@@ -166,14 +172,14 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                 </div>
                 <div className="col-md-3">
                     <div className="card border-0 shadow-sm p-3 text-center bg-light">
-                        <h3 className="text-dark">{kmActual.toLocaleString()} km</h3>
-                        <small className="text-muted fw-bold">Kilometraje Actual</small>
+                        <h3 className="text-dark">{usageActual.toLocaleString()} {unitLabel}</h3>
+                        <small className="text-muted fw-bold">{measureLabel} Actual</small>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="card border-0 shadow-sm p-3 text-center bg-light">
-                        <h3 className="text-info">{kmRecorrido.toLocaleString()} km</h3>
-                        <small className="text-muted fw-bold">Recorrido Total (En Empresa)</small>
+                        <h3 className="text-info">{usageRecorrido.toLocaleString()} {unitLabel}</h3>
+                        <small className="text-muted fw-bold">Uso Total (Empresa)</small>
                     </div>
                 </div>
                 <div className="col-md-3">
@@ -193,7 +199,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                                     <th>Fecha</th>
                                     <th>Tipo</th>
                                     <th>Descripción</th>
-                                    <th>Km Evento</th>
+                                    <th>{measureLabel} Evento</th>
                                     <th>Costo</th>
                                     <th>Próx. Cambio</th>
                                     <th>Estado / Alerta</th>
@@ -217,7 +223,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                                                 </Badge>
                                             </td>
                                             <td>{reg.descripcion}</td>
-                                            <td>{reg.kilometraje_evento?.toLocaleString()} km</td>
+                                            <td>{reg.kilometraje_evento?.toLocaleString()} {unitLabel}</td>
                                             <td>${reg.costo_total?.toLocaleString()}</td>
                                             <td>
                                                 {reg.proximo_vencimiento_fecha ? (
@@ -226,7 +232,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                                                     </small>
                                                 ) : reg.proximo_cambio_kilometraje ? (
                                                     <small className="text-muted">
-                                                        Meta: {reg.proximo_cambio_kilometraje.toLocaleString()} km
+                                                        Meta: {reg.proximo_cambio_kilometraje.toLocaleString()} {unitLabel}
                                                     </small>
                                                 ) : '-'}
                                             </td>
@@ -259,7 +265,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                                 {registros.length === 0 && (
                                     <tr>
                                         <td colSpan="9" className="text-center text-muted py-4">
-                                            No hay registros en la hoja de vida de este vehículo.
+                                            No hay registros en la hoja de vida de este activo.
                                         </td>
                                     </tr>
                                 )}
@@ -278,9 +284,24 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                                 <Form.Select name="tipo_evento" value={formData.tipo_evento} onChange={handleInputChange} required>
                                     <option>Mantenimiento Preventivo</option>
                                     <option>Cambio de Aceite</option>
-                                    <option>Cambio de Llantas</option>
-                                    <option>Renovación SOAT</option>
-                                    <option>Renovación Tecnomecánica</option>
+                                    {isMachinery ? (
+                                        <>
+                                            <option>Renovación Póliza / Seguro</option>
+                                            <option>Renovación Certificación / Tecno</option>
+                                            <option>Certificación ONAC</option>
+                                            <option>Cambio de Filtros</option>
+                                            <option>Cambio de Orugas/Llantas</option>
+                                            <option>Mantenimiento Hidráulico</option>
+                                            <option>Engrase General</option>
+                                            <option>Revisión Cuchiarón/Implemento</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option>Cambio de Llantas</option>
+                                            <option>Renovación SOAT</option>
+                                            <option>Renovación Tecnomecánica</option>
+                                        </>
+                                    )}
                                     <option>Mantenimiento Correctivo</option>
                                     <option>Documentación / Legal</option>
                                     <option>Mejora / Accesorio</option>
@@ -293,28 +314,28 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                                 <Form.Control type="date" name="fecha_evento" value={formData.fecha_evento} onChange={handleInputChange} required />
                             </div>
                             <div className="col-md-4 mb-3">
-                                <Form.Label>Kilometraje al momento (Km)</Form.Label>
-                                <Form.Control type="number" name="kilometraje_evento" value={formData.kilometraje_evento} onChange={handleInputChange} placeholder="Ej: 50000" required />
+                                <Form.Label>{measureLabel} al momento ({unitLabel})</Form.Label>
+                                <Form.Control type="number" name="kilometraje_evento" value={formData.kilometraje_evento} onChange={handleInputChange} placeholder={`Ej: 5000`} required />
                             </div>
                         </div>
 
-                        {/* Alerta Proactiva (Kilometraje o Fecha) */}
+                        {/* Alerta Proactiva (Kilometraje/Horas o Fecha) */}
                         <div className="alert alert-light border-primary border-start border-4 mb-3">
                             <div className="d-flex align-items-center gap-2 mb-2">
                                 <TrendingUp size={20} className="text-primary" />
                                 <strong>Programación de Próximo Cambio</strong>
-                                {formData.tipo_evento === 'Cambio de Aceite' && <Badge bg="danger" className="ms-2">Obligatorio</Badge>}
+                                {(formData.tipo_evento === 'Cambio de Aceite' || formData.tipo_evento === 'Engrase General') && <Badge bg="danger" className="ms-2">Obligatorio</Badge>}
                             </div>
                             <div className="row align-items-center">
                                 <div className="col-md-6">
                                     <small className="text-muted d-block mb-1">
-                                        {formData.tipo_evento.includes('SOAT') || formData.tipo_evento.includes('Tecno') || formData.tipo_evento.includes('Legal')
+                                        {formData.tipo_evento.includes('SOAT') || formData.tipo_evento.includes('Certificación') || formData.tipo_evento.includes('Legal') || formData.tipo_evento.includes('Seguro') || formData.tipo_evento.includes('Póliza') || formData.tipo_evento.includes('Tecno')
                                             ? "Para documentos, define la fecha de vencimiento."
-                                            : "Para mantenimientos mecánicos, define el kilometraje meta."}
+                                            : `Para mantenimientos mecánicos, define el ${measureLabel.toLowerCase()} meta.`}
                                     </small>
                                 </div>
                                 <div className="col-md-6">
-                                    {formData.tipo_evento.includes('SOAT') || formData.tipo_evento.includes('Tecno') || formData.tipo_evento.includes('Legal') ? (
+                                    {formData.tipo_evento.includes('SOAT') || formData.tipo_evento.includes('Certificación') || formData.tipo_evento.includes('Legal') || formData.tipo_evento.includes('Seguro') || formData.tipo_evento.includes('Póliza') || formData.tipo_evento.includes('Tecno') ? (
                                         <Form.Control
                                             type="date"
                                             name="proximo_vencimiento_fecha"
@@ -328,8 +349,8 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                                             name="proximo_cambio_kilometraje"
                                             value={formData.proximo_cambio_kilometraje || ''}
                                             onChange={handleInputChange}
-                                            placeholder="Ej: Si cambia a los 50.000, prox cambio 55.000"
-                                            required={formData.tipo_evento === 'Cambio de Aceite'}
+                                            placeholder={`Ej: Prox cambio a los ${isMachinery ? '5000' : '50000'} ${unitLabel}`}
+                                            required={formData.tipo_evento === 'Cambio de Aceite' || formData.tipo_evento === 'Engrase General'}
                                         />
                                     )}
                                 </div>
@@ -339,7 +360,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
                         <div className="row">
                             <div className="col-md-6 mb-3">
                                 <Form.Label>Proveedor / Taller</Form.Label>
-                                <Form.Control type="text" name="proveedor" value={formData.proveedor} onChange={handleInputChange} placeholder="Ej: Serviteca Los Héroes" required />
+                                <Form.Control type="text" name="proveedor" value={formData.proveedor} onChange={handleInputChange} placeholder="Ej: Talleres Caterpillar" required />
                             </div>
                             <div className="col-md-3 mb-3">
                                 <Form.Label>Costo Total ($)</Form.Label>
@@ -353,7 +374,7 @@ const MantenimientoVehiculo = ({ show, onHide, vehiculo }) => {
 
                         <div className="mb-3">
                             <Form.Label>Descripción del Trabajo</Form.Label>
-                            <Form.Control as="textarea" rows={3} name="descripcion" value={formData.descripcion} onChange={handleInputChange} placeholder="Detalles de lo que se hizo (Cambio de aceite, filtros, frenos...)" required />
+                            <Form.Control as="textarea" rows={3} name="descripcion" value={formData.descripcion} onChange={handleInputChange} placeholder="Detalles de lo que se hizo (Cambio de aceite, filtros...)" required />
                         </div>
 
                         <div className="mb-4">

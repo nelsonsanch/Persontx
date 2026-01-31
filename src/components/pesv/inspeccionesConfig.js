@@ -130,3 +130,81 @@ export const PREOP_CHECKLIST = [
         ]
     }
 ];
+
+export const HEAVY_MACHINERY_CHECKLIST = [
+    {
+        category: "Seguridad personal y del área",
+        items: [
+            { id: "seg_epp", label: "EPP completo según tarea (casco, botas, guantes, gafas, chaleco, etc.)", critical: true },
+            { id: "seg_area", label: "Área de trabajo señalizada y sin personas en zona de riesgo", critical: true },
+            { id: "seg_terreno", label: "Condiciones del terreno (pendientes, huecos, taludes, obstáculos)", critical: true },
+        ]
+    },
+    {
+        category: "Documentos y control",
+        items: [
+            { id: "doc_operador", label: "Operador autorizado/competente y permiso interno vigente", critical: true },
+            { id: "doc_bitacora", label: "Bitácora/permiso de trabajo del día", critical: false },
+        ]
+    },
+    {
+        category: "Inspección visual exterior",
+        items: [
+            { id: "vis_fugas", label: "Fugas visibles (aceite, combustible, hidráulico, refrigerante)", critical: true },
+            { id: "vis_mangueras", label: "Estado de mangueras, acoples y conexiones hidráulicas", critical: true },
+            { id: "vis_guardas", label: "Guardas y protecciones instaladas", critical: true },
+            { id: "vis_llantas", label: "Llantas/orugas (presión, cortes, tensado, rodillos)", critical: true },
+            { id: "vis_pernos", label: "Pernos y pasadores de implementos con seguros", critical: true },
+            { id: "vis_implemento", label: "Implemento (dientes/cuchilla/pasadores) sin fisuras", critical: true },
+            { id: "vis_rops", label: "ROPS/FOPS, barandas, escalas y pasamanos", critical: true },
+        ]
+    },
+    {
+        category: "Fluidos (niveles)",
+        items: [
+            { id: "fl_motor", label: "Aceite de motor", critical: true },
+            { id: "fl_refrig", label: "Refrigerante", critical: true },
+            { id: "fl_combust", label: "Combustible", critical: false },
+            { id: "fl_hidraulico", label: "Aceite hidráulico", critical: true },
+            { id: "fl_transmision", label: "Transmisión/convertidor (si aplica)", critical: true },
+            { id: "fl_drenaje", label: "Drenaje de agua del decantador de combustible", critical: false },
+        ]
+    },
+    {
+        category: "Cabina y controles",
+        items: [
+            { id: "cab_orden", label: "Cabina sin objetos sueltos; pedales/controles libres", critical: false },
+            { id: "cab_asiento", label: "Asiento ajustado y en buen estado", critical: false },
+            { id: "cab_cinturon", label: "Cinturón de seguridad funcional", critical: true },
+            { id: "cab_espejos", label: "Espejos/cámara limpios y ajustados", critical: true },
+            { id: "cab_extintor", label: "Extintor presente, asegurado y accesible", critical: true },
+            { id: "cab_botiquin", label: "Botiquín/kit emergencia disponible", critical: false },
+        ]
+    },
+    {
+        category: "Arranque y tablero",
+        items: [
+            { id: "arr_bateria", label: "Batería/interruptor principal y bornes", critical: false },
+            { id: "arr_alarmas_tab", label: "Sin alarmas críticas en tablero al encender", critical: true },
+            { id: "arr_indicadores", label: "Indicadores en rango (presión aceite, temperatura, voltaje)", critical: true },
+        ]
+    },
+    {
+        category: "Pruebas funcionales",
+        items: [
+            { id: "func_bocina", label: "Bocina/claxon", critical: true },
+            { id: "func_alarma_rev", label: "Alarma de reversa", critical: true },
+            { id: "func_luces", label: "Luces de trabajo/direccionales/baliza", critical: true },
+            { id: "func_freno", label: "Freno de servicio y estacionamiento", critical: true },
+            { id: "func_direccion", label: "Dirección/giro", critical: true },
+            { id: "func_hidraulicos", label: "Implementos/hidráulicos sin ruidos anormales", critical: true },
+            { id: "func_vibracion", label: "Sin vibraciones/ruidos/olor a quemado inusual", critical: true },
+        ]
+    },
+    {
+        category: "Cierre de inspección",
+        items: [
+            { id: "cierr_checklist", label: "Checklist diligenciado y novedades reportadas", critical: true },
+        ]
+    }
+];
