@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Nav, Button, Row, Col, Form, Badge, Table, Alert } from 'react-bootstrap';
+import { Card, Nav, Button, Row, Col, Form, Badge, Table, Alert, Modal } from 'react-bootstrap';
 import { db } from '../../firebase';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, orderBy } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
@@ -42,6 +42,10 @@ const InspeccionesPreoperacionalesMain = () => {
         ruta_destino: ''
     });
     const [checklistResponses, setChecklistResponses] = useState({});
+
+    // Estado para Modal de Alerta
+    const [showWarningModal, setShowWarningModal] = useState(false);
+    const [warningData, setWarningData] = useState(null);
 
     // Cargar Activos (Vehículos y Maquinaria)
     useEffect(() => {
@@ -252,36 +256,76 @@ const InspeccionesPreoperacionalesMain = () => {
             }
         }
 
-        setLoading(true);
-        try {
-            const usageVal = Number(formData.kilometraje_lectura);
+        // VALIDACIÓN INTELIGENTE DE KILOMETRAJE / HORAS
+        const usageVal = Number(formData.kilometraje_lectura);
+        const currentUsage = Number(selectedAsset.kilometraje_actual || selectedAsset.horometro_actual) || 0;
+        const usageUnit = selectedAsset.tipo_activo === 'maquinaria' ? 'Horas' : 'Kilómetros';
 
+        // Umbrales de Seguridad
+        const MAX_DELTA_KM = 3000; // Máximo 3000 km de diferencia aceptable sin confirmación
+        const MAX_DELTA_HOURS = 50; // Máximo 50 horas de diferencia aceptable sin confirmación
+
+        const delta = usageVal - currentUsage;
+        const threshold = selectedAsset.tipo_activo === 'maquinaria' ? MAX_DELTA_HOURS : MAX_DELTA_KM;
+
+        // 1. Validación de valor menor al actual (Inconsistencia)
+        if (usageVal < currentUsage) {
+            if (!window.confirm(`⚠️ DETECTADA INCONSISTENCIA:\n\nEl valor ingresado (${usageVal}) es MENOR al actual registrado (${currentUsage}).\n\n¿Estás seguro que el dato es correcto?`)) {
+                return;
+            }
+        }
+
+        // 2. Validación de "Salto Lógico" (Garbage In Prevention)
+        if (delta > threshold) {
+            setWarningData({
+                current: currentUsage,
+                newVal: usageVal,
+                delta: delta,
+                unit: usageUnit
+            });
+            setShowWarningModal(true);
+            return; // Detener flujo, esperar confirmación del modal
+        }
+
+        // Si pasa validaciones, guardar directo
+        await executeSave();
+    };
+
+    const executeSave = async () => {
+        setShowWarningModal(false); // Cerrar modal si estaba abierto
+        setLoading(true);
+
+        // Recalcular valores necesarios dentro del closure actual o usar refs/state
+        // NOTA: Como executeSave se llama asíncronamente, debemos asegurar que formData y otros estados sean actuales.
+        // En React funcional, esto funciona bien si executeSave se define en el render cycle.
+
+        const { criticalFail, score } = calculateResult();
+        const resultadoGlobal = criticalFail ? "RECHAZADO" : "APROBADO";
+        const usageVal = Number(formData.kilometraje_lectura);
+
+        try {
             await addDoc(collection(db, 'inspecciones_preoperacionales'), {
                 fecha_registro: new Date().toISOString(),
                 clienteId: dataScopeId,
                 usuario_id: user.uid,
                 usuario_email: user.email,
-                vehiculo_id: selectedAsset.id, // Keeping field name for compatibility
+                vehiculo_id: selectedAsset.id,
                 tipo_activo: selectedAsset.tipo_activo,
-                // Fallback robusto para maquinaria que no tiene "placa"
                 vehiculo_placa: selectedAsset.placa || selectedAsset.placa_interna || selectedAsset.serie_chasis || selectedAsset.id_interno || 'S/N',
                 vehiculo_marca: `${selectedAsset.marca} ${selectedAsset.modelo}`,
-                lectura_uso: usageVal, // Generic field for km or hours
+                lectura_uso: usageVal,
                 checklist: checklistResponses,
                 maintenance_status_snapshot: maintenanceStatus,
                 resultado_global: resultadoGlobal,
                 score: Math.round(score),
-                score: Math.round(score),
                 observaciones: formData.observaciones,
                 items_criticos_fallidos: criticalFail,
-                // Datos del Operador
                 operador_nombre: formData.operador_nombre,
                 operador_cedula: formData.operador_cedula,
                 estado_salud: formData.estado_salud,
                 horas_sueno: Number(formData.horas_sueno),
                 toma_medicamentos: formData.toma_medicamentos,
                 nombre_medicamento: formData.nombre_medicamento,
-                // Ruta y Distancia (NUEVO)
                 ruta_origen: formData.ruta_origen || '',
                 ruta_destino: formData.ruta_destino || '',
                 distancia_recorrida: (usageVal > (Number(selectedAsset.kilometraje_actual || selectedAsset.horometro_actual) || 0))
@@ -729,14 +773,55 @@ const InspeccionesPreoperacionalesMain = () => {
                         </div>
                     )}
                     {activeTab === 'historial' && (userRole === 'cliente' || userRole === 'admin') && (
-                        <HistorialPreoperacionales vehiculos={activos} user={{ ...user, uid: dataScopeId }} />
+                        <HistorialPreoperacionales
+                            vehiculos={activos}
+                            user={{ ...user, uid: dataScopeId }}
+                            userRole={userRole}
+                        />
                     )}
 
                     {activeTab === 'indicadores' && (userRole === 'cliente' || userRole === 'admin') && (
-                        <IndicadoresPreoperacionales user={{ ...user, uid: dataScopeId }} />
+                        <IndicadoresPreoperacionales user={{ ...user, uid: dataScopeId }} inventario={activos} />
                     )}
                 </Card.Body>
             </Card>
+
+            {/* MODAL DE ALERTA ROJA (DATOS ATÍPICOS) */}
+            <Modal show={showWarningModal} onHide={() => setShowWarningModal(false)} centered backdrop="static" keyboard={false}>
+                <Modal.Header className="bg-danger text-white">
+                    <Modal.Title className="fw-bold fs-5">
+                        <AlertTriangle size={28} className="me-2" />
+                        AlerTA DE DATO ATÍPICO DETECTADO
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="text-center p-4">
+                    <div className="mb-4 text-danger opacity-75">
+                        <AlertTriangle size={64} />
+                    </div>
+                    <h4 className="fw-bold mb-3">¿Está seguro de este valor?</h4>
+                    <p className="fs-5 mb-4">
+                        Está intentando registrar una diferencia de <strong className="text-danger">{warningData?.delta?.toLocaleString()} {warningData?.unit}</strong>.
+                    </p>
+                    <div className="bg-light p-3 rounded text-start mb-4 border border-danger border-opacity-25">
+                        <div className="d-flex justify-content-between mb-2">
+                            <span className="text-muted">Valor Anterior:</span>
+                            <span className="fw-bold">{warningData?.current?.toLocaleString()}</span>
+                        </div>
+                        <div className="d-flex justify-content-between border-top pt-2">
+                            <span className="text-danger fw-bold">Nuevo Valor:</span>
+                            <span className="fw-bold text-danger fs-5">{warningData?.newVal?.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div className="d-grid gap-2">
+                        <Button variant="danger" size="lg" onClick={executeSave}>
+                            SÍ, EL DATO ES CORRECTO (Confirmar)
+                        </Button>
+                        <Button variant="outline-secondary" size="lg" onClick={() => setShowWarningModal(false)}>
+                            CANCELAR Y CORREGIR
+                        </Button>
+                    </div>
+                </Modal.Body>
+            </Modal>
         </div>
     );
 };

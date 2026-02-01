@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Table, Badge, Button, Row, Col, Form, InputGroup, Card } from 'react-bootstrap';
 import { db } from '../../firebase';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
-import { Eye, Search, Filter, Download } from 'lucide-react';
+import { Eye, Search, Filter, Download, Edit } from 'lucide-react';
 import DetalleInspeccionModal from './DetalleInspeccionModal';
+import { updateDoc, doc, limit, getDocs } from 'firebase/firestore';
+import { toast } from 'react-toastify';
 
-const HistorialPreoperacionales = ({ vehiculos, user }) => {
+const HistorialPreoperacionales = ({ vehiculos, user, userRole }) => {
     const [registros, setRegistros] = useState([]);
     const [filteredRegistros, setFilteredRegistros] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -81,6 +83,65 @@ const HistorialPreoperacionales = ({ vehiculos, user }) => {
     const handleViewDetail = (inspection) => {
         setSelectedInspection(inspection);
         setShowModal(true);
+    };
+
+    // Función de Corrección Administrativa (Solo Admins)
+    const handleEditUsage = async (inspection) => {
+        if (userRole !== 'admin' && user?.email !== 'nelsonsr.1983@gmail.com') return;
+
+        const currentVal = inspection.kilometraje_lectura || 0;
+        const newValStr = window.prompt(`✏️ CORRECCIÓN ADMINISTRATIVA:\n\nIngrese el nuevo valor de Kilometraje/Horómetro para esta inspección (Fecha: ${new Date(inspection.fecha_registro).toLocaleDateString()}).\n\nValor Actual: ${currentVal}`, currentVal);
+
+        if (newValStr === null) return; // Cancelado
+        const newVal = Number(newValStr);
+
+        if (isNaN(newVal) || newVal < 0) {
+            return toast.error("Valor inválido.");
+        }
+
+        if (newVal === currentVal) return;
+
+        try {
+            // 1. Actualizar el registro de inspección
+            await updateDoc(doc(db, 'inspecciones_preoperacionales', inspection.id), {
+                kilometraje_lectura: newVal,
+                lectura_uso: newVal // Asegurar compatibilidad
+            });
+
+            toast.success("Registro corregido exitosamente.");
+
+            // 2. Verificar si es la ÚLTIMA inspección de este vehículo para corregir el Activo
+            // Consultamos la última inspección registrada para este vehículo
+            const qLast = query(
+                collection(db, 'inspecciones_preoperacionales'),
+                where('vehiculo_id', '==', inspection.vehiculo_id),
+                orderBy('fecha_registro', 'desc'),
+                limit(1)
+            );
+
+            const snapshot = await getDocs(qLast);
+            if (!snapshot.empty) {
+                const lastInsp = snapshot.docs[0].data();
+
+                // Si la inspección que acabamos de editar ES la última (o tiene la misma fecha/ID)
+                if (snapshot.docs[0].id === inspection.id) {
+                    // Actualizamos el inventario con el valor corregido
+                    const assetRef = doc(db, 'inventarios', inspection.vehiculo_id);
+                    const isMachinery = inspection.tipo_activo === 'maquinaria';
+
+                    const updateData = isMachinery
+                        ? { horometro_actual: newVal }
+                        : { kilometraje_actual: newVal };
+
+                    await updateDoc(assetRef, updateData);
+                    toast.info("Estado del vehículo actualizado automáticamente (Rollback).");
+                }
+            }
+
+        } catch (error) {
+            console.error("Error corrigiendo uso:", error);
+            toast.error("Error al corregir el registro.");
+        }
     };
 
     const clearFilters = () => {
@@ -208,6 +269,16 @@ const HistorialPreoperacionales = ({ vehiculos, user }) => {
                                     )}
                                 </td>
                                 <td className="text-end pe-3">
+                                    {(userRole === 'admin' || user?.email === 'nelsonsr.1983@gmail.com') && (
+                                        <Button
+                                            variant="link"
+                                            className="text-warning p-0 me-2"
+                                            onClick={() => handleEditUsage(reg)}
+                                            title="[ADMIN] Corregir Lectura"
+                                        >
+                                            <Edit size={16} />
+                                        </Button>
+                                    )}
                                     <Button
                                         variant="link"
                                         className="text-primary p-0"
@@ -240,7 +311,7 @@ const HistorialPreoperacionales = ({ vehiculos, user }) => {
                 onHide={() => setShowModal(false)}
                 inspection={selectedInspection}
             />
-        </div>
+        </div >
     );
 };
 

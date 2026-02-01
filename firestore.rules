@@ -5,8 +5,10 @@ service cloud.firestore {
     // FUNCIÓN HELPER para verificar acceso (Cliente dueño O Trabajador autorizado)
     function isAuthorized(clienteId) {
       let isOwner = request.auth.uid == clienteId;
-      let isWorker = get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.clienteId == clienteId;
-      return isOwner || isWorker;
+      let isSuperAdmin = request.auth.token.email == 'nelsonsr.1983@gmail.com';
+      // let isWorker = get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.clienteId == clienteId;
+      // Optimización: Chequear worker solo si no es owner ni admin (ahorra lecturas)
+      return isOwner || isSuperAdmin || (request.auth.uid != null && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.clienteId == clienteId);
     }
 
     // REGLA PARA USUARIOS
@@ -112,7 +114,8 @@ service cloud.firestore {
     // --- NUEVA REGLA PARA INSPECCIONES PREOPERACIONALES ---
     match /inspecciones_preoperacionales/{document} {
       allow read, delete: if request.auth != null && isAuthorized(resource.data.clienteId);
-      allow create, update: if request.auth != null && isAuthorized(request.resource.data.clienteId);
+      allow create: if request.auth != null && isAuthorized(request.resource.data.clienteId);
+      allow update: if request.auth != null && (isAuthorized(request.resource.data.clienteId) || request.auth.token.email == 'nelsonsr.1983@gmail.com');
     }
   }
 }

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Badge, Table, Button } from 'react-bootstrap';
+import { Card, Row, Col, Badge, Table, Button, Form } from 'react-bootstrap';
 import { db } from '../../firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { AlertTriangle, CheckCircle, XCircle, Activity, Eye, Truck } from 'lucide-react';
 import DetalleInspeccionModal from './DetalleInspeccionModal';
 
-const IndicadoresPreoperacionales = ({ user }) => {
-    const [inspections, setInspections] = useState([]);
+const IndicadoresPreoperacionales = ({ user, inventario = [] }) => {
+    const [allData, setAllData] = useState([]); // Store all raw data
+    const [filteredData, setFilteredData] = useState([]);
+
+    // Core State (Restored)
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         total: 0,
@@ -18,10 +21,17 @@ const IndicadoresPreoperacionales = ({ user }) => {
     });
     const [chartData, setChartData] = useState([]);
     const [criticalVehicles, setCriticalVehicles] = useState([]);
-
-    // Modal State
     const [selectedInspection, setSelectedInspection] = useState(null);
     const [showModal, setShowModal] = useState(false);
+
+    // Filter States
+    const [filterVehicle, setFilterVehicle] = useState('');
+    const [filterYear, setFilterYear] = useState('');
+    const [filterMonth, setFilterMonth] = useState('');
+
+    // Derived Lists for Selects
+    const [availableVehicles, setAvailableVehicles] = useState([]);
+    const [availableYears, setAvailableYears] = useState([]);
 
     useEffect(() => {
         if (!user) return;
@@ -34,13 +44,65 @@ const IndicadoresPreoperacionales = ({ user }) => {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(d => d.data());
-            setInspections(data);
-            processData(data);
+
+            // 1. Initial Data Load & Extraction
+            setAllData(data);
+
+            // Extract Unique Vehicles from Inspections (Format: PLACA)
+            // We need to map these back to full names if possible, or just show PLACA if not in inventory
+            const inspectionPlates = new Set(data.map(d => d.vehiculo_placa).filter(Boolean));
+
+            // Create a Combined List of Objects { value: 'PLACA', label: '[VEH] PLACA - Marca Modelo' }
+            const combinedOptions = [];
+
+            // 1. Add Inventory Items (Preferred Source)
+            inventario.forEach(a => {
+                const placa = a.placa || a.placa_interna || a.serie_chasis || a.id_interno || 'S/N';
+                const label = `[${a.tipo_activo === 'maquinaria' ? 'MAQ' : 'VEH'}] ${placa} - ${a.marca} ${a.linea || a.modelo || ''}`;
+                combinedOptions.push({ value: placa, label });
+            });
+
+            // 2. Add Historical Items not in Inventory (Fallback)
+            inspectionPlates.forEach(placa => {
+                // Check if already added (by value/placa)
+                if (!combinedOptions.find(o => o.value === placa)) {
+                    combinedOptions.push({ value: placa, label: `[HISTÓRICO] ${placa}` });
+                }
+            });
+
+            // Sort by Label
+            combinedOptions.sort((a, b) => a.label.localeCompare(b.label));
+            setAvailableVehicles(combinedOptions);
+
+            // Extract Unique Years
+            const years = [...new Set(data.map(d => new Date(d.fecha_registro).getFullYear()))].sort((a, b) => b - a);
+            setAvailableYears(years);
+
             setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [user]);
+    }, [user, inventario]);
+
+    // Apply Filters when dependencies change
+    useEffect(() => {
+        let res = [...allData];
+
+        if (filterVehicle) {
+            res = res.filter(d => d.vehiculo_placa === filterVehicle);
+        }
+
+        if (filterYear) {
+            res = res.filter(d => new Date(d.fecha_registro).getFullYear().toString() === filterYear);
+        }
+
+        if (filterMonth) {
+            res = res.filter(d => (new Date(d.fecha_registro).getMonth() + 1).toString() === filterMonth);
+        }
+
+        setFilteredData(res);
+        processData(res);
+    }, [allData, filterVehicle, filterYear, filterMonth]);
 
     const processData = (data) => {
         // 1. Basic Stats
@@ -50,6 +112,7 @@ const IndicadoresPreoperacionales = ({ user }) => {
         const rate = total > 0 ? ((approved / total) * 100).toFixed(1) : 0;
 
         // Sumar distancia recorrida (asegurando que sea número)
+        // ESTRICTO: Solo suma lo recorrido en LAS INSPECCIONES FILTRADAS
         const totalDistance = data.reduce((acc, curr) => acc + (Number(curr.distancia_recorrida) || 0), 0);
 
         setStats({ total, approved, rejected, rate, totalDistance });
@@ -78,6 +141,13 @@ const IndicadoresPreoperacionales = ({ user }) => {
         setChartData(chart);
 
         // 3. Active Critical Alerts (Vehicles where LAST inspection was REJECTED)
+        // Note: For critical alerts, we might still want to see everything? 
+        // Or strictly filtered? User asked for filters on indicators. 
+        // Let's keep critical alerts based on filtered view or global?
+        // Usually "Active Alerts" implies current state of fleet. 
+        // But if filtering by "Last Year", showing current alerts might be confusing.
+        // Let's calculate alerts based on the filtered dataset to be consistent.
+
         const vehicleLastState = {};
         data.forEach(insp => {
             if (!insp.vehiculo_id) return;
@@ -106,6 +176,72 @@ const IndicadoresPreoperacionales = ({ user }) => {
 
     return (
         <div className="fade-in">
+            {/* Filters Row */}
+            <Card className="border-0 shadow-sm mb-4 p-3">
+                <Row className="g-3 align-items-end">
+                    <Col xs={12} md={4}>
+                        <Form.Label className="fw-bold text-muted small">Filtrar por Vehículo</Form.Label>
+                        <Form.Select
+                            value={filterVehicle}
+                            onChange={(e) => setFilterVehicle(e.target.value)}
+                            className="bg-light border-0 fw-bold"
+                        >
+                            <option value="">-- Todos los Vehículos --</option>
+                            {availableVehicles.map(v => (
+                                <option key={v.label} value={v.value}>{v.label}</option>
+                            ))}
+                        </Form.Select>
+                    </Col>
+                    <Col xs={6} md={3}>
+                        <Form.Label className="fw-bold text-muted small">Año</Form.Label>
+                        <Form.Select
+                            value={filterYear}
+                            onChange={(e) => setFilterYear(e.target.value)}
+                            className="bg-light border-0 fw-bold"
+                        >
+                            <option value="">-- Todos --</option>
+                            {availableYears.map(y => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </Form.Select>
+                    </Col>
+                    <Col xs={6} md={3}>
+                        <Form.Label className="fw-bold text-muted small">Mes</Form.Label>
+                        <Form.Select
+                            value={filterMonth}
+                            onChange={(e) => setFilterMonth(e.target.value)}
+                            className="bg-light border-0 fw-bold"
+                        >
+                            <option value="">-- Todos --</option>
+                            {[
+                                { val: '1', label: 'Enero' }, { val: '2', label: 'Febrero' }, { val: '3', label: 'Marzo' },
+                                { val: '4', label: 'Abril' }, { val: '5', label: 'Mayo' }, { val: '6', label: 'Junio' },
+                                { val: '7', label: 'Julio' }, { val: '8', label: 'Agosto' }, { val: '9', label: 'Septiembre' },
+                                { val: '10', label: 'Octubre' }, { val: '11', label: 'Noviembre' }, { val: '12', label: 'Diciembre' }
+                            ].map(m => (
+                                <option key={m.val} value={m.val}>{m.label}</option>
+                            ))}
+                        </Form.Select>
+                    </Col>
+                    <Col xs={12} md={2}>
+                        {/* Reset Button if filters are active */}
+                        {(filterVehicle || filterYear || filterMonth) && (
+                            <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                className="w-100"
+                                onClick={() => {
+                                    setFilterVehicle('');
+                                    setFilterYear('');
+                                    setFilterMonth('');
+                                }}
+                            >
+                                Limpiar Filtros
+                            </Button>
+                        )}
+                    </Col>
+                </Row>
+            </Card>
             {/* KPI Cards */}
             <Row className="g-3 mb-4">
                 <Col xs={12} md={3}>
