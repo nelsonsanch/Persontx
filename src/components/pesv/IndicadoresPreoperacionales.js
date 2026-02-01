@@ -111,11 +111,16 @@ const IndicadoresPreoperacionales = ({ user, inventario = [] }) => {
         const rejected = total - approved;
         const rate = total > 0 ? ((approved / total) * 100).toFixed(1) : 0;
 
-        // Sumar distancia recorrida (asegurando que sea número)
-        // ESTRICTO: Solo suma lo recorrido en LAS INSPECCIONES FILTRADAS
-        const totalDistance = data.reduce((acc, curr) => acc + (Number(curr.distancia_recorrida) || 0), 0);
+        // Sumar distancia/horas separadas por tipo de activo
+        const totalKm = data
+            .filter(d => d.tipo_activo !== 'maquinaria')
+            .reduce((acc, curr) => acc + (Number(curr.distancia_recorrida) || 0), 0);
 
-        setStats({ total, approved, rejected, rate, totalDistance });
+        const totalHours = data
+            .filter(d => d.tipo_activo === 'maquinaria')
+            .reduce((acc, curr) => acc + (Number(curr.distancia_recorrida) || 0), 0);
+
+        setStats({ total, approved, rejected, rate, totalKm, totalHours });
 
         // 2. Failures by Category/Item
         const failures = {};
@@ -260,12 +265,20 @@ const IndicadoresPreoperacionales = ({ user, inventario = [] }) => {
                 <Col xs={12} md={3}>
                     <Card className="h-100 border-0 shadow-sm bg-info text-white">
                         <Card.Body>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 className="opacity-75 mb-0">Km Recorridos</h6>
+                                    <h3 className="fw-bold mb-0">{(stats.totalKm || 0).toLocaleString()} km</h3>
+                                </div>
+                                <Truck size={28} className="opacity-50" />
+                            </div>
+                            <div className="border-top border-white opacity-25 mb-3"></div>
                             <div className="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 className="opacity-75">Km Recorridos (Mes)</h6>
-                                    <h2 className="fw-bold mb-0">{(stats.totalDistance || 0).toLocaleString()} km</h2>
+                                    <h6 className="opacity-75 mb-0">Horas Uso</h6>
+                                    <h3 className="fw-bold mb-0">{(stats.totalHours || 0).toLocaleString()} h</h3>
                                 </div>
-                                <Truck size={32} className="opacity-50" />
+                                <Activity size={28} className="opacity-50" />
                             </div>
                         </Card.Body>
                     </Card>

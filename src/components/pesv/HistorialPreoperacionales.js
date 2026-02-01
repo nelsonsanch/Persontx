@@ -239,7 +239,7 @@ const HistorialPreoperacionales = ({ vehiculos, user, userRole }) => {
                             <th className="py-3 ps-3">Fecha</th>
                             <th className="py-3">Vehículo</th>
                             <th className="py-3">Inspector</th>
-                            <th className="py-3">Km</th>
+                            <th className="py-3">Lectura</th>
                             <th className="py-3">Resultado</th>
                             <th className="py-3 text-end pe-3">Acciones</th>
                         </tr>
@@ -257,7 +257,12 @@ const HistorialPreoperacionales = ({ vehiculos, user, userRole }) => {
                                     </Badge>
                                 </td>
                                 <td><small>{reg.usuario_email}</small></td>
-                                <td>{reg.kilometraje_lectura?.toLocaleString()}</td>
+                                <td className="font-monospace">
+                                    {reg.kilometraje_lectura?.toLocaleString()}
+                                    <span className="text-muted ms-1 small">
+                                        {reg.tipo_activo === 'maquinaria' ? 'h' : 'km'}
+                                    </span>
+                                </td>
                                 <td>
                                     <Badge bg={reg.resultado_global === 'APROBADO' ? 'success' : 'danger'}>
                                         {reg.resultado_global}

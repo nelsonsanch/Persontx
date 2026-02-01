@@ -13,7 +13,8 @@ import MantenimientoVehiculo from './MantenimientoVehiculo';
 import DetalleInspeccionModal from './DetalleInspeccionModal';
 import HistorialPreoperacionales from './HistorialPreoperacionales';
 import IndicadoresPreoperacionales from './IndicadoresPreoperacionales';
-import { Eye, BarChart2 } from 'lucide-react';
+import ProgramacionPESV from './ProgramacionPESV';
+import { Eye, BarChart2, Calendar } from 'lucide-react';
 
 const InspeccionesPreoperacionalesMain = () => {
     const { user, dataScopeId, userRole } = useAuth();
@@ -390,6 +391,12 @@ const InspeccionesPreoperacionalesMain = () => {
                                     <Nav.Link eventKey="indicadores" className="fw-bold text-success">
                                         <BarChart2 size={16} className="me-1 mb-1" />
                                         Indicadores
+                                    </Nav.Link>
+                                </Nav.Item>
+                                <Nav.Item>
+                                    <Nav.Link eventKey="programadas" className="fw-bold text-info">
+                                        <Calendar size={16} className="me-1 mb-1" />
+                                        Programadas
                                     </Nav.Link>
                                 </Nav.Item>
                             </>
@@ -782,6 +789,10 @@ const InspeccionesPreoperacionalesMain = () => {
 
                     {activeTab === 'indicadores' && (userRole === 'cliente' || userRole === 'admin') && (
                         <IndicadoresPreoperacionales user={{ ...user, uid: dataScopeId }} inventario={activos} />
+                    )}
+
+                    {activeTab === 'programadas' && (userRole === 'cliente' || userRole === 'admin') && (
+                        <ProgramacionPESV user={{ ...user, uid: dataScopeId }} inventario={activos} />
                     )}
                 </Card.Body>
             </Card>

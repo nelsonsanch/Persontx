@@ -245,8 +245,20 @@ const ProgramacionInspecciones = ({ onInspect }) => {
                                         return (
                                             <tr key={idx} className={status.color === 'danger' ? 'bg-danger bg-opacity-10' : ''}>
                                                 <td className="fw-bold">
-                                                    {item.nombre || item.tipo_equipo}
-                                                    <div className="small text-muted font-monospace">{item.codigo_interno || item.codigo || item.id || 'S/C'}</div>
+                                                    {(item.categoria === 'maquinaria_pesada' || item.categoria === 'vehiculos') ? (
+                                                        <>
+                                                            {item.marca} {item.modelo || item.linea}
+                                                            <div className="small text-muted font-monospace">
+                                                                {item.placa || item.id_interno || item.serie_chasis || 'S/N'}
+                                                                <Badge bg="secondary" className="ms-2" style={{ fontSize: '0.6em' }}>DOTACIÓN</Badge>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {item.nombre || item.tipo_equipo}
+                                                            <div className="small text-muted font-monospace">{item.codigo_interno || item.codigo || item.id || 'S/C'}</div>
+                                                        </>
+                                                    )}
                                                 </td>
                                                 <td> {item.familia || item.categoria} </td>
                                                 <td className="small text-muted">{item.ubicacion || 'S/U'}</td>
