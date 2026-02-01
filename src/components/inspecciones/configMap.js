@@ -5,7 +5,8 @@ import { gabinetesConfig } from '../inventarios/configs/gabinetesConfig';
 import { otrosConfig } from '../inventarios/configs/otrosConfig';
 import { sustanciasQuimicasConfig } from '../inventarios/configs/sustanciasQuimicasConfig';
 import { alturasConfig } from '../inventarios/configs/alturasConfig';
-import { maquinariaPesadaConfig } from '../inventarios/configs/maquinariaPesadaConfig'; // New Import
+import { maquinariaPesadaConfig } from '../inventarios/configs/maquinariaPesadaConfig';
+import { vehiculosSstConfig } from '../inventarios/configs/vehiculosSstConfig'; // New Import
 import { activosConfig } from '../inventarios/configs/activosConfig';
 
 export const INSPECTION_CATEGORIES = [
@@ -14,7 +15,8 @@ export const INSPECTION_CATEGORIES = [
     { key: 'botiquin', label: 'Botiquines', icon: '🩺', config: botiquinConfig, color: 'primary' },
     { key: 'camillas', label: 'Camillas', icon: '🛏️', config: camillasConfig, color: 'info' },
     { key: 'alturas', label: 'Equipos de Alturas', icon: '🧗', config: alturasConfig, color: 'primary' },
-    { key: 'maquinaria_pesada', label: 'Maquinaria Pesada', icon: '🚜', config: maquinariaPesadaConfig, color: 'warning' }, // New Category
+    { key: 'maquinaria_pesada', label: 'Maquinaria Pesada', icon: '🚜', config: maquinariaPesadaConfig, color: 'warning' },
+    { key: 'vehiculos', label: 'Vehículos (Dotación)', icon: '🚙', config: vehiculosSstConfig, color: 'success' }, // New Category
     { key: 'quimicos', label: 'Sustancias Químicas', icon: '🧪', config: sustanciasQuimicasConfig, color: 'warning' },
     { key: 'activos', label: 'Herramientas', icon: '🛠️', config: activosConfig, color: 'secondary' },
     { key: 'otros', label: 'Otros Equipos', icon: '📦', config: otrosConfig, color: 'dark' },

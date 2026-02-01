@@ -291,9 +291,9 @@ const FormularioCheck = ({ data, setData, onNext, onBack }) => {
                                 activoSeleccionado.nombre || activoSeleccionado.tipo}
                         </h5>
                         <small className="text-muted">
-                            {activoSeleccionado.placa_interna || activoSeleccionado.serie_chasis || activoSeleccionado.codigo_interno || activoSeleccionado.codigo || activoSeleccionado.id || 'S/C'} | {activoSeleccionado.ubicacion}
+                            {activoSeleccionado.placa || activoSeleccionado.placa_interna || activoSeleccionado.serie_chasis || activoSeleccionado.codigo_interno || activoSeleccionado.codigo || activoSeleccionado.id || 'S/C'} | {activoSeleccionado.ubicacion || 'Sin Ubicación'}
                             <br />
-                            <strong>Familia:</strong> {activoSeleccionado.familia || 'N/A'} | <strong>Tipo:</strong> {activoSeleccionado.tipo_maquinaria || activoSeleccionado.tipo_equipo || activoSeleccionado.tipo || 'N/A'}
+                            <strong>Familia:</strong> {activoSeleccionado.marca || activoSeleccionado.familia || 'N/A'} | <strong>Tipo:</strong> {activoSeleccionado.tipo_vehiculo || activoSeleccionado.tipo_maquinaria || activoSeleccionado.tipo_equipo || activoSeleccionado.tipo || 'N/A'}
                         </small>
                     </div>
                     <div className="ms-auto">
